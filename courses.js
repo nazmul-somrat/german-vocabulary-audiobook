@@ -9,6 +9,17 @@ const GVA_AUDIO_GATEWAY = GVA_GATEWAY_ROOT &&
 
 window.GVA_COURSES = [
   {
+    id: "a1",
+    short: "A1",
+    title: "A1 Vocabulary Audiobook",
+    description: "Practical beginner German for everyday life with synchronized audio, transcript and active recall.",
+    status: "ready",
+    totalWords: 778,
+    episodes: 15,
+    dataScript: "courses/a1/data.js",
+    audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
+  },
+  {
     id: "b1",
     short: "B1",
     title: "B1 Vocabulary Audiobook",

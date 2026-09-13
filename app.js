@@ -168,12 +168,14 @@ function sectionMeta(id){return D?.sections?.find(s=>s.id===id)||null}
 function episodeDisplayLabel(ep){
   if(!ep)return 'Episode 01';
   const n=String(epDisplay(ep)).padStart(2,'0');
+  if(currentCourseId==='a1')return `A1 Vocabulary · Episode ${n}`;
   if(currentCourseId==='technical')return `Technical Vocabulary · Episode ${n}`;
-  if(ep.section==='advanced')return `B1+ Advanced · Episode ${n}`;
-  if(ep.section==='core')return `B1 Core · Episode ${n}`;
+  if(currentCourseId==='b1'&&ep.section==='advanced')return `B1+ Advanced · Episode ${n}`;
+  if(currentCourseId==='b1'&&ep.section==='core')return `B1 Core · Episode ${n}`;
   return `Episode ${n}`;
 }
 function episodeBrowserTitle(){
+  if(currentCourseId==='a1')return 'A1 Vocabulary';
   if(currentCourseId==='technical')return 'Technical Vocabulary';
   if(currentCourseId==='b1')return 'B1 Core & B1+ Advanced';
   return COURSE_META[currentCourseId]?.title||'Episodes';
