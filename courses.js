@@ -20,17 +20,6 @@ window.GVA_COURSES = [
     audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
   },
   {
-    id: "b2",
-    short: "B2",
-    title: "B2 Vocabulary Audiobook",
-    description: "B2 vocabulary course — ready for your future audio and transcript set.",
-    status: "coming",
-    totalWords: null,
-    episodes: null,
-    dataScript: "courses/b2/data.js",
-    audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
-  },
-  {
     id: "technical",
     short: "TECH",
     title: "Technical Vocabulary Audiobook",
@@ -39,6 +28,17 @@ window.GVA_COURSES = [
     totalWords: 1824,
     episodes: 23,
     dataScript: "courses/technical/data.js",
+    audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
+  },
+  {
+    id: "b2",
+    short: "B2",
+    title: "B2 Vocabulary Audiobook",
+    description: "B2 vocabulary course — ready for your future audio and transcript set.",
+    status: "coming",
+    totalWords: null,
+    episodes: null,
+    dataScript: "courses/b2/data.js",
     audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
   }
 ];
