@@ -58,7 +58,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260913-a1fix2';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-a2';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -169,6 +169,7 @@ function episodeDisplayLabel(ep){
   if(!ep)return 'Episode 01';
   const n=String(epDisplay(ep)).padStart(2,'0');
   if(currentCourseId==='a1')return `A1 Vocabulary · Episode ${n}`;
+  if(currentCourseId==='a2')return `A2 Vocabulary · Episode ${n}`;
   if(currentCourseId==='technical')return `Technical Vocabulary · Episode ${n}`;
   if(currentCourseId==='b1'&&ep.section==='advanced')return `B1+ Advanced · Episode ${n}`;
   if(currentCourseId==='b1'&&ep.section==='core')return `B1 Core · Episode ${n}`;
@@ -176,6 +177,7 @@ function episodeDisplayLabel(ep){
 }
 function episodeBrowserTitle(){
   if(currentCourseId==='a1')return 'A1 Vocabulary';
+  if(currentCourseId==='a2')return 'A2 Vocabulary';
   if(currentCourseId==='technical')return 'Technical Vocabulary';
   if(currentCourseId==='b1')return 'B1 Core & B1+ Advanced';
   return COURSE_META[currentCourseId]?.title||'Episodes';

@@ -20,6 +20,17 @@ window.GVA_COURSES = [
     audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
   },
   {
+    id: "a2",
+    short: "A2",
+    title: "A2 Vocabulary Audiobook",
+    description: "Practical A2 German vocabulary with synchronized audio, transcript and active recall.",
+    status: "ready",
+    totalWords: 1214,
+    episodes: 24,
+    dataScript: "courses/a2/data.js",
+    audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
+  },
+  {
     id: "b1",
     short: "B1",
     title: "B1 Vocabulary Audiobook",
