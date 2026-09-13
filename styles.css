@@ -24,6 +24,15 @@ button{cursor:pointer}
 .brand{display:flex;align-items:center;gap:10px;color:#fff}
 .brand-button{border:0;background:transparent;text-align:left;padding:0}
 .brandmark{width:40px;height:40px;display:grid;place-items:center;border-radius:12px;background:#3b82f6;font-weight:900}
+/* Nazmul Somrat logo in the site header */
+.brandmark-logo{
+  display:block;
+  object-fit:contain;
+  background:#fff;
+  padding:3px;
+  border:1px solid rgba(255,255,255,.20);
+  border-radius:10px;
+}
 .brand small{display:block;color:#aebbd0;font-size:11px;font-weight:400}
 .menu-btn{display:none;border:1px solid #42506a;background:#1b2638;color:#fff;border-radius:10px;width:40px;height:40px;font-size:20px}
 .top-actions{display:flex;align-items:center;gap:8px}
