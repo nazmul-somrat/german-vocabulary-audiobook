@@ -34,10 +34,10 @@ window.GVA_COURSES = [
     id: "technical",
     short: "TECH",
     title: "Technical Vocabulary Audiobook",
-    description: "Engineering and technical German vocabulary — course slot prepared.",
-    status: "coming",
-    totalWords: 1825,
-    episodes: null,
+    description: "Engineering, software, AI, data science, manufacturing and workplace technical German.",
+    status: "ready",
+    totalWords: 1824,
+    episodes: 23,
     dataScript: "courses/technical/data.js",
     audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
   }

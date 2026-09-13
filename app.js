@@ -228,9 +228,10 @@ function scrollToEpisodeBrowser(sectionId=null){
 
 function courseProgressFromLoaded(id){
   const data=loaded[id];
-  if(!data)return {done:0,total:0};
+  const meta=COURSE_META[id];
+  if(!data)return {done:0,total:meta?.totalWords||0};
   const st=cs(id);
-  return {done:progressWords(data,st),total:data.total_words||0};
+  return {done:progressWords(data,st),total:data.total_words||meta?.totalWords||0};
 }
 function combinedProgress(){
   let done=0,total=0;
