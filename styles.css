@@ -27,11 +27,14 @@ button{cursor:pointer}
 /* Nazmul Somrat logo in the site header */
 .brandmark-logo{
   display:block;
+  width:32px;
+  height:44px;
   object-fit:contain;
-  background:#fff;
-  padding:3px;
-  border:1px solid rgba(255,255,255,.20);
-  border-radius:10px;
+  background:transparent;
+  padding:0;
+  border:0;
+  border-radius:0;
+  flex:none;
 }
 .brand small{display:block;color:#aebbd0;font-size:11px;font-weight:400}
 .menu-btn{display:none;border:1px solid #42506a;background:#1b2638;color:#fff;border-radius:10px;width:40px;height:40px;font-size:20px}
@@ -202,6 +205,18 @@ button{cursor:pointer}
 .back-current{position:fixed;left:calc(var(--sidebar) + (100vw - var(--sidebar))/2);transform:translateX(-50%);bottom:18px;z-index:115;border:0;background:var(--blue);color:#fff;border-radius:999px;padding:10px 15px;font-weight:800;box-shadow:0 7px 22px rgba(0,0,0,.22)}
 .toast{position:fixed;bottom:16px;right:12px;z-index:140;background:#172033;color:#fff;border-radius:11px;padding:8px 11px;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s}.toast.show{opacity:.94}
 .site-footer{margin-top:auto;padding:22px 15px 28px;text-align:center;color:var(--muted);font-size:10px}
+.footer-brand-row{display:flex;align-items:center;gap:9px}
+.footer-logo{
+  width:22px;height:30px;object-fit:contain;display:block;flex:none;
+  border:0;border-radius:0;background:transparent
+}
+.site-footer-inner{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:max-content;max-width:100%;margin:0 auto
+}
+.site-footer-logo{width:24px;height:33px}
+.site-footer-copy{text-align:left}
+.site-footer-copy .footer-social-links{justify-content:flex-start}
 .social-links{display:flex;align-items:center;gap:8px;margin-top:9px}
 .side-footer .social-links{justify-content:flex-start}
 .footer-social-links{justify-content:center}
@@ -213,7 +228,8 @@ button{cursor:pointer}
 .social-link svg{width:17px;height:17px;fill:currentColor;display:block}
 
 @media(max-width:900px){
-  .menu-btn{display:block}.brandmark{display:none}.brand small{display:none}
+  .menu-btn{display:block}.brand small{display:none}
+  .brandmark-logo{display:block;width:27px;height:37px}.brand{gap:7px}
   .sidebar{transform:translateX(-105%);box-shadow:10px 0 30px rgba(0,0,0,.18)}
   .sidebar.open{transform:translateX(0)}
   .sidebar-backdrop{position:fixed;inset:66px 0 0 0;background:rgba(0,0,0,.38);z-index:95}
@@ -589,4 +605,12 @@ button{cursor:pointer}
 /* v2.7 — Core and B1+ Advanced have independent player episode lists */
 #episodeSelect{
   font-weight:650;
+}
+
+
+@media(max-width:470px){
+  .brandmark-logo{width:24px;height:33px}
+  .brand strong{font-size:12px}
+  .site-footer-inner{gap:8px}
+  .site-footer-logo{width:21px;height:29px}
 }
