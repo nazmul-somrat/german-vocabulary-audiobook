@@ -58,7 +58,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260913-a1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260913-a1fix2';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -515,9 +515,9 @@ function renderTranscript(){
       h+='</div></section>'
     }
     h+=`<section class="recall-card"><h3>◆ Recall after Block ${rb.block}</h3>`;
-    rb.de_en.forEach(id=>{let evs=evByEntry[id]||[],p=evs.find(x=>x.kind==='recall_de_prompt'),a=evs.find(x=>x.kind==='recall_en_answer'),x=entryIndex[id];
+    (rb.de_en||[]).forEach(id=>{let evs=evByEntry[id]||[],p=evs.find(x=>x.kind==='recall_de_prompt'),a=evs.find(x=>x.kind==='recall_en_answer'),x=entryIndex[id];
       h+=`<div class="recall-item">${line(p,'de-example','German → English · 4-second recall',x.german)}<div class="line en-example english recall-answer auto-hidden" data-event="${a.id}" data-start="${a.start}" data-answer="${a.start}"><span class="smalllabel">Answer</span><span class="actual-text">${esc(x.english)}</span></div></div>`});
-    rb.en_de.forEach(id=>{let evs=evByEntry[id]||[],p=evs.find(x=>x.kind==='recall_en_prompt'),a=evs.find(x=>x.kind==='recall_de_answer'),x=entryIndex[id];
+    (rb.en_de||[]).forEach(id=>{let evs=evByEntry[id]||[],p=evs.find(x=>x.kind==='recall_en_prompt'),a=evs.find(x=>x.kind==='recall_de_answer'),x=entryIndex[id];
       h+=`<div class="recall-item">${line(p,'en-example','English → German · 4-second recall',x.english,true)}<div class="line de-example recall-answer auto-hidden" data-event="${a.id}" data-start="${a.start}" data-answer="${a.start}"><span class="smalllabel">Answer</span><span class="actual-text">${esc(x.german)}</span></div></div>`});
     h+='</section>'
   }
