@@ -4,9 +4,9 @@
   --shadow:0 9px 26px rgba(20,31,52,.08);--text-scale:1;--sidebar:220px;--ring-bg:#dbe3ee
 }
 :root[data-theme="dark"]{
-  --bg:#0b111b;--panel:#121b29;--panel2:#182231;--ink:#e8eef8;--muted:#9aa8bd;--line:#29384d;
-  --blue:#60a5fa;--blue2:#17304d;--navy:#070c14;--gold:#f5cc55;--danger:#ff7777;
-  --shadow:0 9px 26px rgba(0,0,0,.28);--ring-bg:#253247
+  --bg:#050608;--panel:#0b0e12;--panel2:#11151a;--ink:#f1f3f5;--muted:#a4abb5;--line:#242a31;
+  --blue:#60a5fa;--blue2:#10151c;--navy:#020304;--gold:#f5cc55;--danger:#ff7777;
+  --shadow:0 10px 28px rgba(0,0,0,.42);--ring-bg:#1b2027
 }
 :root[data-text-size="small"]{--text-scale:.90}
 :root[data-text-size="normal"]{--text-scale:1}
@@ -340,7 +340,7 @@ button{cursor:pointer}
 
 /* Keep app header intentionally dark/navy in both themes */
 :root[data-theme="light"] .topbar{
-  background:#101827;
+  background:var(--navy);
   color:#fff;
 }
 
