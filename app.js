@@ -168,9 +168,23 @@ function sectionMeta(id){return D?.sections?.find(s=>s.id===id)||null}
 function episodeDisplayLabel(ep){
   if(!ep)return 'Episode 01';
   const n=String(epDisplay(ep)).padStart(2,'0');
+  if(currentCourseId==='technical')return `Technical Vocabulary · Episode ${n}`;
   if(ep.section==='advanced')return `B1+ Advanced · Episode ${n}`;
   if(ep.section==='core')return `B1 Core · Episode ${n}`;
   return `Episode ${n}`;
+}
+function episodeBrowserTitle(){
+  if(currentCourseId==='technical')return 'Technical Vocabulary';
+  if(currentCourseId==='b1')return 'B1 Core & B1+ Advanced';
+  return COURSE_META[currentCourseId]?.title||'Episodes';
+}
+function sectionDisplayTitle(sec){
+  return currentCourseId==='technical'?'Technical Vocabulary':sec.title;
+}
+function sectionDisplayKicker(sec){
+  if(currentCourseId==='technical')return 'TECH';
+  if(currentCourseId==='b1')return sec.id==='advanced'?'B1+':'B1';
+  return COURSE_META[currentCourseId]?.short||'';
 }
 function sectionEpisodes(id){return D?.episodes?.filter(ep=>ep.section===id)||[]}
 function sectionProgress(id){
@@ -317,6 +331,8 @@ async function openCourse(id='b1',sectionToOpen=null){
   $('#courseProgressText').textContent=`${p}%`;
   $('#courseProgressInline').textContent=`${words} / ${D.total_words} words · ${p}%`;
   $('#courseProgressFill').style.width=`${p}%`;
+  const browserTitle=$('#episodeBrowserTitle');
+  if(browserTitle)browserTitle.textContent=episodeBrowserTitle();
   $('#bookmarkCount').textContent=S.bookmarks.length;
   $('#sideBookmarkCount').textContent=S.bookmarks.length;
   let le=+S.lastEpisode||1,pos=+S.positions[le]||0,lastEp=epMap[le]||D.episodes[0],lastLabel=episodeDisplayLabel(lastEp);
@@ -391,7 +407,7 @@ function renderEpisodeGrid(){
       const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id);
       html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}">
         <button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}">
-          <div><span class="section-kicker">${sec.id==='advanced'?'B1+':'B1'}</span><h2>${esc(sec.title)}</h2><p>${sec.episodes} episodes · ${sec.total_words.toLocaleString()} words</p></div>
+          <div><span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span><h2>${esc(sectionDisplayTitle(sec))}</h2><p>${sec.episodes} episodes · ${sec.total_words.toLocaleString()} words</p></div>
           <div class="library-section-head-right"><strong>${p.pct}%</strong><span class="section-chevron" aria-hidden="true">⌄</span></div>
         </button>
         <div class="library-section-body ${isOpen?'':'hidden'}">
