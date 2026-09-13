@@ -1,8 +1,24 @@
-const CACHE='german-vocab-audiobook-tech-v2-fix';
-const CORE=['./','./index.html','./styles.css','./site-config.js','./courses.js','./app.js','./manifest.webmanifest','./courses/b1/data.js'];
-self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)))});
+const CACHE='german-vocab-audiobook-a1-v1';
+const CORE=[
+  './',
+  './index.html',
+  './styles.css',
+  './site-config.js?v=20260913-a1',
+  './courses.js?v=20260913-a1',
+  './app.js?v=20260913-a1',
+  './manifest.webmanifest',
+  './courses/a1/data.js?v=20260913-a1',
+  './courses/b1/data.js?v=20260913-a1',
+  './courses/technical/data.js?v=20260913-a1'
+];
+self.addEventListener('install',e=>{
+  self.skipWaiting();
+  e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)));
+});
 self.addEventListener('activate',e=>e.waitUntil(Promise.all([
-  caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE&&k.startsWith('german-vocab-audiobook-')).map(k=>caches.delete(k)))),
+  caches.keys().then(keys=>Promise.all(
+    keys.filter(k=>k!==CACHE&&k.startsWith('german-vocab-audiobook-')).map(k=>caches.delete(k))
+  )),
   self.clients.claim()
 ])));
 self.addEventListener('fetch',e=>{
