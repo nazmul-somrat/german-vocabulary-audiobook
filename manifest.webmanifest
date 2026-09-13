@@ -1,0 +1,9 @@
+{
+  "name": "German Vocabulary Audiobook",
+  "short_name": "German Vocab",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f6fa",
+  "theme_color": "#101827",
+  "description": "Interactive German vocabulary audiobooks with synchronized transcripts and active recall"
+}
