@@ -1,4 +1,4 @@
-// German Vocabulary Audiobook — public deployment configuration
+// German Vocabulary Audiobook — hardened public configuration
 window.GVA_PUBLIC_CONFIG = {
-  audioRoot: "https://pub-6fe56bf34e4b4be1b90bb992125f9830.r2.dev/"
+  audioGateway: "https://gva-audio-gateway.nislamsomrat.workers.dev/"
 };

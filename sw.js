@@ -1,4 +1,4 @@
-const CACHE='german-vocab-audiobook-public-v1.1-configured';
+const CACHE='german-vocab-audiobook-hardened-v1.2-configured';
 const CORE=['./','./index.html','./styles.css','./site-config.js','./courses.js','./app.js','./manifest.webmanifest','./courses/b1/data.js'];
 self.addEventListener('install',e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)))});
 self.addEventListener('activate',e=>e.waitUntil(Promise.all([

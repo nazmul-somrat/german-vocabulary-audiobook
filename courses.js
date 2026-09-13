@@ -1,10 +1,10 @@
-const GVA_AUDIO_ROOT = String(
-  (window.GVA_PUBLIC_CONFIG && window.GVA_PUBLIC_CONFIG.audioRoot) || ""
+const GVA_GATEWAY_ROOT = String(
+  (window.GVA_PUBLIC_CONFIG && window.GVA_PUBLIC_CONFIG.audioGateway) || ""
 ).trim();
 
-const GVA_PUBLIC_AUDIO = GVA_AUDIO_ROOT &&
-  !GVA_AUDIO_ROOT.includes("PASTE_YOUR_R2_PUBLIC_URL_HERE")
-    ? GVA_AUDIO_ROOT.replace(/\/+$/, "") + "/"
+const GVA_AUDIO_GATEWAY = GVA_GATEWAY_ROOT &&
+  !GVA_GATEWAY_ROOT.includes("PASTE_YOUR_WORKER_URL_HERE")
+    ? GVA_GATEWAY_ROOT.replace(/\/+$/, "") + "/"
     : "";
 
 window.GVA_COURSES = [
@@ -17,7 +17,7 @@ window.GVA_COURSES = [
     totalWords: 4069,
     episodes: 51,
     dataScript: "courses/b1/data.js",
-    audioBase: GVA_PUBLIC_AUDIO ? GVA_PUBLIC_AUDIO + "b1/" : "courses/b1/audio/"
+    audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
   },
   {
     id: "b2",
@@ -28,7 +28,7 @@ window.GVA_COURSES = [
     totalWords: null,
     episodes: null,
     dataScript: "courses/b2/data.js",
-    audioBase: GVA_PUBLIC_AUDIO ? GVA_PUBLIC_AUDIO + "b2/" : "courses/b2/audio/"
+    audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
   },
   {
     id: "technical",
@@ -39,6 +39,6 @@ window.GVA_COURSES = [
     totalWords: 1825,
     episodes: null,
     dataScript: "courses/technical/data.js",
-    audioBase: GVA_PUBLIC_AUDIO ? GVA_PUBLIC_AUDIO + "technical/" : "courses/technical/audio/"
+    audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
   }
 ];

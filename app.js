@@ -567,7 +567,14 @@ async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,kee
   if($('#episodeSelect'))$('#episodeSelect').value=String(n);
   updateEpisodeNavButtons();
   $('#episodeIntro').innerHTML=`<h1>${esc(episodeDisplayLabel(currentEp))}</h1><p>${fmt(currentEp.duration)} · ${currentEp.word_count} words · ${esc(currentEp.first_word)} → ${esc(currentEp.last_word)}</p><p>Tap a transcript line to seek. Tap ☆ to save a difficult word.</p>`;
-  renderTranscript();let src=`${meta.audioBase}${currentEp.audio}`;pendingSeek=seek!=null?+seek:(+S.positions[n]||0);
+  renderTranscript();
+  if(!meta.audioBase){
+    $('#playerNote').textContent='Secure audio gateway is not configured yet.';
+    msg('Secure audio gateway is not configured yet.');
+    return;
+  }
+  let src=`${meta.audioBase}${currentEp.audio}`;
+  pendingSeek=seek!=null?+seek:(+S.positions[n]||0);
   $('#playerNote').textContent=stop!=null?'Difficult-word review: this entry will stop automatically.':'Your position is saved automatically.';
   if(audio.getAttribute('src')!==src){
     audio.src=src;
@@ -676,7 +683,7 @@ audio.onpause=()=>{
   if(!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
 };
 audio.onended=()=>{if(!currentEp)return;const S=courseState();S.completed[currentEp.episode]=true;S.positions[currentEp.episode]=currentEp.duration;S.maxPositions[currentEp.episode]=currentEp.duration;save();updateHeaderProgress();updatePersistentPlayerVisibility();msg('Episode completed ✓')};
-audio.onerror=()=>$('#playerNote').textContent='Audio could not be opened. Check the R2 public URL in site-config.js and confirm the MP3 was uploaded.';
+audio.onerror=()=>$('#playerNote').textContent='Audio stream could not be opened. Please refresh and try again.';
 
 if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 
