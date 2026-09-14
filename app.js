@@ -8,7 +8,7 @@ const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
 const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{}};
-const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'next',courses:{}};
+const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:3,courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function loadAppState(){
@@ -27,7 +27,8 @@ function loadAppState(){
   }
   s=Object.assign(clone(APP_DEFAULT),s||{});
   s.courses=s.courses||{};
-  if(!['next','repeat'].includes(s.endBehavior))s.endBehavior='next';
+  if(s.endBehaviorUiVersion!==3){s.endBehavior='stop';s.endBehaviorUiVersion=3;}
+  if(!['stop','next','repeat'].includes(s.endBehavior))s.endBehavior='stop';
   if(!['en','bn','de'].includes(s.uiLanguage))s.uiLanguage='en';
   if(typeof s.quizSound!=='boolean')s.quizSound=true;
   return s;
@@ -68,7 +69,7 @@ function tt(key,vars={}){let s=(UI_TEXT[lang()]&&UI_TEXT[lang()][key])||UI_TEXT.
 function courseTitle(id){return COURSE_TEXT[lang()]?.[id]?.title||COURSE_META[id]?.title||""}
 function courseDescription(id){return COURSE_TEXT[lang()]?.[id]?.description||COURSE_META[id]?.description||""}
 function courseLabel(id){if(id==="b1")return lang()==="bn"?"B1 শব্দভাণ্ডার":(lang()==="de"?"B1 Wortschatz":"B1 Vocabulary"); if(id==="technical")return lang()==="bn"?"কারিগরি শব্দভাণ্ডার":(lang()==="de"?"Technischer Wortschatz":"Technical Vocabulary"); if(id==="a1")return lang()==="bn"?"A1 শব্দভাণ্ডার":(lang()==="de"?"A1 Wortschatz":"A1 Vocabulary"); if(id==="a2")return lang()==="bn"?"A2 শব্দভাণ্ডার":(lang()==="de"?"A2 Wortschatz":"A2 Vocabulary"); return COURSE_META[id]?.title||id}
-function endModeText(mode){return mode==="repeat"?tt("afterRepeat"):tt("afterNext")}
+function endModeText(mode){return mode==="repeat"?tt("afterRepeat"):mode==="next"?tt("afterNext"):tt("afterStop")}
 function setText(sel,val){const el=$(sel);if(el)el.textContent=val}
 function setHTML(sel,val){const el=$(sel);if(el)el.innerHTML=val}
 function updateLanguageButtons(){$$("[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang()))}
@@ -90,7 +91,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-layoutfix2';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quizrepeatfix1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -189,25 +190,27 @@ function moveEpisodeWithinSection(delta,seek=null){
   return false;
 }
 function updateEndBehaviorControl(){
-  const btn=$('#endBehaviorBtn');
-  const icon=$('#endBehaviorIcon');
-  if(!btn||!icon)return;
-  const mode=AS.endBehavior==='repeat'?'repeat':'next';
-  if(AS.endBehavior!==mode){AS.endBehavior=mode;save()}
-  btn.dataset.mode=mode;
-  btn.title=endModeText(mode);
-  btn.setAttribute('aria-label',endModeText(mode));
-  const icons={
-    next:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5.5l8.5 6.5-8.5 6.5z"></path><path d="M17.5 5.5v13"></path></svg>',
-    repeat:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7.5h8.5"></path><path d="M13.8 4.8l3 2.7-3 2.7"></path><path d="M17 16.5H8.5"></path><path d="M10.2 13.8l-3 2.7 3 2.7"></path><path d="M12 10.2v4.2"></path></svg>'
-  };
-  icon.innerHTML=icons[mode];
+  const mode=['repeat','next'].includes(AS.endBehavior)?AS.endBehavior:'stop';
+  $$('[data-end-mode]').forEach(btn=>{
+    const active=btn.dataset.endMode===mode;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',active?'true':'false');
+    btn.title=endModeText(btn.dataset.endMode);
+    btn.setAttribute('aria-label',endModeText(btn.dataset.endMode));
+  });
+  const wrap=$('#endBehaviorControl');
+  if(wrap){
+    wrap.dataset.mode=mode;
+    wrap.title=mode==='stop'?endModeText('stop'):endModeText(mode);
+    wrap.setAttribute('aria-label',wrap.title);
+  }
 }
 function setEndBehavior(mode){
-  if(!['next','repeat'].includes(mode))mode='next';
-  AS.endBehavior=mode;save();updateEndBehaviorControl();msg(endModeText(mode));
+  if(!['stop','next','repeat'].includes(mode))mode='stop';
+  AS.endBehavior=mode;
+  AS.endBehaviorUiVersion=3;
+  save();updateEndBehaviorControl();msg(endModeText(mode));
 }
-function cycleEndBehavior(){setEndBehavior((AS.endBehavior==='repeat')?'next':'repeat');}
 function settingsCopy(){
   if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন'};
   if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',settings:'Einstellungen',close:'Einstellungen schließen'};
@@ -605,7 +608,29 @@ function setupMediaSession(){
     sync(true);
   });
 }
-function handleEpisodeEnded(){ if(!currentEp)return; const S=courseState(); S.completed[currentEp.episode]=true; S.positions[currentEp.episode]=currentEp.duration; S.maxPositions[currentEp.episode]=currentEp.duration; save(); updateHeaderProgress(); updatePersistentPlayerVisibility(); const mode=AS.endBehavior==='repeat'?'repeat':'next'; if(mode==='repeat'){audio.currentTime=0; updateMediaSessionMetadata(); audio.play().catch(()=>{}); msg(endModeText('repeat')); return;} const target=adjacentEpisode(1); if(target){msg(endModeText('next')); openEpisode(target.episode,0,true); return;} msg(lang()==='bn'?'এপিসোড শেষ ✓ · সেকশনের শেষ':lang()==='de'?'Episode beendet ✓ · Abschnittsende':'Episode completed ✓ · End of section'); }
+function handleEpisodeEnded(){
+  if(!currentEp)return;
+  const S=courseState();
+  S.completed[currentEp.episode]=true;
+  S.positions[currentEp.episode]=currentEp.duration;
+  S.maxPositions[currentEp.episode]=currentEp.duration;
+  save();updateHeaderProgress();updatePersistentPlayerVisibility();
+  const mode=['repeat','next'].includes(AS.endBehavior)?AS.endBehavior:'stop';
+  if(mode==='repeat'){
+    audio.currentTime=0;
+    updateMediaSessionMetadata();
+    audio.play().catch(()=>{});
+    msg(endModeText('repeat'));
+    return;
+  }
+  if(mode==='next'){
+    const target=adjacentEpisode(1);
+    if(target){msg(endModeText('next'));openEpisode(target.episode,0,true);return;}
+    msg(lang()==='bn'?'এপিসোড শেষ ✓ · সেকশনের শেষ':lang()==='de'?'Episode beendet ✓ · Abschnittsende':'Episode completed ✓ · End of section');
+    return;
+  }
+  msg(lang()==='bn'?'এপিসোড শেষ ✓ · প্লেব্যাক বন্ধ':lang()==='de'?'Episode beendet ✓ · Wiedergabe gestoppt':'Episode completed ✓ · Playback stopped');
+}
 
 
 function shuffleCopy(arr){
@@ -714,6 +739,10 @@ function playQuizWrongSound(){
   quizTone(250,0,.15,.07,'triangle');
   quizTone(180,.12,.20,.075,'triangle');
 }
+function playQuizFeedback(correct){
+  if(AS.quizSound===false)return;
+  if(correct)playQuizCorrectSound();else playQuizWrongSound();
+}
 function playQuizPassSound(){
   quizTone(523.25,0,.14,.07);
   quizTone(659.25,.11,.14,.075);
@@ -743,12 +772,13 @@ function buildQuiz(){
   }
   return questions;
 }
-function openQuiz(){ if(!quizIsAvailable())return; audio.pause(); const questions=buildQuiz(); if(!questions){msg('This episode does not have enough unique quiz words yet.');return} quizState={questions,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; $('#quizOverlay').classList.remove('hidden'); document.body.classList.add('quiz-open'); renderQuiz(); }
+function openQuiz(){ if(!quizIsAvailable())return; audio.pause(); const questions=buildQuiz(); if(!questions){msg('This episode does not have enough unique quiz words yet.');return} quizState={questions,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; $('#quizOverlay').classList.remove('hidden'); $('#quizBtn').classList.add('active'); document.body.classList.add('quiz-open'); renderQuiz(); }
 function closeQuiz(){
   $('#quizOverlay').classList.add('hidden');
+  $('#quizBtn').classList.remove('active');
   document.body.classList.remove('quiz-open');
 }
-function renderQuiz(){ if(!quizState)return; const body=$('#quizBody'); if(quizState.finished){renderQuizResult();return} const q=quizState.questions[quizState.index], selected=quizState.answers[quizState.index], pct=Math.round((quizState.index/QUIZ_COUNT)*100); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${tt('quizTitle')}</h2><div class="quiz-meta"><span>${tt('question',{n:quizState.index+1,t:QUIZ_COUNT})}</span><span>${tt('pass',{p:QUIZ_PASS,t:QUIZ_COUNT})}</span></div><div class="quiz-progress"><span style="width:${pct}%"></span></div><div class="quiz-word">${esc(q.german)}${q.grammar?` <span class="quiz-grammar">(${esc(q.grammar)})</span>`:''}</div><p class="quiz-prompt">${tt('quizPrompt')}</p><div class="quiz-options">${q.options.map((o,i)=>`<button type="button" class="quiz-option ${selected===i?'selected':''} ${selected!=null?'locked':''}" data-qoption="${i}" ${selected!=null?'disabled':''}><span class="quiz-letter">${String.fromCharCode(65+i)}</span><span>${esc(o.label)}</span></button>`).join('')}</div>${selected!=null?(q.options[selected]?.correct?`<div class="quiz-instant-feedback correct">${tt('correct')}</div>`:`<div class="quiz-instant-feedback wrong"><span>${tt('correctAnswer')}</span> <strong>${esc(q.correct)}</strong></div>`):`<div class="quiz-instant-feedback placeholder" aria-hidden="true">&nbsp;</div>`}<div class="quiz-actions"><button id="quizPrev" class="quiz-secondary" type="button" ${quizState.index===0?'disabled':''}>${tt('back')}</button><button id="quizNext" class="quiz-primary" type="button" ${selected==null?'disabled':''}>${quizState.index===QUIZ_COUNT-1?tt('finish'):tt('next')}</button></div>`; $$('[data-qoption]').forEach(btn=>btn.onclick=()=>{if(quizState.answers[quizState.index]!=null)return; const i=+btn.dataset.qoption,opt=q.options[i]; quizState.answers[quizState.index]=i; playQuizFeedback(!!opt.correct); renderQuiz();}); $('#quizPrev').onclick=()=>{if(quizState.index>0){quizState.index--;renderQuiz()}}; $('#quizNext').onclick=()=>{if(quizState.answers[quizState.index]==null)return; if(quizState.index<QUIZ_COUNT-1){quizState.index++;renderQuiz();}else{ const score=quizState.answers.reduce((sum,idx,qi)=>{const q=quizState.questions[qi]; const a=q.options[idx]; return sum+(a?.correct?1:0)},0); quizState.score=score; quizState.finished=true; const S=courseState(); S.quizBest[currentEp.episode]=Math.max(score,+S.quizBest[currentEp.episode]||0); save(); updateCourseQuizPoints(); renderQuizResult(); }}; }
+function renderQuiz(){ if(!quizState)return; const body=$('#quizBody'); if(quizState.finished){renderQuizResult();return} const q=quizState.questions[quizState.index], selected=quizState.answers[quizState.index], pct=Math.round((quizState.index/QUIZ_COUNT)*100); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${tt('quizTitle')}</h2><div class="quiz-meta"><span>${tt('question',{n:quizState.index+1,t:QUIZ_COUNT})}</span><span>${tt('pass',{p:QUIZ_PASS,t:QUIZ_COUNT})}</span></div><div class="quiz-progress"><span style="width:${pct}%"></span></div><div class="quiz-word">${esc(q.german)}${q.grammar?` <span class="quiz-grammar">(${esc(q.grammar)})</span>`:''}</div><p class="quiz-prompt">${tt('quizPrompt')}</p><div class="quiz-options">${q.options.map((o,i)=>`<button type="button" class="quiz-option ${selected===i?'selected':''} ${selected!=null?'locked':''}" data-qoption="${i}" ${selected!=null?'disabled':''}><span class="quiz-letter">${String.fromCharCode(65+i)}</span><span>${esc(o.label)}</span></button>`).join('')}</div>${selected!=null?(q.options[selected]?.correct?`<div class="quiz-instant-feedback correct">${tt('correct')}</div>`:`<div class="quiz-instant-feedback wrong"><span>${tt('correctAnswer')}</span> <strong>${esc(q.correct)}</strong></div>`):`<div class="quiz-instant-feedback placeholder" aria-hidden="true">&nbsp;</div>`}<div class="quiz-actions"><button id="quizPrev" class="quiz-secondary" type="button" ${quizState.index===0?'disabled':''}>${tt('back')}</button><button id="quizNext" class="quiz-primary" type="button" ${selected==null?'disabled':''}>${quizState.index===QUIZ_COUNT-1?tt('finish'):tt('next')}</button></div>`; $$('[data-qoption]').forEach(btn=>btn.onclick=()=>{if(quizState.answers[quizState.index]!=null)return; const i=+btn.dataset.qoption,opt=q.options[i]; quizState.answers[quizState.index]=i; playQuizFeedback(!!opt.correct); renderQuiz();}); $('#quizPrev').onclick=()=>{if(quizState.index>0){quizState.index--;renderQuiz()}}; $('#quizNext').onclick=()=>{if(quizState.answers[quizState.index]==null)return; if(quizState.index<QUIZ_COUNT-1){quizState.index++;renderQuiz();}else{finishQuiz();}}; }
 function finishQuiz(){
   if(!quizState)return;
   let score=0;
@@ -866,7 +896,7 @@ $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.targ
 const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5};
 $('#speedSelect').onchange=e=>{courseState().speed=speeds[e.target.value]||1;audio.playbackRate=courseState().speed;save()};
 $('#currentBookmark').onclick=$('#lyricsStar').onclick=()=>{let e=currentEntry();if(e)toggleBookmark(e.entry_id)};
-$('#endBehaviorBtn').onclick=cycleEndBehavior;
+$$('[data-end-mode]').forEach(btn=>btn.onclick=()=>setEndBehavior(AS.endBehavior===btn.dataset.endMode?'stop':btn.dataset.endMode));
 $('#backCurrent').onclick=()=>scrollToCurrentWord(true);
 
 const backTop=$('#backToTop');

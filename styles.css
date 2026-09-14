@@ -953,3 +953,93 @@ body.settings-open{overflow:hidden}
   .episode-grid.grid-view .epwords{font-size:calc(9.5px * var(--text-scale))!important}
   .episode-grid.grid-view .epbar{height:5px!important}
 }
+
+
+/* v5 — verified quiz interaction + two-button 3-state end behavior */
+.quiz-launch{font-weight:400!important}
+.quiz-launch.active{font-weight:800!important}
+
+/* Keep quiz content scrollable for long final reviews, but never show an unnecessary scrollbar. */
+.quiz-panel{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+.quiz-panel::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
+.quiz-option{pointer-events:auto!important;position:relative;z-index:1}
+.quiz-options{position:relative;z-index:2}
+
+/* Two physical buttons create 3 effective states:
+   neither active = Stop; Repeat active = Repeat; Next active = Play next. */
+.end-mode-pair{
+  display:grid!important;
+  grid-template-columns:50px 50px!important;
+  gap:7px!important;
+  align-items:center!important;
+}
+.end-mode-option{
+  width:50px!important;
+  height:42px!important;
+  min-height:42px!important;
+  padding:0!important;
+  border:1px solid #cbd5e1!important;
+  border-radius:12px!important;
+  background:#ffffff!important;
+  color:#475569!important;
+  box-shadow:none!important;
+  display:grid!important;
+  place-items:center!important;
+  cursor:pointer!important;
+  transition:background .14s ease,border-color .14s ease,color .14s ease,transform .14s ease!important;
+}
+.end-mode-option svg{
+  width:24px!important;
+  height:24px!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:2.2!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+}
+.end-mode-option[data-end-mode="next"] svg path:last-child{fill:currentColor!important;stroke:none!important}
+.end-mode-option:hover{border-color:#93b8ef!important;color:#2563eb!important;background:#f8fbff!important}
+.end-mode-option.active{
+  background:#3b82f6!important;
+  border-color:#3b82f6!important;
+  color:#ffffff!important;
+}
+.end-mode-option:active{transform:translateY(1px)!important}
+:root[data-theme="dark"] .end-mode-option:not(.active){
+  background:#ffffff!important;
+  border-color:#d5deeb!important;
+  color:#334155!important;
+}
+
+/* Desktop: same height as Play/Pause; two 50px mode buttons. */
+.transport{
+  grid-template-columns:48px 50px 48px 75px 48px 107px minmax(130px,1fr)!important;
+}
+
+/* Mobile: keep both end-mode buttons and the time/word information on the same first row. */
+@media(max-width:760px){
+  .transport{
+    grid-template-columns:40px 46px 40px 62px 40px 99px minmax(76px,1fr)!important;
+    gap:5px!important;
+  }
+  .end-mode-pair{grid-template-columns:46px 46px!important;gap:5px!important}
+  .end-mode-option{width:46px!important;height:42px!important}
+  .playback-stats{grid-column:7!important;grid-row:1!important;text-align:right!important;min-width:0!important}
+  .playback-stats #timebox,.playback-stats #wordProgress{font-size:9.5px!important;white-space:nowrap!important}
+}
+@media(max-width:520px){
+  .transport{
+    grid-template-columns:34px 40px 34px 52px 34px 85px minmax(62px,1fr)!important;
+    gap:4px!important;
+  }
+  .end-mode-pair{grid-template-columns:40px 40px!important;gap:5px!important}
+  .end-mode-option{width:40px!important;height:40px!important}
+  .end-mode-option svg{width:21px!important;height:21px!important}
+  .playback-stats{grid-column:7!important;grid-row:1!important}
+  .playback-stats #timebox,.playback-stats #wordProgress{font-size:8.5px!important}
+}

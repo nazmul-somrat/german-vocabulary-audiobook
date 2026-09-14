@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="logo-32-v2.png">
 <link rel="apple-touch-icon" href="logo-192-v2.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=20260914-layoutfix2">
+<link rel="stylesheet" href="styles.css?v=20260914-quizrepeatfix1">
 <title>German Vocabulary Audiobook</title>
 </head>
 <body>
@@ -84,9 +84,19 @@
             <option>.8×</option><option>.9×</option><option selected>1×</option><option>1.1×</option><option>1.25×</option><option>1.5×</option>
           </select>
           <button id="currentBookmark" class="starbtn" title="Bookmark current word">☆</button>
-          <button id="endBehaviorBtn" class="end-mode-cycle" type="button" aria-label="Play next episode" title="Play next episode">
-            <span id="endBehaviorIcon" aria-hidden="true"></span>
-          </button>
+          <div id="endBehaviorControl" class="end-mode-pair" role="group" aria-label="After episode behavior" title="After episode behavior">
+            <button id="repeatModeBtn" type="button" class="end-mode-option" data-end-mode="repeat" aria-label="Repeat same episode" title="Repeat same episode">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6.5 8h9"></path><path d="M13.8 5.2 17 8l-3.2 2.8"></path>
+                <path d="M17.5 16h-9"></path><path d="M10.2 13.2 7 16l3.2 2.8"></path>
+              </svg>
+            </button>
+            <button id="nextModeBtn" type="button" class="end-mode-option" data-end-mode="next" aria-label="Play next episode" title="Play next episode">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6.5 5.5v13"></path><path d="M10 6.5 18 12l-8 5.5z"></path>
+              </svg>
+            </button>
+          </div>
           <div class="playback-stats"><span id="timebox">00:00 / 00:00</span><strong id="wordProgress">0 / 0 words</strong></div>
         </div>
         <input id="progress" class="progress" type="range" min="0" value="0" step="0.05">
@@ -253,9 +263,9 @@
   </section>
 </div>
 
-<script src="site-config.js?v=20260914-layoutfix2"></script>
-<script src="courses.js?v=20260914-layoutfix2"></script>
-<script src="app.js?v=20260914-layoutfix2"></script>
+<script src="site-config.js?v=20260914-quizrepeatfix1"></script>
+<script src="courses.js?v=20260914-quizrepeatfix1"></script>
+<script src="app.js?v=20260914-quizrepeatfix1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

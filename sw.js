@@ -1,16 +1,16 @@
-const CACHE='german-vocab-audiobook-layoutfix-v2';
+const CACHE='german-vocab-audiobook-quizrepeatfix-v1';
 const CORE=[
   './',
   './index.html',
-  './styles.css?v=20260914-layoutfix2',
-  './site-config.js?v=20260914-layoutfix2',
-  './courses.js?v=20260914-layoutfix2',
-  './app.js?v=20260914-layoutfix2',
+  './styles.css?v=20260914-quizrepeatfix1',
+  './site-config.js?v=20260914-quizrepeatfix1',
+  './courses.js?v=20260914-quizrepeatfix1',
+  './app.js?v=20260914-quizrepeatfix1',
   './manifest.webmanifest',
-  './courses/a1/data.js?v=20260914-layoutfix2',
-  './courses/a2/data.js?v=20260914-layoutfix2',
-  './courses/b1/data.js?v=20260914-layoutfix2',
-  './courses/technical/data.js?v=20260914-layoutfix2'
+  './courses/a1/data.js?v=20260914-quizrepeatfix1',
+  './courses/a2/data.js?v=20260914-quizrepeatfix1',
+  './courses/b1/data.js?v=20260914-quizrepeatfix1',
+  './courses/technical/data.js?v=20260914-quizrepeatfix1'
 ];
 self.addEventListener('install',e=>{
   self.skipWaiting();
