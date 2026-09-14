@@ -1,16 +1,16 @@
-const CACHE='german-vocab-audiobook-media-v1';
+const CACHE='german-vocab-audiobook-media-v2';
 const CORE=[
   './',
   './index.html',
-  './styles.css?v=20260914-media1',
-  './site-config.js?v=20260914-media1',
-  './courses.js?v=20260914-media1',
-  './app.js?v=20260914-media1',
+  './styles.css?v=20260914-media2',
+  './site-config.js?v=20260914-media2',
+  './courses.js?v=20260914-media2',
+  './app.js?v=20260914-media2',
   './manifest.webmanifest',
-  './courses/a1/data.js?v=20260914-media1',
-  './courses/a2/data.js?v=20260914-media1',
-  './courses/b1/data.js?v=20260914-media1',
-  './courses/technical/data.js?v=20260914-media1'
+  './courses/a1/data.js?v=20260914-media2',
+  './courses/a2/data.js?v=20260914-media2',
+  './courses/b1/data.js?v=20260914-media2',
+  './courses/technical/data.js?v=20260914-media2'
 ];
 self.addEventListener('install',e=>{
   self.skipWaiting();

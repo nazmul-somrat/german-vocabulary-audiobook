@@ -157,6 +157,7 @@ button{cursor:pointer}
 .starbtn.marked{background:#f2c84b;color:#2d260e}
 .endbtn{padding:0 8px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
 .endbtn.repeat{background:#315a47;color:#dff7e9}
+.endbtn.stop{background:#263449;color:#fff}
 .playback-stats{text-align:right;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;line-height:1.2}
 .playback-stats #timebox{font-size:12px;color:#d6e0ef}.playback-stats #wordProgress{font-size:11px;color:#93c5fd;margin-top:3px}
 .progress{display:block;width:min(860px,100%);margin:7px auto;accent-color:#60a5fa}
@@ -624,3 +625,5 @@ button{cursor:pointer}
   .playback-stats{grid-column:1/-1;flex-direction:row;justify-content:center;gap:8px;text-align:center}
   .endbtn{font-size:10px;padding:0 4px}
 }
+
+:root[data-theme="light"] .endbtn.stop{background:#fff;color:#334155;border-color:#cbd5e1}

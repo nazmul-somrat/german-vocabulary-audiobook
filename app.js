@@ -7,8 +7,8 @@ const COURSE_META=Object.fromEntries(COURSE_LIST.map(c=>[c.id,c]));
 const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
-const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,endBehavior:'next'};
-const APP_DEFAULT={theme:'light',textSize:'normal',lastCourse:'b1',libraryLayout:'grid',courses:{}};
+const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false};
+const APP_DEFAULT={theme:'light',textSize:'normal',lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function loadAppState(){
@@ -27,6 +27,7 @@ function loadAppState(){
   }
   s=Object.assign(clone(APP_DEFAULT),s||{});
   s.courses=s.courses||{};
+  if(!['stop','next','repeat'].includes(s.endBehavior))s.endBehavior='stop';
   return s;
 }
 let AS=loadAppState();
@@ -35,7 +36,6 @@ function cs(id){
   if(!AS.courses[id])AS.courses[id]=clone(COURSE_DEFAULT);
   const s=AS.courses[id];
   if(!s.sectionLastEpisodes)s.sectionLastEpisodes={};
-  if(!['next','repeat'].includes(s.endBehavior))s.endBehavior='next';
   return s;
 }
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -59,7 +59,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-media1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-media2';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -157,18 +157,29 @@ function moveEpisodeWithinSection(delta,seek=null){
 function updateEndBehaviorButton(){
   const btn=$('#endBehaviorBtn');
   if(!btn)return;
-  const mode=courseState().endBehavior||'next';
-  btn.textContent=mode==='repeat'?'↻ Repeat':'Next →';
+  const mode=AS.endBehavior||'stop';
   btn.classList.toggle('repeat',mode==='repeat');
-  btn.title=mode==='repeat'
-    ?'At episode end: repeat this episode. Click to switch to next episode.'
-    :'At episode end: continue to the next episode. Click to switch to repeat.';
+  btn.classList.toggle('stop',mode==='stop');
+  if(mode==='repeat'){
+    btn.textContent='↻ Repeat';
+    btn.title='Episode end: repeat the current episode continuously. Click to switch to Stop.';
+  }else if(mode==='next'){
+    btn.textContent='Next →';
+    btn.title='Episode end: automatically play the next episode. Click to switch to Repeat.';
+  }else{
+    btn.textContent='■ Stop';
+    btn.title='Episode end: stop playback. Click to switch to Next.';
+  }
 }
 function toggleEndBehavior(){
-  const S=courseState();
-  S.endBehavior=S.endBehavior==='repeat'?'next':'repeat';
+  const mode=AS.endBehavior||'stop';
+  AS.endBehavior=mode==='stop'?'next':mode==='next'?'repeat':'stop';
   save();updateEndBehaviorButton();
-  msg(S.endBehavior==='repeat'?'End behavior: repeat episode ↻':'End behavior: next episode →');
+  msg(
+    AS.endBehavior==='repeat'?'End behavior: repeat episode ↻':
+    AS.endBehavior==='next'?'End behavior: next episode →':
+    'End behavior: stop at episode end ■'
+  );
 }
 function openSidebar(){sidebar.classList.add('open');backdrop.classList.add('show')}
 function closeSidebar(){sidebar.classList.remove('open');backdrop.classList.remove('show')}
@@ -641,7 +652,9 @@ function handleEpisodeEnded(){
   S.maxPositions[currentEp.episode]=currentEp.duration;
   save();updateHeaderProgress();updatePersistentPlayerVisibility();
 
-  if(S.endBehavior==='repeat'){
+  const mode=AS.endBehavior||'stop';
+
+  if(mode==='repeat'){
     audio.currentTime=0;
     updateMediaSessionMetadata();
     audio.play().catch(()=>{});
@@ -649,13 +662,18 @@ function handleEpisodeEnded(){
     return;
   }
 
-  const target=adjacentEpisode(1);
-  if(target){
-    msg('Starting next episode →');
-    openEpisode(target.episode,0,true);
-  }else{
+  if(mode==='next'){
+    const target=adjacentEpisode(1);
+    if(target){
+      msg('Starting next episode →');
+      openEpisode(target.episode,0,true);
+      return;
+    }
     msg('Episode completed ✓ · End of section');
+    return;
   }
+
+  msg('Episode completed ✓ · Playback stopped');
 }
 
 async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,keepCourseView=false){
