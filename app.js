@@ -39,11 +39,16 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.0';
+const APP_VERSION='1.0.1';
 const APP_UPDATED='14 September 2026';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
+function isInstalledApp(){
+  return window.matchMedia?.('(display-mode: standalone)').matches===true ||
+    window.navigator.standalone===true ||
+    document.referrer.startsWith('android-app://');
+}
 
 function save(){localStorage.setItem('gvaAppState',JSON.stringify(AS))}
 function cs(id){
@@ -218,14 +223,16 @@ function cycleEndBehavior(){
   setEndBehavior(next);
 }
 function settingsCopy(){
-  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৪ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন'};
-  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 14. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen'};
-  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings'};
+  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৪ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
+  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 14. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
+  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings',browserAuto:'The web version updates automatically when you refresh.'};
 }
 function updateSettingsUI(){
   const s=settingsCopy();
   setText('#settingsTitle',s.title);setText('#settingsKicker',s.kicker);setText('#settingsLanguageLabel',s.language);setText('#settingsLanguageHint',s.languageHint);setText('#settingsAppearanceLabel',s.appearance);setText('#settingsAppearanceHint',s.appearanceHint);setText('#settingsFontLabel',s.font);setText('#settingsFontHint',s.fontHint);setText('#settingsQuizSoundLabel',s.quizSound);setText('#settingsQuizSoundHint',s.quizSoundHint);
   setText('#settingsAppLabel',s.app);setText('#settingsAppHint',s.appHint);setText('#appVersionText',s.version);setText('#appUpdatedText',s.updated);setText('#checkUpdateBtn',s.check);
+  const checkBtn=$('#checkUpdateBtn');if(checkBtn)checkBtn.classList.toggle('hidden',!isInstalledApp());
+  const updateStatus=$('#updateCheckStatus');if(updateStatus&&!isInstalledApp())updateStatus.textContent=s.browserAuto;
   setText('#updateNoticeTitle',s.updateTitle);setText('#updateNoticeText',s.updateText);setText('#updateNowBtn',s.updateNow);setText('#updateLaterBtn',s.later);
   const settingsBtn=$('#settingsBtn');if(settingsBtn){settingsBtn.title=s.settings;settingsBtn.setAttribute('aria-label',s.settings)}
   const close=$('#settingsClose');if(close)close.setAttribute('aria-label',s.close);
@@ -234,6 +241,7 @@ function updateSettingsUI(){
 
 function setUpdateStatus(message){const el=$('#updateCheckStatus');if(el)el.textContent=message||''}
 function showUpdateNotice(){
+  if(!isInstalledApp())return;
   if(sessionStorage.getItem('gvaUpdateLater')==='1')return;
   updateSettingsUI();
   const n=$('#updateNotice');if(n)n.classList.remove('hidden');
@@ -257,7 +265,13 @@ async function applyWaitingUpdate(){
   reg.waiting.postMessage({type:'SKIP_WAITING'});
 }
 async function checkForAppUpdate(){
-  const s=settingsCopy();setUpdateStatus(s.checking);
+  const s=settingsCopy();
+  if(!isInstalledApp()){
+    try{const reg=swRegistration||await navigator.serviceWorker?.getRegistration?.();await reg?.update?.()}catch{}
+    setUpdateStatus(s.browserAuto);
+    return false;
+  }
+  setUpdateStatus(s.checking);
   if(!('serviceWorker'in navigator)){setUpdateStatus(s.upToDate);return false}
   try{
     const reg=swRegistration||await navigator.serviceWorker.getRegistration();
@@ -272,15 +286,15 @@ async function checkForAppUpdate(){
 }
 function watchServiceWorkerRegistration(reg){
   swRegistration=reg;
-  if(reg.waiting&&navigator.serviceWorker.controller)showUpdateNotice();
+  if(reg.waiting&&navigator.serviceWorker.controller&&isInstalledApp())showUpdateNotice();
   reg.addEventListener('updatefound',()=>{
     const worker=reg.installing;if(!worker)return;
     worker.addEventListener('statechange',()=>{
-      if(worker.state==='installed'&&navigator.serviceWorker.controller){sessionStorage.removeItem('gvaUpdateLater');showUpdateNotice()}
+      if(worker.state==='installed'&&navigator.serviceWorker.controller&&isInstalledApp()){sessionStorage.removeItem('gvaUpdateLater');showUpdateNotice()}
     });
   });
   clearInterval(updateCheckTimer);
-  updateCheckTimer=setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
+  if(isInstalledApp())updateCheckTimer=setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
 }
 function registerAppServiceWorker(){
   if(!('serviceWorker'in navigator)||location.protocol==='file:')return;
@@ -290,9 +304,9 @@ function registerAppServiceWorker(){
   });
   navigator.serviceWorker.register('sw.js').then(reg=>{
     watchServiceWorkerRegistration(reg);
-    setTimeout(()=>reg.update().catch(()=>{}),2500);
+    if(isInstalledApp())setTimeout(()=>reg.update().catch(()=>{}),2500);
   }).catch(err=>console.warn('Service worker registration failed',err));
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')swRegistration?.update().catch(()=>{})});
+  document.addEventListener('visibilitychange',()=>{if(isInstalledApp()&&document.visibilityState==='visible')swRegistration?.update().catch(()=>{})});
 }
 function openSettings(){updateSettingsUI();$('#settingsOverlay').classList.remove('hidden');document.body.classList.add('settings-open')}
 function closeSettings(){$('#settingsOverlay').classList.add('hidden');document.body.classList.remove('settings-open')}
