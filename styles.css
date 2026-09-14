@@ -717,3 +717,16 @@ body.quiz-open{overflow:hidden}
   .quiz-review-row{grid-template-columns:1fr;gap:3px}
   .end-mode-control span{display:none}
 }
+
+.quiz-grammar{
+  font-size:.58em;
+  font-weight:650;
+  color:#9fb0c8;
+  line-height:1.45;
+}
+.quiz-option.locked{cursor:default}
+.quiz-option.locked:not(.selected){opacity:.68}
+:root[data-theme="light"] .quiz-grammar{color:#64748b}
+@media(max-width:720px){
+  .quiz-grammar{display:block;margin-top:7px;font-size:.56em}
+}

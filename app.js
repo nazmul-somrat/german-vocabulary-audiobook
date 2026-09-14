@@ -65,7 +65,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quiztest1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quiztest2';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -697,6 +697,21 @@ function normalizedQuizGerman(s){
 function normalizedQuizEnglish(s){
   return String(s||'').trim().toLocaleLowerCase('en-US').replace(/\s+/g,' ');
 }
+
+function quizGrammarLabel(entry){
+  const g=String(entry?.grammar||'').trim();
+  if(!g)return'';
+  // For verbs the grammar field often starts with the infinitive again.
+  // Show only the additional forms so the question reads:
+  // gehen (geht, ging, ist gegangen)
+  if(entry?.type==='verb'){
+    const parts=g.split(',').map(x=>x.trim()).filter(Boolean);
+    const base=normalizedQuizGerman(entry.german);
+    if(parts.length>1&&normalizedQuizGerman(parts[0])===base)return parts.slice(1).join(', ');
+  }
+  return g;
+}
+
 function quizEligibleEntries(){
   if(!currentEp||!D)return[];
   const meanings=new Map();
@@ -729,6 +744,44 @@ function quizDistractors(correct,pool){
   const others=unique(pool.filter(e=>e.entry_id!==correct.entry_id&&e.type!==correct.type));
   return shuffleCopy([...shuffleCopy(sameType),...shuffleCopy(others)]).slice(0,3);
 }
+
+let quizAudioContext=null;
+function getQuizAudioContext(){
+  try{
+    if(!quizAudioContext)quizAudioContext=new (window.AudioContext||window.webkitAudioContext)();
+    if(quizAudioContext.state==='suspended')quizAudioContext.resume();
+    return quizAudioContext;
+  }catch{return null}
+}
+function quizTone(freq,start,duration,gain=.09,type='sine'){
+  const ctx=getQuizAudioContext();
+  if(!ctx)return;
+  const osc=ctx.createOscillator();
+  const g=ctx.createGain();
+  osc.type=type;
+  osc.frequency.setValueAtTime(freq,ctx.currentTime+start);
+  g.gain.setValueAtTime(.0001,ctx.currentTime+start);
+  g.gain.exponentialRampToValueAtTime(gain,ctx.currentTime+start+.015);
+  g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+start+duration);
+  osc.connect(g);g.connect(ctx.destination);
+  osc.start(ctx.currentTime+start);
+  osc.stop(ctx.currentTime+start+duration+.03);
+}
+function playQuizCorrectSound(){
+  quizTone(660,0,.12,.075);
+  quizTone(880,.11,.16,.085);
+}
+function playQuizWrongSound(){
+  quizTone(250,0,.15,.07,'triangle');
+  quizTone(180,.12,.20,.075,'triangle');
+}
+function playQuizPassSound(){
+  quizTone(523.25,0,.14,.07);
+  quizTone(659.25,.11,.14,.075);
+  quizTone(783.99,.22,.15,.08);
+  quizTone(1046.5,.35,.28,.09);
+}
+
 function buildQuiz(){
   const pool=quizEligibleEntries();
   if(pool.length<QUIZ_COUNT)return null;
@@ -744,6 +797,7 @@ function buildQuiz(){
     questions.push({
       entry_id:correct.entry_id,
       german:correct.german,
+      grammar:quizGrammarLabel(correct),
       correct:correct.english,
       options
     });
@@ -776,10 +830,10 @@ function renderQuiz(){
     <h2 id="quizTitle">Episode Quiz</h2>
     <div class="quiz-meta"><span>Question ${quizState.index+1} of ${QUIZ_COUNT}</span><span>Pass: ${QUIZ_PASS}/${QUIZ_COUNT}</span></div>
     <div class="quiz-progress"><span style="width:${pct}%"></span></div>
-    <div class="quiz-word">${esc(q.german)}</div>
-    <p class="quiz-prompt">Choose the correct English meaning.</p>
+    <div class="quiz-word">${esc(q.german)}${q.grammar?` <span class="quiz-grammar">(${esc(q.grammar)})</span>`:''}</div>
+    <p class="quiz-prompt">Choose the correct English meaning. The sound tells you whether your choice was right or wrong.</p>
     <div class="quiz-options">
-      ${q.options.map((o,i)=>`<button type="button" class="quiz-option ${selected===i?'selected':''}" data-qoption="${i}">
+      ${q.options.map((o,i)=>`<button type="button" class="quiz-option ${selected===i?'selected':''} ${selected!=null?'locked':''}" data-qoption="${i}" ${selected!=null?'disabled':''}>
         <span class="quiz-letter">${String.fromCharCode(65+i)}</span><span>${esc(o.label)}</span>
       </button>`).join('')}
     </div>
@@ -788,7 +842,11 @@ function renderQuiz(){
       <button id="quizNext" class="quiz-primary" type="button" ${selected==null?'disabled':''}>${quizState.index===QUIZ_COUNT-1?'Finish':'Next'}</button>
     </div>`;
   $$('[data-qoption]').forEach(b=>b.onclick=()=>{
-    quizState.answers[quizState.index]=+b.dataset.qoption;
+    if(quizState.answers[quizState.index]!=null)return;
+    const choice=+b.dataset.qoption;
+    quizState.answers[quizState.index]=choice;
+    const picked=q.options[choice];
+    if(picked?.correct)playQuizCorrectSound();else playQuizWrongSound();
     renderQuiz();
   });
   $('#quizPrev').onclick=()=>{if(quizState.index>0){quizState.index--;renderQuiz()}};
@@ -813,6 +871,7 @@ function finishQuiz(){
   if(score>old)S.quizBest[currentEp.episode]=score;
   save();updateQuizButton();
   renderQuizResult();
+  if(score>=QUIZ_PASS)setTimeout(playQuizPassSound,120);
 }
 function renderQuizResult(){
   const body=$('#quizBody');
