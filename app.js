@@ -8,7 +8,7 @@ const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
 const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{}};
-const APP_DEFAULT={theme:'light',textSize:'normal',lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',courses:{}};
+const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function loadAppState(){
@@ -28,6 +28,7 @@ function loadAppState(){
   s=Object.assign(clone(APP_DEFAULT),s||{});
   s.courses=s.courses||{};
   if(!['stop','next','repeat'].includes(s.endBehavior))s.endBehavior='stop';
+  if(!['en','bn','de'].includes(s.uiLanguage))s.uiLanguage='en';
   return s;
 }
 let AS=loadAppState();
@@ -50,6 +51,29 @@ function msg(x){toast.textContent=x;toast.classList.add('show');clearTimeout(msg
 
 let currentCourseId='b1', D=null, entryIndex={}, epMap={}, currentEp=null;
 let lastActive=-1, segmentStop=null, manualEnglish=new Set(), manualRecall=new Set();
+
+const UI_TEXT={
+  en:{home:"Home",current:"CURRENT COURSE",courses:"COURSES",quizPoints:"Quiz Points",uiLanguage:"UI Language",brand:"German Vocabulary Audiobook",brandSub:"Audio + synchronized transcript",homeEyebrow:"VOCABULARY AUDIOBOOK COLLECTION",homeTitle:"Learn German vocabulary by listening, reading and recalling.",homeSubtitle:"One player for multiple vocabulary courses. Your progress and difficult words stay separate for each course.",coursesHeading:"Courses",courseProgress:"Course progress",words:"words",episodes:"episodes",completed:"completed",quizPointsLower:"quiz points",continueLearning:"Continue learning",goToEpisodes:"Go to episodes",personalReview:"PERSONAL REVIEW",difficultWords:"Difficult Words",difficultSubtitle:"Words you marked with ★ while listening.",resetProgress:"Reset progress",allCourses:"All courses",noCourseData:"No course data",progress:"progress",openCourse:"Open course",comingSoon:"Coming soon",progressLoads:"Progress loads with course",structurePrepared:"Course structure prepared",passedWord:"passed",continueWord:"Continue",startWord:"Start",savedAutomatically:"Your listening position is saved automatically.",lastPosition:"Last position: {label} at {time}.",notStarted:"Not started",inProgress:"In progress",finished:"Finished",episodeLabel:"Episode",b1core:"B1 Core",b1adv:"B1+ Advanced",themeDark:"☾ Dark",themeLight:"☀ Light",afterStop:"Stop after episode",afterNext:"Play next episode",afterRepeat:"Repeat same episode",quiz:"Quiz",best:"Best",quizTitle:"Episode Quiz",question:"Question {n} of {t}",pass:"Pass: {p}/{t}",quizPrompt:"Choose the correct English meaning. The sound tells you whether your choice was right or wrong.",correct:"✓ Correct",correctAnswer:"Correct answer:",back:"Back",next:"Next",finish:"Finish",passed:"Passed",reviewRecommended:"Review recommended",greatTarget:"Great — you reached the 12/15 target.",listenAgainThen:"Listen to this episode again, then retake the quiz.",reviewMistakes:"Review your mistakes ({n})",yourAnswer:"Your answer:",correctShort:"Correct:",allCorrect:"All 15 answers were correct.",listenAgain:"Listen Again",retakeQuiz:"Retake Quiz",close:"Close",designedBy:"Designed & developed by Nazmul Somrat",top:"↑ Top",difficultWordBtn:"☆ Difficult word"},
+  bn:{home:"হোম",current:"বর্তমান কোর্স",courses:"কোর্সসমূহ",quizPoints:"কুইজ পয়েন্ট",uiLanguage:"ভাষা",brand:"জার্মান ভোকাবুলারি অডিওবুক",brandSub:"অডিও + সিঙ্ক্রোনাইজড ট্রান্সক্রিপ্ট",homeEyebrow:"ভোকাবুলারি অডিওবুক সংগ্রহ",homeTitle:"শুনে, পড়ে এবং মনে রেখে জার্মান শব্দভাণ্ডার শিখুন।",homeSubtitle:"একই প্লেয়ারে একাধিক শব্দভাণ্ডার কোর্স। প্রতিটি কোর্সের প্রগ্রেস ও কঠিন শব্দ আলাদাভাবে সংরক্ষিত থাকে।",coursesHeading:"কোর্সসমূহ",courseProgress:"কোর্স প্রগ্রেস",words:"শব্দ",episodes:"এপিসোড",completed:"সম্পন্ন",quizPointsLower:"কুইজ পয়েন্ট",continueLearning:"শেখা চালিয়ে যান",goToEpisodes:"এপিসোডে যান",personalReview:"ব্যক্তিগত রিভিউ",difficultWords:"কঠিন শব্দ",difficultSubtitle:"শোনার সময় ★ দিয়ে চিহ্নিত করা শব্দ।",resetProgress:"প্রগ্রেস রিসেট",allCourses:"সব কোর্স",noCourseData:"কোর্স ডেটা নেই",progress:"প্রগ্রেস",openCourse:"কোর্স খুলুন",comingSoon:"শীঘ্রই আসছে",progressLoads:"কোর্স খুললে প্রগ্রেস দেখা যাবে",structurePrepared:"কোর্সের কাঠামো প্রস্তুত",passedWord:"পাস",continueWord:"চালিয়ে যান",startWord:"শুরু",savedAutomatically:"আপনার শোনার অবস্থান স্বয়ংক্রিয়ভাবে সেভ হয়।",lastPosition:"সর্বশেষ অবস্থান: {label} এ {time}।",notStarted:"শুরু হয়নি",inProgress:"চলছে",finished:"শেষ",episodeLabel:"এপিসোড",b1core:"B1 কোর",b1adv:"B1+ অ্যাডভান্সড",themeDark:"☾ ডার্ক",themeLight:"☀ লাইট",afterStop:"এপিসোড শেষে থামুন",afterNext:"এপিসোড শেষে পরের এপিসোড চালান",afterRepeat:"এপিসোড শেষে একই এপিসোড পুনরায় চালান",quiz:"কুইজ",best:"সেরা",quizTitle:"এপিসোড কুইজ",question:"প্রশ্ন {n} / {t}",pass:"পাস: {p}/{t}",quizPrompt:"সঠিক ইংরেজি অর্থটি বেছে নিন। সাউন্ড বলে দেবে আপনার উত্তর সঠিক না ভুল।",correct:"✓ সঠিক",correctAnswer:"সঠিক উত্তর:",back:"পেছনে",next:"পরবর্তী",finish:"শেষ করুন",passed:"পাস",reviewRecommended:"পুনরায় রিভিউ করুন",greatTarget:"দারুণ — আপনি 12/15 লক্ষ্য পূরণ করেছেন।",listenAgainThen:"এই এপিসোডটি আবার শুনুন, তারপর কুইজটি আবার দিন।",reviewMistakes:"আপনার ভুলগুলো দেখুন ({n})",yourAnswer:"আপনার উত্তর:",correctShort:"সঠিক:",allCorrect:"সব 15টি উত্তরই সঠিক হয়েছে।",listenAgain:"আবার শুনুন",retakeQuiz:"আবার কুইজ দিন",close:"বন্ধ",designedBy:"ডিজাইন ও ডেভেলপ করেছেন Nazmul Somrat",top:"↑ টপ",difficultWordBtn:"☆ কঠিন শব্দ"},
+  de:{home:"Start",current:"AKTUELLER KURS",courses:"KURSE",quizPoints:"Quizpunkte",uiLanguage:"Sprache",brand:"Deutsches Vokabel-Hörbuch",brandSub:"Audio + synchronisiertes Transkript",homeEyebrow:"VOKABEL-HÖRBUCH-SAMMLUNG",homeTitle:"Lerne deutsche Vokabeln durch Hören, Lesen und Wiederholen.",homeSubtitle:"Ein Player für mehrere Vokabelkurse. Dein Fortschritt und deine schwierigen Wörter werden für jeden Kurs getrennt gespeichert.",coursesHeading:"Kurse",courseProgress:"Kursfortschritt",words:"Wörter",episodes:"Episoden",completed:"abgeschlossen",quizPointsLower:"Quizpunkte",continueLearning:"Weiterlernen",goToEpisodes:"Zu den Episoden",personalReview:"PERSÖNLICHE WIEDERHOLUNG",difficultWords:"Schwierige Wörter",difficultSubtitle:"Wörter, die du beim Hören mit ★ markiert hast.",resetProgress:"Fortschritt zurücksetzen",allCourses:"Alle Kurse",noCourseData:"Keine Kursdaten",progress:"Fortschritt",openCourse:"Kurs öffnen",comingSoon:"Demnächst",progressLoads:"Fortschritt wird mit dem Kurs geladen",structurePrepared:"Kursstruktur vorbereitet",passedWord:"bestanden",continueWord:"Weiter",startWord:"Start",savedAutomatically:"Deine Hörposition wird automatisch gespeichert.",lastPosition:"Letzte Position: {label} bei {time}.",notStarted:"Nicht begonnen",inProgress:"In Bearbeitung",finished:"Fertig",episodeLabel:"Episode",b1core:"B1 Grundkurs",b1adv:"B1+ Aufbau",themeDark:"☾ Dunkel",themeLight:"☀ Hell",afterStop:"Nach der Episode stoppen",afterNext:"Nächste Episode abspielen",afterRepeat:"Dieselbe Episode wiederholen",quiz:"Quiz",best:"Bestwert",quizTitle:"Episoden-Quiz",question:"Frage {n} von {t}",pass:"Bestehen: {p}/{t}",quizPrompt:"Wähle die richtige englische Bedeutung. Der Ton zeigt dir, ob deine Antwort richtig oder falsch war.",correct:"✓ Richtig",correctAnswer:"Richtige Antwort:",back:"Zurück",next:"Weiter",finish:"Beenden",passed:"Bestanden",reviewRecommended:"Wiederholung empfohlen",greatTarget:"Super — du hast das Ziel 12/15 erreicht.",listenAgainThen:"Höre diese Episode noch einmal und mache danach das Quiz erneut.",reviewMistakes:"Überprüfe deine Fehler ({n})",yourAnswer:"Deine Antwort:",correctShort:"Richtig:",allCorrect:"Alle 15 Antworten waren richtig.",listenAgain:"Noch einmal hören",retakeQuiz:"Quiz wiederholen",close:"Schließen",designedBy:"Entwickelt von Nazmul Somrat",top:"↑ Nach oben",difficultWordBtn:"☆ Schwieriges Wort"}
+};
+const COURSE_TEXT={
+  en:{a1:{title:"A1 Vocabulary",description:"Practical beginner German for everyday life with synchronized audio, transcript and active recall."},a2:{title:"A2 Vocabulary",description:"High-frequency elementary German vocabulary with synchronized audio, transcript and active recall."},b1:{title:"B1 Vocabulary Audiobook",description:"Goethe-style B1 core and advanced vocabulary with synchronized audio, transcript and active recall."},technical:{title:"Technical Vocabulary Audiobook",description:"Engineering, software, AI, data science, manufacturing and workplace technical German."}},
+  bn:{a1:{title:"A1 শব্দভাণ্ডার",description:"দৈনন্দিন জীবনের জন্য ব্যবহারিক প্রাথমিক জার্মান শব্দভাণ্ডার, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},a2:{title:"A2 শব্দভাণ্ডার",description:"উচ্চ-প্রচলিত প্রাথমিক জার্মান শব্দভাণ্ডার, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},b1:{title:"B1 শব্দভাণ্ডার অডিওবুক",description:"Goethe-ধাঁচের B1 core এবং advanced শব্দভাণ্ডার, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},technical:{title:"কারিগরি শব্দভাণ্ডার অডিওবুক",description:"ইঞ্জিনিয়ারিং, সফটওয়্যার, AI, data science, manufacturing এবং workplace technical German."}},
+  de:{a1:{title:"A1 Wortschatz",description:"Praktischer Anfängerwortschatz für den Alltag mit synchronisiertem Audio, Transkript und aktivem Abruf."},a2:{title:"A2 Wortschatz",description:"Häufiger Grundwortschatz auf A2-Niveau mit synchronisiertem Audio, Transkript und aktivem Abruf."},b1:{title:"B1 Vokabel-Hörbuch",description:"Goethe-orientierter B1-Kern- und Aufbauwortschatz mit synchronisiertem Audio, Transkript und aktivem Abruf."},technical:{title:"Technisches Vokabel-Hörbuch",description:"Technisches Deutsch für Engineering, Software, KI, Data Science, Fertigung und Arbeitsplatz."}}
+};
+function lang(){return ["en","bn","de"].includes(AS.uiLanguage)?AS.uiLanguage:"en"}
+function tt(key,vars={}){let s=(UI_TEXT[lang()]&&UI_TEXT[lang()][key])||UI_TEXT.en[key]||key;return String(s).replace(/\{(\w+)\}/g,(_,k)=>vars[k]??"")}
+function courseTitle(id){return COURSE_TEXT[lang()]?.[id]?.title||COURSE_META[id]?.title||""}
+function courseDescription(id){return COURSE_TEXT[lang()]?.[id]?.description||COURSE_META[id]?.description||""}
+function courseLabel(id){if(id==="b1")return lang()==="bn"?"B1 শব্দভাণ্ডার":(lang()==="de"?"B1 Wortschatz":"B1 Vocabulary"); if(id==="technical")return lang()==="bn"?"কারিগরি শব্দভাণ্ডার":(lang()==="de"?"Technischer Wortschatz":"Technical Vocabulary"); if(id==="a1")return lang()==="bn"?"A1 শব্দভাণ্ডার":(lang()==="de"?"A1 Wortschatz":"A1 Vocabulary"); if(id==="a2")return lang()==="bn"?"A2 শব্দভাণ্ডার":(lang()==="de"?"A2 Wortschatz":"A2 Vocabulary"); return COURSE_META[id]?.title||id}
+function endModeText(mode){return mode==="repeat"?tt("afterRepeat"):mode==="next"?tt("afterNext"):tt("afterStop")}
+function setText(sel,val){const el=$(sel);if(el)el.textContent=val}
+function setHTML(sel,val){const el=$(sel);if(el)el.innerHTML=val}
+function updateLanguageButtons(){$$("[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang()))}
+function updateStaticLanguage(){document.documentElement.lang=lang()==="bn"?"bn":lang()==="de"?"de":"en";setText("#brandTitle",tt("brand"));setText("#brandSubtitle",tt("brandSub"));setHTML("#navHomeBtn",'<span>⌂</span> '+tt("home"));setText("#sideLabelCurrentCourse",tt("current"));setText("#sideLabelCourses",tt("courses"));setText("#sideQuizLabel",tt("quizPoints"));setText("#uiLanguageLabel",tt("uiLanguage"));setText("#footerCredit",tt("designedBy"));setText("#homeEyebrow",tt("homeEyebrow"));setText("#homeTitle",tt("homeTitle"));setText("#homeSubtitle",tt("homeSubtitle"));setText("#homeCoursesHeading",tt("coursesHeading"));setText("#courseProgressLabel",tt("courseProgress"));setText("#courseWordsLabel",tt("words"));setText("#courseEpisodesLabel",tt("episodes"));setText("#courseCompletedLabel",tt("completed"));setText("#courseQuizPointsLabel",tt("quizPointsLower"));setText("#episodeEyebrow",tt("episodes").toUpperCase());setText("#quickCardTitle",tt("continueLearning"));setText("#quickLibrary",tt("goToEpisodes"));setText("#difficultEyebrow",tt("personalReview"));setText("#difficultTitle",tt("difficultWords"));setText("#difficultSubtitle",tt("difficultSubtitle"));setText("#backToTop",tt("top"));setText("#resetProgress",tt("resetProgress"));setText("#openLibraryBtn",tt("episodes"));setText("#lyricsStar",tt("difficultWordBtn"));if($("#searchInput"))$("#searchInput").placeholder=(lang()==="bn"?"জার্মান বা ইংরেজি খুঁজুন…":lang()==="de"?"Deutsch oder Englisch suchen…":"Search German or English…");const themeBtn=$("#themeBtn");if(themeBtn)themeBtn.textContent=AS.theme==="dark"?tt("themeLight"):tt("themeDark");updateLanguageButtons();}
+function setUILanguage(next){AS.uiLanguage=["en","bn","de"].includes(next)?next:"en";save();updateStaticLanguage();route();}
+
 let pendingSeek=null,pendingFocusId=null,saveTick=0,libraryFilter='all',scrollTimer=null;
 let libraryOpenSections=new Set();
 let activeEpisodeSection=null;
@@ -65,7 +89,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quizall2';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-layoutlang1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -79,7 +103,7 @@ async function loadCourseData(id){
 async function activateCourse(id){
   const meta=COURSE_META[id];
   if(!meta)return false;
-  if(meta.status!=='ready'){msg(`${meta.title} is prepared for a future course.`);return false}
+  if(meta.status!=='ready'){msg(`${courseTitle(id)} is prepared for a future course.`);return false}
   try{
     D=await loadCourseData(id);currentCourseId=id;AS.lastCourse=id;save();
     entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));
@@ -87,14 +111,14 @@ async function activateCourse(id){
       const last=epMap[+courseState().lastEpisode||0];
       activeEpisodeSection=currentEp&&currentEp.section?currentEp.section:(last?.section||activeEpisodeSection||'core');
     }else activeEpisodeSection=null;
-    populateSelect(activeEpisodeSection);updateCourseNavigation();updateHeaderProgress();updateEndBehaviorControl();return true;
+    populateSelect(activeEpisodeSection);updateCourseNavigation();updateHeaderProgress();updateEndBehaviorControl();updateStaticLanguage();return true;
   }catch(err){console.error(err);msg('Course data could not be loaded.');return false}
 }
 
 function applyPreferences(){
   document.documentElement.dataset.theme=AS.theme||'light';
   document.documentElement.dataset.textSize=AS.textSize||'normal';
-  $('#themeBtn').textContent=AS.theme==='dark'?'☀ Light':'☾ Dark';
+  $('#themeBtn').textContent=AS.theme==='dark'?tt('themeLight'):tt('themeDark');
   $$('.top-mini').forEach(b=>b.classList.remove('active'));
   const map={small:'#textSmaller',normal:'#textNormal',large:'#textLarger'};
   if(map[AS.textSize]&&$(map[AS.textSize]))$(map[AS.textSize]).classList.add('active');
@@ -161,18 +185,19 @@ function moveEpisodeWithinSection(delta,seek=null){
   return false;
 }
 function updateEndBehaviorControl(){
-  const select=$('#endBehaviorSelect');
-  if(select)select.value=AS.endBehavior||'stop';
+  $$('[data-end-mode]').forEach(btn=>{
+    const active=(AS.endBehavior||'stop')===btn.dataset.endMode;
+    btn.classList.toggle('active',active);
+    btn.setAttribute('aria-pressed',active?'true':'false');
+    btn.title=endModeText(btn.dataset.endMode);
+    btn.setAttribute('aria-label',endModeText(btn.dataset.endMode));
+  });
+  const wrap=$('#endBehaviorControl');
+  if(wrap){wrap.title=endModeText(AS.endBehavior||'stop');wrap.setAttribute('aria-label',endModeText(AS.endBehavior||'stop'));}
 }
 function setEndBehavior(mode){
   if(!['stop','next','repeat'].includes(mode))mode='stop';
-  AS.endBehavior=mode;
-  save();updateEndBehaviorControl();
-  msg(
-    mode==='repeat'?'After episode: repeat current episode':
-    mode==='next'?'After episode: play next episode':
-    'After episode: stop playback'
-  );
+  AS.endBehavior=mode;save();updateEndBehaviorControl();msg(endModeText(mode));
 }
 function openSidebar(){sidebar.classList.add('open');backdrop.classList.add('show')}
 function closeSidebar(){sidebar.classList.remove('open');backdrop.classList.remove('show')}
@@ -186,30 +211,13 @@ function progressWords(data=D,state=courseState()){
 function completedWords(ep){const S=courseState();let max=S.completed[ep.episode]?ep.duration:(+S.maxPositions[ep.episode]||0);return ep.entries.filter(e=>e.end<=max).length}
 function pct(ep){const S=courseState();if(S.completed[ep.episode])return 100;return Math.min(100,100*(+S.maxPositions[ep.episode]||0)/ep.duration)}
 function statusKey(ep){const S=courseState();if(S.completed[ep.episode])return'finished';return (+S.maxPositions[ep.episode]||0)>2?'in-progress':'not-started'}
-function statusLabel(ep){let k=statusKey(ep);return k==='finished'?['✓ Finished','done']:k==='in-progress'?['◐ In progress','progressing']:['○ Not started','']}
+function statusLabel(ep){ let k=statusKey(ep); return k==='finished'?[`✓ ${tt('finished')}`,'done']:k==='in-progress'?[`◐ ${tt('inProgress')}`,'progressing']:[`○ ${tt('notStarted')}`,'']; }
 
 function epDisplay(ep){return ep?.display_episode||ep?.episode||1}
 function sectionMeta(id){return D?.sections?.find(s=>s.id===id)||null}
-function episodeDisplayLabel(ep){
-  if(!ep)return 'Episode 01';
-  const n=String(epDisplay(ep)).padStart(2,'0');
-  if(currentCourseId==='a1')return `A1 Vocabulary · Episode ${n}`;
-  if(currentCourseId==='a2')return `A2 Vocabulary · Episode ${n}`;
-  if(currentCourseId==='technical')return `Technical Vocabulary · Episode ${n}`;
-  if(currentCourseId==='b1'&&ep.section==='advanced')return `B1+ Advanced · Episode ${n}`;
-  if(currentCourseId==='b1'&&ep.section==='core')return `B1 Core · Episode ${n}`;
-  return `Episode ${n}`;
-}
-function episodeBrowserTitle(){
-  if(currentCourseId==='a1')return 'A1 Vocabulary';
-  if(currentCourseId==='a2')return 'A2 Vocabulary';
-  if(currentCourseId==='technical')return 'Technical Vocabulary';
-  if(currentCourseId==='b1')return 'B1 Core & B1+ Advanced';
-  return COURSE_META[currentCourseId]?.title||'Episodes';
-}
-function sectionDisplayTitle(sec){
-  return currentCourseId==='technical'?'Technical Vocabulary':sec.title;
-}
+function episodeDisplayLabel(ep){ const n=String(epDisplay(ep)).padStart(2,'0'), episodeWord=tt('episodeLabel'); if(currentCourseId==='a1')return `${courseLabel('a1')} · ${episodeWord} ${n}`; if(currentCourseId==='a2')return `${courseLabel('a2')} · ${episodeWord} ${n}`; if(currentCourseId==='technical')return `${courseLabel('technical')} · ${episodeWord} ${n}`; if(currentCourseId==='b1'&&ep.section==='advanced')return `${tt('b1adv')} · ${episodeWord} ${n}`; if(currentCourseId==='b1'&&ep.section==='core')return `${tt('b1core')} · ${episodeWord} ${n}`; return `${episodeWord} ${n}`; }
+function episodeBrowserTitle(){ if(currentCourseId==='a1')return courseLabel('a1'); if(currentCourseId==='a2')return courseLabel('a2'); if(currentCourseId==='technical')return courseLabel('technical'); if(currentCourseId==='b1')return `${tt('b1core')} & ${tt('b1adv')}`; return courseTitle(currentCourseId)||tt('episodes'); }
+function sectionDisplayTitle(sec){ if(currentCourseId==='technical')return courseLabel('technical'); if(currentCourseId==='b1'&&sec.id==='core')return tt('b1core'); if(currentCourseId==='b1'&&sec.id==='advanced')return tt('b1adv'); return sec.title; }
 function sectionDisplayKicker(sec){
   if(currentCourseId==='technical')return 'TECH';
   if(currentCourseId==='b1')return sec.id==='advanced'?'B1+':'B1';
@@ -296,25 +304,16 @@ function updatePersistentPlayerVisibility(){
 function updateHeaderProgress(){
   const ring=$('#headerRing'),pctEl=$('#headerPct'),label=$('#headerProgressLabel'),wordsEl=$('#headerProgressWords');
   const onHome=!$('#appHomeView').classList.contains('hidden');
-
   if(onHome || !D){
     const p=combinedProgress();
     ring.style.setProperty('--pct',p.pct);
     pctEl.textContent=`${p.pct}%`;
-    label.textContent='All courses';
-    wordsEl.textContent=p.total?`${p.done} / ${p.total}`:'No course data';
+    label.textContent=tt('allCourses');
+    wordsEl.textContent=p.total?`${p.done} / ${p.total}`:tt('noCourseData');
     return;
   }
-
-  const words=progressWords();
-  const total=D.total_words||0;
-  const pct=total?Math.round(100*words/total):0;
-  const meta=COURSE_META[currentCourseId];
-
-  ring.style.setProperty('--pct',pct);
-  pctEl.textContent=`${pct}%`;
-  label.textContent=`${meta.short} progress`;
-  wordsEl.textContent=`${words} / ${total}`;
+  const words=progressWords(), total=D.total_words||0, pct=total?Math.round(100*words/total):0, meta=COURSE_META[currentCourseId];
+  ring.style.setProperty('--pct',pct); pctEl.textContent=`${pct}%`; label.textContent=`${meta.short} ${tt('progress')}`; wordsEl.textContent=`${words} / ${total}`;
 }
 
 function quizSummaryFor(courseId=currentCourseId,data=(courseId===currentCourseId?D:loaded[courseId])){
@@ -339,86 +338,32 @@ function updateCourseQuizPoints(){
 
 function updateCourseNavigation(){
   const meta=COURSE_META[currentCourseId];
-  $('#navCourse').innerHTML=`<span>▶</span> ${esc(meta.short)} Vocabulary`;
-  $('#navDifficult').title=`${meta.short} Difficult Words`;
-  $$('.course-side').forEach(b=>b.classList.toggle('active-course',b.dataset.course===currentCourseId));
-  $('#sideBookmarkCount').textContent=courseState().bookmarks.length;
-  updateCourseQuizPoints();
-  if($('#navCore'))$('#navCore').classList.toggle('hidden',currentCourseId!=='b1');
-  if($('#navAdvanced'))$('#navAdvanced').classList.toggle('hidden',currentCourseId!=='b1');
+  $('#navCourse').innerHTML=`<span>▶</span> ${esc(courseLabel(currentCourseId))}`;
+  $('#navDifficult').title=`${meta.short} ${tt('difficultWords')}`;
+  $('#navDifficult').innerHTML=`<span>★</span> ${esc(tt('difficultWords'))} <em id="sideBookmarkCount">${courseState().bookmarks.length}</em>`;
+  const core=$('#navCore'); if(core)core.innerHTML=`<span>1</span> ${tt('b1core')}`;
+  const adv=$('#navAdvanced'); if(adv)adv.innerHTML=`<span>+</span> ${tt('b1adv')}`;
+  $$('.course-side').forEach(b=>{ b.classList.toggle('active-course',b.dataset.course===currentCourseId); const dot=b.querySelector('.course-dot')?.outerHTML||''; b.innerHTML=dot+`<span>${esc(courseLabel(b.dataset.course))}</span>`; });
+  updateCourseQuizPoints(); if($('#navCore'))$('#navCore').classList.toggle('hidden',currentCourseId!=='b1'); if($('#navAdvanced'))$('#navAdvanced').classList.toggle('hidden',currentCourseId!=='b1'); updateStaticLanguage();
 }
 
 function renderAppHome(){
   showView('#appHomeView');location.hash='home';
-  $('#courseGrid').innerHTML=COURSE_LIST.map(c=>{
-    let progressHtml='',action='';
-    if(c.status==='ready'&&loaded[c.id]){
-      const st=cs(c.id),data=loaded[c.id],words=progressWords(data,st),p=Math.round(100*words/data.total_words),q=quizSummaryFor(c.id,data);
-      progressHtml=`<div class="course-card-meta"><span>${words} / ${data.total_words} words</span><span>${p}%</span></div><div class="thinbar"><i style="width:${p}%"></i></div><div class="course-quiz-meta">Quiz ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} passed</div>`;
-      action='<span class="coming-tag">Open course</span>';
-    }else if(c.status==='ready'){
-      const q=quizSummaryFor(c.id,null);
-      progressHtml=`<div class="course-card-meta"><span>Progress loads with course</span><span></span></div><div class="thinbar"><i style="width:0"></i></div><div class="course-quiz-meta">Quiz ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} passed</div>`;
-      action='<span class="coming-tag">Open course</span>';
-    }else{
-      progressHtml='<div class="course-card-meta"><span>Course structure prepared</span><span></span></div>';
-      action='<span class="coming-tag">Coming soon</span>';
-    }
-    return `<article class="course-card ${c.status==='ready'?'ready':''} ${c.id==='technical'?'tech':''}" data-course="${c.id}">
-      <div class="course-card-head"><div class="course-card-badge">${esc(c.short)}</div>${action}</div>
-      <h3>${esc(c.title)}</h3><p>${esc(c.description)}</p>
-      <div class="course-card-footer">${progressHtml}</div></article>`
-  }).join('');
+  $('#courseGrid').innerHTML=COURSE_LIST.map(c=>{ let progressHtml='',action=''; if(c.status==='ready'&&loaded[c.id]){ const st=cs(c.id),data=loaded[c.id],words=progressWords(data,st),p=Math.round(100*words/data.total_words),q=quizSummaryFor(c.id,data); progressHtml=`<div class="course-card-meta"><span>${words} / ${data.total_words} ${tt('words')}</span><span>${p}%</span></div><div class="thinbar"><i style="width:${p}%"></i></div><div class="course-quiz-meta">${tt('quiz')} ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} ${tt('passedWord')}</div>`; action=`<span class="coming-tag">${tt('openCourse')}</span>`; }else if(c.status==='ready'){ const q=quizSummaryFor(c.id,null); progressHtml=`<div class="course-card-meta"><span>${tt('progressLoads')}</span><span></span></div><div class="thinbar"><i style="width:0"></i></div><div class="course-quiz-meta">${tt('quiz')} ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} ${tt('passedWord')}</div>`; action=`<span class="coming-tag">${tt('openCourse')}</span>`; }else{ progressHtml=`<div class="course-card-meta"><span>${tt('structurePrepared')}</span><span></span></div>`; action=`<span class="coming-tag">${tt('comingSoon')}</span>`; } return `<article class="course-card ${c.status==='ready'?'ready':''} ${c.id==='technical'?'tech':''}" data-course="${c.id}"><div class="course-card-head"><div class="course-card-badge">${esc(c.short)}</div>${action}</div><h3>${esc(courseTitle(c.id))}</h3><p>${esc(courseDescription(c.id))}</p><div class="course-card-footer">${progressHtml}</div></article>` }).join('');
   $$('.course-card[data-course]').forEach(card=>card.onclick=()=>openCourse(card.dataset.course));
-  updateHeaderProgress();
+  updateHeaderProgress();updateStaticLanguage();
 }
 async function openCourse(id='b1',sectionToOpen=null){
   if(!(await activateCourse(id)))return;
   const meta=COURSE_META[id],S=courseState(),words=progressWords(),p=Math.round(100*words/D.total_words);
-  $('#courseEyebrow').textContent=`${meta.short} AUDIO COURSE`;
-  $('#courseTitle').textContent=meta.title;
-  $('#courseDescription').textContent=meta.description;
-  $('#courseWords').textContent=D.total_words.toLocaleString();
-  $('#courseEpisodes').textContent=D.episodes.length;
-  $('#courseProgressText').textContent=`${p}%`;
-  $('#courseProgressInline').textContent=`${words} / ${D.total_words} words · ${p}%`;
-  $('#courseProgressFill').style.width=`${p}%`;
-  updateCourseQuizPoints();
-  const browserTitle=$('#episodeBrowserTitle');
-  if(browserTitle)browserTitle.textContent=episodeBrowserTitle();
-  $('#bookmarkCount').textContent=S.bookmarks.length;
-  $('#sideBookmarkCount').textContent=S.bookmarks.length;
-  let le=+S.lastEpisode||1,pos=+S.positions[le]||0,lastEp=epMap[le]||D.episodes[0],lastLabel=episodeDisplayLabel(lastEp);
-  $('#continueBtn').textContent=pos>5?`Continue ${lastLabel} · ${fmt(pos)}`:`Start ${lastLabel}`;
-  $('#continueSummary').textContent=pos>5?`Last position: ${lastLabel} at ${fmt(pos)}.`:'Your listening position is saved automatically.';
-  libraryOpenSections=new Set(sectionToOpen?[sectionToOpen]:[]);
-  if(id==='b1'&&sectionToOpen)setActiveEpisodeSection(sectionToOpen);
-  else if(id==='b1')setActiveEpisodeSection(currentEp?.section||activeEpisodeSection||'core');
-  else setActiveEpisodeSection(null);
-  renderEpisodeGrid();
-  $('#searchInput').value='';$('#searchPanel').classList.add('hidden');$('#bookmarksPanel').classList.add('hidden');$('#bookmarksBtn').classList.remove('active');
-  showView('#courseHomeView');location.hash=`course-${id}`;updateHeaderProgress();
-  setSectionNav(sectionToOpen);
-
-  if(id==='b1'&&sectionToOpen&&currentEp&&playerHasStarted&&currentEp.section!==sectionToOpen){
-    const wasPlaying=!audio.paused;
-    const target=lastEpisodeForSection(sectionToOpen);
-    const seek=+courseState().positions[target]||0;
-    openEpisode(target,seek,wasPlaying,null,null,true);
-  }
-  if(sectionToOpen)scrollToEpisodeBrowser(sectionToOpen);
+  $('#courseEyebrow').textContent=`${meta.short} AUDIO COURSE`; $('#courseTitle').textContent=courseTitle(id); $('#courseDescription').textContent=courseDescription(id); $('#courseWords').textContent=D.total_words.toLocaleString(); $('#courseEpisodes').textContent=D.episodes.length; $('#courseProgressText').textContent=`${p}%`; $('#courseProgressInline').textContent=`${words} / ${D.total_words} ${tt('words')} · ${p}%`; $('#courseProgressFill').style.width=`${p}%`; updateCourseQuizPoints();
+  const browserTitle=$('#episodeBrowserTitle'); if(browserTitle)browserTitle.textContent=episodeBrowserTitle(); $('#bookmarkCount').textContent=S.bookmarks.length; $('#sideBookmarkCount').textContent=S.bookmarks.length;
+  let le=+S.lastEpisode||1,pos=+S.positions[le]||0,lastEp=epMap[le]||D.episodes[0],lastLabel=episodeDisplayLabel(lastEp); $('#continueBtn').textContent=pos>5?`${tt('continueWord')} ${lastLabel} · ${fmt(pos)}`:`${tt('startWord')} ${lastLabel}`; $('#continueSummary').textContent=pos>5?tt('lastPosition',{label:lastLabel,time:fmt(pos)}):tt('savedAutomatically');
+  libraryOpenSections=new Set(sectionToOpen?[sectionToOpen]:[]); if(id==='b1'&&sectionToOpen)setActiveEpisodeSection(sectionToOpen); else if(id==='b1')setActiveEpisodeSection(currentEp?.section||activeEpisodeSection||'core'); else setActiveEpisodeSection(null);
+  renderEpisodeGrid(); $('#searchInput').value='';$('#searchPanel').classList.add('hidden');$('#bookmarksPanel').classList.add('hidden');$('#bookmarksBtn').classList.remove('active'); showView('#courseHomeView');location.hash=`course-${id}`;updateHeaderProgress();refreshBookmarkCounts();renderCourseBookmarkPanel();updatePersistentPlayerVisibility();updateStaticLanguage();
 }
 
-function episodeCardHtml(ep){
-  let p=pct(ep),st=statusLabel(ep),cw=completedWords(ep);
-  const isCurrent=!!(currentEp&&playerHasStarted&&currentEp.episode===ep.episode);
-  const currentState=isCurrent?(audio.paused?['● Current','current-now']:['▶ Playing','playing-now']):st;
-  return `<article class="episode-card ${ep.section==='advanced'?'advanced':''} ${isCurrent?'current-episode':''}" data-ep="${ep.episode}">
-    <div class="ephead"><span class="epnum">Episode ${String(epDisplay(ep)).padStart(2,'0')}</span><span class="status ${currentState[1]}">${currentState[0]}</span></div>
-    <div class="epmeta">${fmt(ep.duration)} · ${cw} / ${ep.word_count} words</div>
-    <div class="epbar"><i style="width:${p}%"></i></div>
-    <div class="epwords">${esc(ep.first_word)} → ${esc(ep.last_word)}</div></article>`
-}
+function episodeCardHtml(ep){ let p=pct(ep),st=statusLabel(ep),cw=completedWords(ep); const isCurrent=!!(currentEp&&playerHasStarted&&currentEp.episode===ep.episode); const currentState=isCurrent?(audio.paused?[`● ${lang()==='bn'?'বর্তমান':lang()==='de'?'Aktuell':'Current'}`,'current-now']:[`▶ ${lang()==='bn'?'চলছে':lang()==='de'?'Läuft':'Playing'}`,'playing-now']):st; return `<article class="episode-card ${ep.section==='advanced'?'advanced':''} ${isCurrent?'current-episode':''}" data-ep="${ep.episode}"><div class="ephead"><span class="epnum">${tt('episodeLabel')} ${String(epDisplay(ep)).padStart(2,'0')}</span><span class="status ${currentState[1]}">${currentState[0]}</span></div><div class="epmeta">${fmt(ep.duration)} · ${cw} / ${ep.word_count} ${tt('words')}</div><div class="epbar"><i style="width:${p}%"></i></div><div class="epwords">${esc(ep.first_word)} → ${esc(ep.last_word)}</div></article>` }
 
 function applyLibraryLayout(){
   const layout=AS.libraryLayout==='list'?'list':'grid',grid=$('#episodeGrid');
@@ -450,32 +395,7 @@ function toggleLibrarySection(id){
     setTimeout(()=>scrollSectionToActiveEpisode(id,true),90);
   }
 }
-function renderEpisodeGrid(){
-  if(!D||!$('#episodeGrid'))return;
-  const filtered=D.episodes.filter(ep=>libraryFilter==='all'||statusKey(ep)===libraryFilter);
-  let html='';
-  if(D.sections?.length){
-    for(const sec of D.sections){
-      const eps=filtered.filter(ep=>ep.section===sec.id);
-      const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id);
-      html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}">
-        <button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}">
-          <div><span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span><h2>${esc(sectionDisplayTitle(sec))}</h2><p>${sec.episodes} episodes · ${sec.total_words.toLocaleString()} words</p></div>
-          <div class="library-section-head-right"><strong>${p.pct}%</strong><span class="section-chevron" aria-hidden="true">⌄</span></div>
-        </button>
-        <div class="library-section-body ${isOpen?'':'hidden'}">
-          <div class="episode-grid-inner">${eps.length?eps.map(episodeCardHtml).join(''):'<div class="empty-state">No episodes in this section match the selected filter.</div>'}</div>
-        </div>
-      </section>`;
-    }
-  }else{
-    html=filtered.map(episodeCardHtml).join('');
-  }
-  $('#episodeGrid').innerHTML=html||'<div class="empty-state">No episodes match this filter.</div>';
-  applyLibraryLayout();
-  $$('[data-section-toggle]').forEach(x=>x.onclick=()=>toggleLibrarySection(x.dataset.sectionToggle));
-  $$('.episode-card').forEach(x=>x.onclick=()=>openEpisode(+x.dataset.ep,null,true));
-}
+function renderEpisodeGrid(){ if(!D||!$('#episodeGrid'))return; const filtered=D.episodes.filter(ep=>libraryFilter==='all'||statusKey(ep)===libraryFilter); let html=''; if(D.sections?.length){ for(const sec of D.sections){ const eps=filtered.filter(ep=>ep.section===sec.id); const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id); html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}"><button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}"><div><span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span><h2>${esc(sectionDisplayTitle(sec))}</h2><p>${sec.episodes} ${tt('episodes')} · ${sec.total_words.toLocaleString()} ${tt('words')}</p></div><div class="library-section-head-right"><strong>${p.pct}%</strong><span class="section-chevron" aria-hidden="true">⌄</span></div></button><div class="library-section-body ${isOpen?'':'hidden'}"><div class="episode-grid-inner">${eps.length?eps.map(episodeCardHtml).join(''):'<div class="empty-state">No episodes in this section match the selected filter.</div>'}</div></div></section>`; } } else html=filtered.map(episodeCardHtml).join(''); $('#episodeGrid').innerHTML=html||'<div class="empty-state">No episodes match this filter.</div>'; applyLibraryLayout(); $$('[data-section-toggle]').forEach(x=>x.onclick=()=>toggleLibrarySection(x.dataset.sectionToggle)); $$('.episode-card').forEach(x=>x.onclick=()=>openEpisode(+x.dataset.ep,null,true)); }
 function bookmarksHtml(){
   const S=courseState();
   if(!S.bookmarks.length)return '<b>No difficult words bookmarked yet.</b><p>Tap ☆ while studying to build your personal review list.</p>';
@@ -661,37 +581,7 @@ function setupMediaSession(){
     sync(true);
   });
 }
-function handleEpisodeEnded(){
-  if(!currentEp)return;
-  const S=courseState();
-  S.completed[currentEp.episode]=true;
-  S.positions[currentEp.episode]=currentEp.duration;
-  S.maxPositions[currentEp.episode]=currentEp.duration;
-  save();updateHeaderProgress();updatePersistentPlayerVisibility();
-
-  const mode=AS.endBehavior||'stop';
-
-  if(mode==='repeat'){
-    audio.currentTime=0;
-    updateMediaSessionMetadata();
-    audio.play().catch(()=>{});
-    msg('Repeating episode ↻');
-    return;
-  }
-
-  if(mode==='next'){
-    const target=adjacentEpisode(1);
-    if(target){
-      msg('Starting next episode →');
-      openEpisode(target.episode,0,true);
-      return;
-    }
-    msg('Episode completed ✓ · End of section');
-    return;
-  }
-
-  msg('Episode completed ✓ · Playback stopped');
-}
+function handleEpisodeEnded(){ if(!currentEp)return; const S=courseState(); S.completed[currentEp.episode]=true; S.positions[currentEp.episode]=currentEp.duration; S.maxPositions[currentEp.episode]=currentEp.duration; save(); updateHeaderProgress(); updatePersistentPlayerVisibility(); const mode=AS.endBehavior||'stop'; if(mode==='repeat'){audio.currentTime=0; updateMediaSessionMetadata(); audio.play().catch(()=>{}); msg(endModeText('repeat')); return;} if(mode==='next'){ const target=adjacentEpisode(1); if(target){msg(endModeText('next')); openEpisode(target.episode,0,true); return;} msg(lang()==='bn'?'এপিসোড শেষ ✓ · সেকশনের শেষ':lang()==='de'?'Episode beendet ✓ · Abschnittsende':'Episode completed ✓ · End of section'); return;} msg(lang()==='bn'?'এপিসোড শেষ ✓ · প্লেব্যাক বন্ধ':lang()==='de'?'Episode beendet ✓ · Wiedergabe gestoppt':'Episode completed ✓ · Playback stopped'); }
 
 
 function shuffleCopy(arr){
@@ -705,15 +595,7 @@ function shuffleCopy(arr){
 function quizIsAvailable(){
   return !!(currentEp&&D&&quizEligibleEntries().length>=QUIZ_COUNT);
 }
-function updateQuizButton(){
-  const btn=$('#quizBtn');
-  if(!btn)return;
-  const available=quizIsAvailable();
-  btn.classList.toggle('hidden',!available);
-  if(!available)return;
-  const best=+(courseState().quizBest?.[currentEp.episode]||0);
-  btn.textContent=best>0?`Quiz · Best ${best}/${QUIZ_COUNT}`:'Quiz';
-}
+function updateQuizButton(){ const btn=$('#quizBtn'); if(!btn)return; const available=quizIsAvailable(); btn.classList.toggle('hidden',!available); if(!available)return; const best=+(courseState().quizBest?.[currentEp.episode]||0); btn.textContent=best>0?`${tt('quiz')} · ${tt('best')} ${best}/${QUIZ_COUNT}`:tt('quiz'); }
 function normalizedQuizGerman(s){
   return String(s||'').trim().toLocaleLowerCase('de-DE').replace(/\s+/g,' ');
 }
@@ -836,63 +718,12 @@ function buildQuiz(){
   }
   return questions;
 }
-function openQuiz(){
-  if(!quizIsAvailable())return;
-  audio.pause();
-  const questions=buildQuiz();
-  if(!questions){msg('This episode does not have enough unique quiz words yet.');return}
-  quizState={questions,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false};
-  $('#quizOverlay').classList.remove('hidden');
-  document.body.classList.add('quiz-open');
-  renderQuiz();
-}
+function openQuiz(){ if(!quizIsAvailable())return; audio.pause(); const questions=buildQuiz(); if(!questions){msg('This episode does not have enough unique quiz words yet.');return} quizState={questions,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; $('#quizOverlay').classList.remove('hidden'); document.body.classList.add('quiz-open'); renderQuiz(); }
 function closeQuiz(){
   $('#quizOverlay').classList.add('hidden');
   document.body.classList.remove('quiz-open');
 }
-function renderQuiz(){
-  if(!quizState)return;
-  const body=$('#quizBody');
-  if(quizState.finished){renderQuizResult();return}
-  const q=quizState.questions[quizState.index];
-  const selected=quizState.answers[quizState.index];
-  const pct=Math.round((quizState.index/QUIZ_COUNT)*100);
-  body.innerHTML=`
-    <div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div>
-    <h2 id="quizTitle">Episode Quiz</h2>
-    <div class="quiz-meta"><span>Question ${quizState.index+1} of ${QUIZ_COUNT}</span><span>Pass: ${QUIZ_PASS}/${QUIZ_COUNT}</span></div>
-    <div class="quiz-progress"><span style="width:${pct}%"></span></div>
-    <div class="quiz-word">${esc(q.german)}${q.grammar?` <span class="quiz-grammar">(${esc(q.grammar)})</span>`:''}</div>
-    <p class="quiz-prompt">Choose the correct English meaning. The sound tells you whether your choice was right or wrong.</p>
-    <div class="quiz-options">
-      ${q.options.map((o,i)=>`<button type="button" class="quiz-option ${selected===i?'selected':''} ${selected!=null?'locked':''}" data-qoption="${i}" ${selected!=null?'disabled':''}>
-        <span class="quiz-letter">${String.fromCharCode(65+i)}</span><span>${esc(o.label)}</span>
-      </button>`).join('')}
-    </div>
-    ${selected!=null?(
-      q.options[selected]?.correct
-        ? `<div class="quiz-instant-feedback correct">✓ Correct</div>`
-        : `<div class="quiz-instant-feedback wrong"><span>Correct answer:</span> <strong>${esc(q.correct)}</strong></div>`
-    ):`<div class="quiz-instant-feedback placeholder" aria-hidden="true">&nbsp;</div>`}
-    <div class="quiz-actions">
-      <button id="quizPrev" class="quiz-secondary" type="button" ${quizState.index===0?'disabled':''}>Back</button>
-      <button id="quizNext" class="quiz-primary" type="button" ${selected==null?'disabled':''}>${quizState.index===QUIZ_COUNT-1?'Finish':'Next'}</button>
-    </div>`;
-  $$('[data-qoption]').forEach(b=>b.onclick=()=>{
-    if(quizState.answers[quizState.index]!=null)return;
-    const choice=+b.dataset.qoption;
-    quizState.answers[quizState.index]=choice;
-    const picked=q.options[choice];
-    if(picked?.correct)playQuizCorrectSound();else playQuizWrongSound();
-    renderQuiz();
-  });
-  $('#quizPrev').onclick=()=>{if(quizState.index>0){quizState.index--;renderQuiz()}};
-  $('#quizNext').onclick=()=>{
-    if(quizState.answers[quizState.index]==null)return;
-    if(quizState.index<QUIZ_COUNT-1){quizState.index++;renderQuiz()}
-    else finishQuiz();
-  };
-}
+function renderQuiz(){ if(!quizState)return; const body=$('#quizBody'); if(quizState.finished){renderQuizResult();return} const q=quizState.questions[quizState.index], selected=quizState.answers[quizState.index], pct=Math.round((quizState.index/QUIZ_COUNT)*100); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${tt('quizTitle')}</h2><div class="quiz-meta"><span>${tt('question',{n:quizState.index+1,t:QUIZ_COUNT})}</span><span>${tt('pass',{p:QUIZ_PASS,t:QUIZ_COUNT})}</span></div><div class="quiz-progress"><span style="width:${pct}%"></span></div><div class="quiz-word">${esc(q.german)}${q.grammar?` <span class="quiz-grammar">(${esc(q.grammar)})</span>`:''}</div><p class="quiz-prompt">${tt('quizPrompt')}</p><div class="quiz-options">${q.options.map((o,i)=>`<button type="button" class="quiz-option ${selected===i?'selected':''} ${selected!=null?'locked':''}" data-qoption="${i}" ${selected!=null?'disabled':''}><span class="quiz-letter">${String.fromCharCode(65+i)}</span><span>${esc(o.label)}</span></button>`).join('')}</div>${selected!=null?(q.options[selected]?.correct?`<div class="quiz-instant-feedback correct">${tt('correct')}</div>`:`<div class="quiz-instant-feedback wrong"><span>${tt('correctAnswer')}</span> <strong>${esc(q.correct)}</strong></div>`):`<div class="quiz-instant-feedback placeholder" aria-hidden="true">&nbsp;</div>`}<div class="quiz-actions"><button id="quizPrev" class="quiz-secondary" type="button" ${quizState.index===0?'disabled':''}>${tt('back')}</button><button id="quizNext" class="quiz-primary" type="button" ${selected==null?'disabled':''}>${quizState.index===QUIZ_COUNT-1?tt('finish'):tt('next')}</button></div>`; $$('[data-qoption]').forEach(btn=>btn.onclick=()=>{if(quizState.answers[quizState.index]!=null)return; const i=+btn.dataset.qoption,opt=q.options[i]; quizState.answers[quizState.index]=i; playQuizFeedback(!!opt.correct); renderQuiz();}); $('#quizPrev').onclick=()=>{if(quizState.index>0){quizState.index--;renderQuiz()}}; $('#quizNext').onclick=()=>{if(quizState.answers[quizState.index]==null)return; if(quizState.index<QUIZ_COUNT-1){quizState.index++;renderQuiz();}else{ const score=quizState.answers.reduce((sum,idx,qi)=>{const q=quizState.questions[qi]; const a=q.options[idx]; return sum+(a?.correct?1:0)},0); quizState.score=score; quizState.finished=true; const S=courseState(); S.quizBest[currentEp.episode]=Math.max(score,+S.quizBest[currentEp.episode]||0); save(); updateCourseQuizPoints(); renderQuizResult(); }}; }
 function finishQuiz(){
   if(!quizState)return;
   let score=0;
@@ -910,40 +741,7 @@ function finishQuiz(){
   renderQuizResult();
   if(score>=QUIZ_PASS)setTimeout(playQuizPassSound,120);
 }
-function renderQuizResult(){
-  const body=$('#quizBody');
-  const score=quizState.score||0;
-  const passed=score>=QUIZ_PASS;
-  const wrong=[];
-  quizState.questions.forEach((q,i)=>{
-    const answer=q.options[quizState.answers[i]];
-    if(!answer?.correct)wrong.push({german:q.german,yours:answer?.label||'No answer',correct:q.correct});
-  });
-  body.innerHTML=`
-    <div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div>
-    <h2 id="quizTitle">${passed?'Passed':'Review recommended'}</h2>
-    <div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${passed?'Great — you reached the 12/15 target.':'Listen to this episode again, then retake the quiz.'}</span></div>
-    ${wrong.length?`<section class="quiz-review">
-      <h3>Review your mistakes (${wrong.length})</h3>
-      ${wrong.map(x=>`<div class="quiz-review-row">
-        <strong>${esc(x.german)}</strong>
-        <span>Your answer: ${esc(x.yours)}</span>
-        <span class="quiz-correct">Correct: ${esc(x.correct)}</span>
-      </div>`).join('')}
-    </section>`:`<div class="quiz-perfect">All 15 answers were correct.</div>`}
-    <div class="quiz-result-actions">
-      <button id="quizListenAgain" class="quiz-secondary" type="button">Listen Again</button>
-      <button id="quizRetake" class="quiz-primary" type="button">Retake Quiz</button>
-      <button id="quizDone" class="quiz-secondary" type="button">Close</button>
-    </div>`;
-  $('#quizRetake').onclick=()=>{const q=buildQuiz();if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false};renderQuiz()}};
-  $('#quizListenAgain').onclick=()=>{
-    closeQuiz();
-    audio.currentTime=0;sync(true);
-    audio.play().catch(()=>{});
-  };
-  $('#quizDone').onclick=closeQuiz;
-}
+function renderQuizResult(){ const body=$('#quizBody'), score=quizState.score||0, passed=score>=QUIZ_PASS, wrong=[]; quizState.questions.forEach((q,i)=>{const answer=q.options[quizState.answers[i]]; if(!answer?.correct)wrong.push({german:q.german,yours:answer?.label||'—',correct:q.correct})}); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${passed?tt('passed'):tt('reviewRecommended')}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${passed?tt('greatTarget'):tt('listenAgainThen')}</span></div>${wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)}</span></div>`).join('')}</section>`:`<div class="quiz-perfect">${tt('allCorrect')}</div>`}<div class="quiz-result-actions"><button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`; $('#quizRetake').onclick=()=>{const q=buildQuiz(); if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; renderQuiz()}}; $('#quizListenAgain').onclick=()=>{closeQuiz(); audio.currentTime=0; sync(true); audio.play().catch(()=>{});}; $('#quizDone').onclick=closeQuiz; }
 
 async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,keepCourseView=false){
   if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
@@ -1039,11 +837,11 @@ $('#playBtn').onclick=()=>audio.paused?audio.play().catch(()=>{}):audio.pause();
 $('#progress').oninput=e=>{audio.currentTime=+e.target.value;sync(true)};
 $('#followToggle').onchange=()=>sync(true);
 $$('.mode[data-mode]').forEach(b=>b.onclick=()=>{courseState().mode=b.dataset.mode;save();applyMode()});
-$('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.target.checked;save();applyEnglishVisibility(audio.currentTime||0);msg(e.target.checked?'English will appear with its audio':'English always visible in Study mode')};
+$('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.target.checked;save();applyEnglishVisibility(audio.currentTime||0);msg(e.target.checked?(lang()==='bn'?'ইংরেজি তার অডিওর সাথে দেখাবে':lang()==='de'?'Englisch erscheint mit dem Audio':'English will appear with its audio'):(lang()==='bn'?'স্টাডি মোডে ইংরেজি সবসময় দেখা যাবে':lang()==='de'?'Englisch ist im Lernmodus immer sichtbar':'English always visible in Study mode'))};
 const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5};
 $('#speedSelect').onchange=e=>{courseState().speed=speeds[e.target.value]||1;audio.playbackRate=courseState().speed;save()};
 $('#currentBookmark').onclick=$('#lyricsStar').onclick=()=>{let e=currentEntry();if(e)toggleBookmark(e.entry_id)};
-$('#endBehaviorSelect').onchange=e=>setEndBehavior(e.target.value);
+$$('[data-end-mode]').forEach(b=>b.onclick=()=>setEndBehavior(b.dataset.endMode));
 $('#backCurrent').onclick=()=>scrollToCurrentWord(true);
 
 const backTop=$('#backToTop');
@@ -1056,7 +854,7 @@ if(backTop){
   updateBackTop();
 }
 
-$('#themeBtn').onclick=()=>{AS.theme=AS.theme==='dark'?'light':'dark';save();applyPreferences()};
+$('#themeBtn').onclick=()=>{AS.theme=AS.theme==='dark'?'light':'dark';save();applyPreferences();updateStaticLanguage()};
 $('#textSmaller').onclick=()=>{AS.textSize='small';save();applyPreferences()};
 $('#textNormal').onclick=()=>{AS.textSize='normal';save();applyPreferences()};
 $('#textLarger').onclick=()=>{AS.textSize='large';save();applyPreferences()};
@@ -1102,6 +900,8 @@ async function route(){
 }
 
 applyPreferences();
-loadCourseData('b1').then(data=>{loaded.b1=data;if(!D&&AS.lastCourse==='b1'){D=data;currentCourseId='b1';entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));updateCourseNavigation();updateHeaderProgress();renderAppHome()}}).catch(()=>{});
+updateStaticLanguage();
+$$('[data-lang]').forEach(b=>b.onclick=()=>setUILanguage(b.dataset.lang));
+loadCourseData('b1').then(data=>{loaded.b1=data;if(!D&&AS.lastCourse==='b1'){D=data;currentCourseId='b1';entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));updateCourseNavigation();updateHeaderProgress();renderAppHome();updateStaticLanguage()}}).catch(()=>{});
 route();
 })();

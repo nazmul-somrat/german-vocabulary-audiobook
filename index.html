@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="logo-32-v2.png">
 <link rel="apple-touch-icon" href="logo-192-v2.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=20260914-quizall2">
+<link rel="stylesheet" href="styles.css?v=20260914-layoutlang1">
 <title>German Vocabulary Audiobook</title>
 </head>
 <body>
@@ -17,7 +17,7 @@
   <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   <button id="brandHome" class="brand brand-button" aria-label="Go to home">
     <img class="brandmark brandmark-logo" src="logo-header.png" alt="" aria-hidden="true">
-    <span><strong>German Vocabulary Audiobook</strong><small>Audio + synchronized transcript</small></span>
+    <span><strong id="brandTitle">German Vocabulary Audiobook</strong><small id="brandSubtitle">Audio + synchronized transcript</small></span>
   </button>
 
   <div class="top-actions">
@@ -37,26 +37,34 @@
 <div class="app-shell">
   <aside id="sidebar" class="sidebar">
     <nav class="side-nav">
-      <button class="side-link active" data-nav="home"><span>⌂</span> Home</button>
-      <div class="side-label">CURRENT COURSE</div>
+      <button id="navHomeBtn" class="side-link active" data-nav="home"><span>⌂</span> Home</button>
+      <div id="sideLabelCurrentCourse" class="side-label">CURRENT COURSE</div>
       <button id="navCourse" class="side-link current-course-link" data-nav="course"><span>▶</span> B1 Vocabulary</button>
       <div class="course-subnav">
         <button id="navCore" class="side-link sub-link section-side-link"><span>1</span> B1 Core</button>
         <button id="navAdvanced" class="side-link sub-link section-side-link advanced-link"><span>+</span> B1+ Advanced</button>
         <button id="navDifficult" class="side-link sub-link" data-nav="difficult"><span>★</span> Difficult Words <em id="sideBookmarkCount">0</em></button>
-        <div class="side-quiz-points" title="Best quiz scores across this course"><span>◆</span><span>Quiz Points</span><em id="sideQuizPoints">0 / 0</em></div>
+        <div class="side-quiz-points" title="Best quiz scores across this course"><span>◆</span><span id="sideQuizLabel">Quiz Points</span><em id="sideQuizPoints">0 / 0</em></div>
       </div>
 
-      <div class="side-label">COURSES</div>
+      <div id="sideLabelCourses" class="side-label">COURSES</div>
       <button class="course-side" data-course="a1"><span class="course-dot">A1</span><span>A1 Vocabulary</span></button>
       <button class="course-side" data-course="a2"><span class="course-dot">A2</span><span>A2 Vocabulary</span></button>
       <button class="course-side active-course" data-course="b1"><span class="course-dot">B1</span><span>B1 Vocabulary</span></button>
       <button class="course-side" data-course="technical"><span class="course-dot tech">T</span><span>Technical Vocabulary</span></button>
     </nav>
+    <div class="side-language-box" id="uiLanguageBox">
+      <div class="side-language-label" id="uiLanguageLabel">UI Language</div>
+      <div class="lang-switch" role="group" aria-label="Interface language">
+        <button class="lang-btn active" type="button" data-lang="en">EN</button>
+        <button class="lang-btn" type="button" data-lang="bn">বাংলা</button>
+        <button class="lang-btn" type="button" data-lang="de">DE</button>
+      </div>
+    </div>
     <div class="side-footer">
       <div class="footer-brand-row">
         <img class="footer-logo" src="logo-header.png" alt="" aria-hidden="true">
-        <div>Designed &amp; developed by Nazmul Somrat</div>
+        <div id="footerCredit">Designed &amp; developed by Nazmul Somrat</div>
       </div>
       <div class="social-links" aria-label="Nazmul Somrat social profiles">
         <a class="social-link" href="https://www.linkedin.com/in/gm-nazmul-islam/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn profile" title="LinkedIn">
@@ -87,14 +95,11 @@
             <option>.8×</option><option>.9×</option><option selected>1×</option><option>1.1×</option><option>1.25×</option><option>1.5×</option>
           </select>
           <button id="currentBookmark" class="starbtn" title="Bookmark current word">☆</button>
-          <label class="end-mode-control" title="Choose what the player should do when an episode finishes">
-            <span>After episode</span>
-            <select id="endBehaviorSelect" aria-label="After episode">
-              <option value="stop">Stop</option>
-              <option value="next">Play next</option>
-              <option value="repeat">Repeat</option>
-            </select>
-          </label>
+          <div id="endBehaviorControl" class="end-mode-compact" role="group" aria-label="After episode behavior" title="After episode behavior">
+            <button type="button" class="end-mode-btn" data-end-mode="stop" aria-label="Stop after episode" title="Stop after episode"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2.5"></rect></svg></button>
+            <button type="button" class="end-mode-btn" data-end-mode="next" aria-label="Play next episode" title="Play next episode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5.5v13"></path><path d="M10 6.5l8 5.5-8 5.5z"></path></svg></button>
+            <button type="button" class="end-mode-btn" data-end-mode="repeat" aria-label="Repeat same episode" title="Repeat same episode"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h8.5"></path><path d="M13.5 5l3.5 3-3.5 3"></path><path d="M17 16H8.5"></path><path d="M10.5 13l-3.5 3 3.5 3"></path></svg></button>
+          </div>
           <div class="playback-stats"><span id="timebox">00:00 / 00:00</span><strong id="wordProgress">0 / 0 words</strong></div>
         </div>
         <input id="progress" class="progress" type="range" min="0" value="0" step="0.05">
@@ -114,12 +119,12 @@
     <section id="appHomeView" class="view">
       <main class="page-main">
         <section class="app-hero">
-          <p class="eyebrow">VOCABULARY AUDIOBOOK COLLECTION</p>
-          <h1>Learn German vocabulary by listening, reading and recalling.</h1>
-          <p>One player for multiple vocabulary courses. Your progress and difficult words stay separate for each course.</p>
+          <p class="eyebrow" id="homeEyebrow">VOCABULARY AUDIOBOOK COLLECTION</p>
+          <h1 id="homeTitle">Learn German vocabulary by listening, reading and recalling.</h1>
+          <p id="homeSubtitle">One player for multiple vocabulary courses. Your progress and difficult words stay separate for each course.</p>
         </section>
 
-        <div class="section-head simple"><h2>Courses</h2></div>
+        <div class="section-head simple"><h2 id="homeCoursesHeading">Courses</h2></div>
         <div id="courseGrid" class="course-grid"></div>
       </main>
     </section>
@@ -132,7 +137,7 @@
             <h1 id="courseTitle">B1 Vocabulary Audiobook</h1>
             <p id="courseDescription"></p>
             <div class="course-progress-inline">
-              <div class="course-progress-copy"><span>Course progress</span><strong id="courseProgressInline">0 / 0 words · 0%</strong></div>
+              <div class="course-progress-copy"><span id="courseProgressLabel">Course progress</span><strong id="courseProgressInline">0 / 0 words · 0%</strong></div>
               <div class="thinbar course-progress-bar"><i id="courseProgressFill" style="width:0%"></i></div>
             </div>
             <div class="hero-actions">
@@ -141,17 +146,17 @@
             </div>
           </div>
           <div class="course-stats">
-            <div><strong id="courseWords">2,871</strong><span>words</span></div>
-            <div><strong id="courseEpisodes">36</strong><span>episodes</span></div>
-            <div><strong id="courseProgressText">0%</strong><span>completed</span></div>
-            <div><strong id="courseQuizPoints">0 / 0</strong><span>quiz points</span></div>
+            <div><strong id="courseWords">2,871</strong><span id="courseWordsLabel">words</span></div>
+            <div><strong id="courseEpisodes">36</strong><span id="courseEpisodesLabel">episodes</span></div>
+            <div><strong id="courseProgressText">0%</strong><span id="courseCompletedLabel">completed</span></div>
+            <div><strong id="courseQuizPoints">0 / 0</strong><span id="courseQuizPointsLabel">quiz points</span></div>
           </div>
         </section>
 
         <section id="courseEpisodeBrowser" class="course-episode-browser">
           <div class="episode-browser-head">
             <div>
-              <p class="eyebrow">EPISODES</p>
+              <p class="eyebrow" id="episodeEyebrow">EPISODES</p>
               <h2 id="episodeBrowserTitle">B1 Core &amp; B1+ Advanced</h2>
             </div>
             <button id="resetProgress" class="text-btn danger">Reset progress</button>
@@ -179,7 +184,7 @@
         <div id="bookmarksPanel" class="panel hidden"></div>
 
         <section class="quick-card">
-          <div><h3>Continue learning</h3><p id="continueSummary">Your listening position is saved automatically.</p></div>
+          <div><h3 id="quickCardTitle">Continue learning</h3><p id="continueSummary">Your listening position is saved automatically.</p></div>
           <button id="quickLibrary" class="mini-primary">Go to episodes</button>
         </section>
       </main>
@@ -188,7 +193,7 @@
     <section id="difficultView" class="view hidden">
       <main class="page-main">
         <div class="page-title-row">
-          <div><p class="eyebrow">PERSONAL REVIEW</p><h1>Difficult Words</h1><p>Words you marked with ★ while listening.</p></div>
+          <div><p class="eyebrow" id="difficultEyebrow">PERSONAL REVIEW</p><h1 id="difficultTitle">Difficult Words</h1><p id="difficultSubtitle">Words you marked with ★ while listening.</p></div>
         </div>
         <div id="difficultFullPanel" class="panel"></div>
       </main>
@@ -220,9 +225,9 @@
   </section>
 </div>
 
-<script src="site-config.js?v=20260914-quizall2"></script>
-<script src="courses.js?v=20260914-quizall2"></script>
-<script src="app.js?v=20260914-quizall2"></script>
+<script src="site-config.js?v=20260914-layoutlang1"></script>
+<script src="courses.js?v=20260914-layoutlang1"></script>
+<script src="app.js?v=20260914-layoutlang1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

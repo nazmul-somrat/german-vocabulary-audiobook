@@ -1,16 +1,16 @@
-const CACHE='german-vocab-audiobook-quizall-v2';
+const CACHE='german-vocab-audiobook-layoutlang-v1';
 const CORE=[
   './',
   './index.html',
-  './styles.css?v=20260914-quizall2',
-  './site-config.js?v=20260914-quizall2',
-  './courses.js?v=20260914-quizall2',
-  './app.js?v=20260914-quizall2',
+  './styles.css?v=20260914-layoutlang1',
+  './site-config.js?v=20260914-layoutlang1',
+  './courses.js?v=20260914-layoutlang1',
+  './app.js?v=20260914-layoutlang1',
   './manifest.webmanifest',
-  './courses/a1/data.js?v=20260914-quizall2',
-  './courses/a2/data.js?v=20260914-quizall2',
-  './courses/b1/data.js?v=20260914-quizall2',
-  './courses/technical/data.js?v=20260914-quizall2'
+  './courses/a1/data.js?v=20260914-layoutlang1',
+  './courses/a2/data.js?v=20260914-layoutlang1',
+  './courses/b1/data.js?v=20260914-layoutlang1',
+  './courses/technical/data.js?v=20260914-layoutlang1'
 ];
 self.addEventListener('install',e=>{
   self.skipWaiting();
