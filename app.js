@@ -8,7 +8,7 @@ const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
 const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{}};
-const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:3,courses:{}};
+const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:4,courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function loadAppState(){
@@ -27,7 +27,7 @@ function loadAppState(){
   }
   s=Object.assign(clone(APP_DEFAULT),s||{});
   s.courses=s.courses||{};
-  if(s.endBehaviorUiVersion!==3){s.endBehavior='stop';s.endBehaviorUiVersion=3;}
+  if(s.endBehaviorUiVersion!==4){s.endBehavior='stop';s.endBehaviorUiVersion=4;}
   if(!['stop','next','repeat'].includes(s.endBehavior))s.endBehavior='stop';
   if(!['en','bn','de'].includes(s.uiLanguage))s.uiLanguage='en';
   if(typeof s.quizSound!=='boolean')s.quizSound=true;
@@ -191,25 +191,25 @@ function moveEpisodeWithinSection(delta,seek=null){
 }
 function updateEndBehaviorControl(){
   const mode=['repeat','next'].includes(AS.endBehavior)?AS.endBehavior:'stop';
-  $$('[data-end-mode]').forEach(btn=>{
-    const active=btn.dataset.endMode===mode;
-    btn.classList.toggle('active',active);
-    btn.setAttribute('aria-pressed',active?'true':'false');
-    btn.title=endModeText(btn.dataset.endMode);
-    btn.setAttribute('aria-label',endModeText(btn.dataset.endMode));
-  });
-  const wrap=$('#endBehaviorControl');
-  if(wrap){
-    wrap.dataset.mode=mode;
-    wrap.title=mode==='stop'?endModeText('stop'):endModeText(mode);
-    wrap.setAttribute('aria-label',wrap.title);
+  const btn=$('#endBehaviorControl');
+  if(btn){
+    btn.dataset.mode=mode;
+    btn.classList.toggle('active',mode!=='stop');
+    btn.setAttribute('aria-pressed',mode==='stop'?'false':'true');
+    btn.title=mode==='stop'?endModeText('stop'):endModeText(mode);
+    btn.setAttribute('aria-label',btn.title);
   }
 }
 function setEndBehavior(mode){
   if(!['stop','next','repeat'].includes(mode))mode='stop';
   AS.endBehavior=mode;
-  AS.endBehaviorUiVersion=3;
+  AS.endBehaviorUiVersion=4;
   save();updateEndBehaviorControl();msg(endModeText(mode));
+}
+function cycleEndBehavior(){
+  const current=['repeat','next'].includes(AS.endBehavior)?AS.endBehavior:'stop';
+  const next=current==='stop'?'repeat':current==='repeat'?'next':'stop';
+  setEndBehavior(next);
 }
 function settingsCopy(){
   if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন'};
@@ -896,7 +896,7 @@ $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.targ
 const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5};
 $('#speedSelect').onchange=e=>{courseState().speed=speeds[e.target.value]||1;audio.playbackRate=courseState().speed;save()};
 $('#currentBookmark').onclick=$('#lyricsStar').onclick=()=>{let e=currentEntry();if(e)toggleBookmark(e.entry_id)};
-$$('[data-end-mode]').forEach(btn=>btn.onclick=()=>setEndBehavior(AS.endBehavior===btn.dataset.endMode?'stop':btn.dataset.endMode));
+if($('#endBehaviorControl'))$('#endBehaviorControl').onclick=cycleEndBehavior;
 $('#backCurrent').onclick=()=>scrollToCurrentWord(true);
 
 const backTop=$('#backToTop');
