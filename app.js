@@ -8,7 +8,7 @@ const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
 const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{}};
-const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',courses:{}};
+const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function loadAppState(){
@@ -29,6 +29,7 @@ function loadAppState(){
   s.courses=s.courses||{};
   if(!['stop','next','repeat'].includes(s.endBehavior))s.endBehavior='stop';
   if(!['en','bn','de'].includes(s.uiLanguage))s.uiLanguage='en';
+  if(typeof s.quizSound!=='boolean')s.quizSound=true;
   return s;
 }
 let AS=loadAppState();
@@ -72,7 +73,7 @@ function setText(sel,val){const el=$(sel);if(el)el.textContent=val}
 function setHTML(sel,val){const el=$(sel);if(el)el.innerHTML=val}
 function updateLanguageButtons(){$$("[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang()))}
 function updateStaticLanguage(){document.documentElement.lang=lang()==="bn"?"bn":lang()==="de"?"de":"en";setText("#brandTitle",tt("brand"));setText("#brandSubtitle",tt("brandSub"));setHTML("#navHomeBtn",'<span>⌂</span> '+tt("home"));setText("#sideLabelCurrentCourse",tt("current"));setText("#sideLabelCourses",tt("courses"));setText("#sideQuizLabel",tt("quizPoints"));setText("#uiLanguageLabel",tt("uiLanguage"));setText("#footerCredit",tt("designedBy"));setText("#homeEyebrow",tt("homeEyebrow"));setText("#homeTitle",tt("homeTitle"));setText("#homeSubtitle",tt("homeSubtitle"));setText("#homeCoursesHeading",tt("coursesHeading"));setText("#courseProgressLabel",tt("courseProgress"));setText("#courseWordsLabel",tt("words"));setText("#courseEpisodesLabel",tt("episodes"));setText("#courseCompletedLabel",tt("completed"));setText("#courseQuizPointsLabel",tt("quizPointsLower"));setText("#episodeEyebrow",tt("episodes").toUpperCase());setText("#quickCardTitle",tt("continueLearning"));setText("#quickLibrary",tt("goToEpisodes"));setText("#difficultEyebrow",tt("personalReview"));setText("#difficultTitle",tt("difficultWords"));setText("#difficultSubtitle",tt("difficultSubtitle"));setText("#backToTop",tt("top"));setText("#resetProgress",tt("resetProgress"));setText("#openLibraryBtn",tt("episodes"));setText("#lyricsStar",tt("difficultWordBtn"));if($("#searchInput"))$("#searchInput").placeholder=(lang()==="bn"?"জার্মান বা ইংরেজি খুঁজুন…":lang()==="de"?"Deutsch oder Englisch suchen…":"Search German or English…");const themeBtn=$("#themeBtn");if(themeBtn)themeBtn.textContent=AS.theme==="dark"?tt("themeLight"):tt("themeDark");updateLanguageButtons();}
-function setUILanguage(next){AS.uiLanguage=["en","bn","de"].includes(next)?next:"en";save();updateStaticLanguage();route();}
+function setUILanguage(next){AS.uiLanguage=["en","bn","de"].includes(next)?next:"en";save();updateStaticLanguage();updateSettingsUI();route();}
 
 let pendingSeek=null,pendingFocusId=null,saveTick=0,libraryFilter='all',scrollTimer=null;
 let libraryOpenSections=new Set();
@@ -89,7 +90,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-layoutlang1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-settings1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -118,12 +119,15 @@ async function activateCourse(id){
 function applyPreferences(){
   document.documentElement.dataset.theme=AS.theme||'light';
   document.documentElement.dataset.textSize=AS.textSize||'normal';
-  $('#themeBtn').textContent=AS.theme==='dark'?tt('themeLight'):tt('themeDark');
+  const themeBtn=$('#themeBtn');
+  if(themeBtn)themeBtn.textContent=AS.theme==='dark'?tt('themeLight'):tt('themeDark');
   $$('.top-mini').forEach(b=>b.classList.remove('active'));
   const map={small:'#textSmaller',normal:'#textNormal',large:'#textLarger'};
   if(map[AS.textSize]&&$(map[AS.textSize]))$(map[AS.textSize]).classList.add('active');
   const meta=document.querySelector('meta[name="theme-color"]');
   if(meta)meta.content=AS.theme==='dark'?'#070c14':'#101827';
+  const quizSound=$('#quizSoundToggle');
+  if(quizSound)quizSound.checked=AS.quizSound!==false;
 }
 function showView(id){
   views.forEach(v=>$(v).classList.toggle('hidden',v!==id));
@@ -185,20 +189,40 @@ function moveEpisodeWithinSection(delta,seek=null){
   return false;
 }
 function updateEndBehaviorControl(){
-  $$('[data-end-mode]').forEach(btn=>{
-    const active=(AS.endBehavior||'stop')===btn.dataset.endMode;
-    btn.classList.toggle('active',active);
-    btn.setAttribute('aria-pressed',active?'true':'false');
-    btn.title=endModeText(btn.dataset.endMode);
-    btn.setAttribute('aria-label',endModeText(btn.dataset.endMode));
-  });
-  const wrap=$('#endBehaviorControl');
-  if(wrap){wrap.title=endModeText(AS.endBehavior||'stop');wrap.setAttribute('aria-label',endModeText(AS.endBehavior||'stop'));}
+  const btn=$('#endBehaviorBtn');
+  const icon=$('#endBehaviorIcon');
+  if(!btn||!icon)return;
+  const mode=AS.endBehavior||'stop';
+  btn.dataset.mode=mode;
+  btn.title=endModeText(mode);
+  btn.setAttribute('aria-label',endModeText(mode));
+  const icons={
+    stop:'<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"></rect></svg>',
+    next:'<svg viewBox="0 0 24 24"><path d="M5.5 5.5v13"></path><path d="M9.5 6.5l8 5.5-8 5.5z"></path></svg>',
+    repeat:'<svg viewBox="0 0 24 24"><path d="M6.5 8h9"></path><path d="M13.5 5l3.5 3-3.5 3"></path><path d="M17.5 16h-9"></path><path d="M10.5 13l-3.5 3 3.5 3"></path></svg>'
+  };
+  icon.innerHTML=icons[mode]||icons.stop;
 }
 function setEndBehavior(mode){
   if(!['stop','next','repeat'].includes(mode))mode='stop';
   AS.endBehavior=mode;save();updateEndBehaviorControl();msg(endModeText(mode));
 }
+function cycleEndBehavior(){const order=['stop','next','repeat'];const i=order.indexOf(AS.endBehavior||'stop');setEndBehavior(order[(i+1)%order.length]);}
+function settingsCopy(){
+  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন'};
+  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',settings:'Einstellungen',close:'Einstellungen schließen'};
+  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',settings:'Settings',close:'Close settings'};
+}
+function updateSettingsUI(){
+  const s=settingsCopy();
+  setText('#settingsTitle',s.title);setText('#settingsKicker',s.kicker);setText('#settingsLanguageLabel',s.language);setText('#settingsLanguageHint',s.languageHint);setText('#settingsAppearanceLabel',s.appearance);setText('#settingsAppearanceHint',s.appearanceHint);setText('#settingsFontLabel',s.font);setText('#settingsFontHint',s.fontHint);setText('#settingsQuizSoundLabel',s.quizSound);setText('#settingsQuizSoundHint',s.quizSoundHint);
+  const settingsBtn=$('#settingsBtn');if(settingsBtn){settingsBtn.title=s.settings;settingsBtn.setAttribute('aria-label',s.settings)}
+  const close=$('#settingsClose');if(close)close.setAttribute('aria-label',s.close);
+  applyPreferences();updateLanguageButtons();
+}
+function openSettings(){updateSettingsUI();$('#settingsOverlay').classList.remove('hidden');document.body.classList.add('settings-open')}
+function closeSettings(){$('#settingsOverlay').classList.add('hidden');document.body.classList.remove('settings-open')}
+
 function openSidebar(){sidebar.classList.add('open');backdrop.classList.add('show')}
 function closeSidebar(){sidebar.classList.remove('open');backdrop.classList.remove('show')}
 
@@ -668,6 +692,7 @@ function getQuizAudioContext(){
   }catch{return null}
 }
 function quizTone(freq,start,duration,gain=.09,type='sine'){
+  if(AS.quizSound===false)return;
   const ctx=getQuizAudioContext();
   if(!ctx)return;
   const osc=ctx.createOscillator();
@@ -841,7 +866,7 @@ $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.targ
 const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5};
 $('#speedSelect').onchange=e=>{courseState().speed=speeds[e.target.value]||1;audio.playbackRate=courseState().speed;save()};
 $('#currentBookmark').onclick=$('#lyricsStar').onclick=()=>{let e=currentEntry();if(e)toggleBookmark(e.entry_id)};
-$$('[data-end-mode]').forEach(b=>b.onclick=()=>setEndBehavior(b.dataset.endMode));
+$('#endBehaviorBtn').onclick=cycleEndBehavior;
 $('#backCurrent').onclick=()=>scrollToCurrentWord(true);
 
 const backTop=$('#backToTop');
@@ -861,7 +886,7 @@ $('#textLarger').onclick=()=>{AS.textSize='large';save();applyPreferences()};
 
 window.addEventListener('scroll',()=>{clearTimeout(scrollTimer);scrollTimer=setTimeout(checkBackCurrent,120)},{passive:true});
 window.addEventListener('resize',checkBackCurrent);
-window.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#quizOverlay').classList.contains('hidden'))closeQuiz()});
+window.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('#quizOverlay').classList.contains('hidden'))closeQuiz();else if(!$('#settingsOverlay').classList.contains('hidden'))closeSettings()});
 
 audio.onloadedmetadata=()=>{
   if(!currentEp)return;const S=courseState();$('#progress').max=currentEp.duration;audio.playbackRate=+S.speed||1;
@@ -901,7 +926,12 @@ async function route(){
 
 applyPreferences();
 updateStaticLanguage();
+updateSettingsUI();
 $$('[data-lang]').forEach(b=>b.onclick=()=>setUILanguage(b.dataset.lang));
+$('#settingsBtn').onclick=openSettings;
+$('#settingsClose').onclick=closeSettings;
+$('#settingsOverlay').onclick=e=>{if(e.target===$('#settingsOverlay'))closeSettings()};
+$('#quizSoundToggle').onchange=e=>{AS.quizSound=e.target.checked;save();updateSettingsUI()};
 loadCourseData('b1').then(data=>{loaded.b1=data;if(!D&&AS.lastCourse==='b1'){D=data;currentCourseId='b1';entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));updateCourseNavigation();updateHeaderProgress();renderAppHome();updateStaticLanguage()}}).catch(()=>{});
 route();
 })();
