@@ -7,9 +7,9 @@
 <meta name="description" content="German Vocabulary Audiobook — interactive synchronized vocabulary audio learning">
 <link rel="icon" href="favicon-v2.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="logo-32-v2.png">
-<link rel="apple-touch-icon" href="logo-192-v2.png">
+<link rel="apple-touch-icon" href="logo-pwa-192-v4.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=20260914-quizrepeatfix1">
+<link rel="stylesheet" href="styles.css?v=20260914-appupdate1">
 <title>German Vocabulary Audiobook</title>
 </head>
 <body>
@@ -219,6 +219,18 @@
 </div>
 
 
+<div id="updateNotice" class="update-notice hidden" role="status" aria-live="polite">
+  <div class="update-notice-icon" aria-hidden="true">↻</div>
+  <div class="update-notice-copy">
+    <strong id="updateNoticeTitle">Update available</strong>
+    <span id="updateNoticeText">A newer version is ready. Your progress, bookmarks and quiz scores will be kept.</span>
+  </div>
+  <div class="update-notice-actions">
+    <button id="updateLaterBtn" class="update-later-btn" type="button">Later</button>
+    <button id="updateNowBtn" class="update-now-btn" type="button">Update now</button>
+  </div>
+</div>
+
 <div id="settingsOverlay" class="settings-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
   <section class="settings-panel">
     <div class="settings-head">
@@ -256,12 +268,24 @@
         <span class="switch-slider" aria-hidden="true"></span>
       </label>
     </div>
+
+    <div class="settings-group app-update-group">
+      <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
+      <div class="app-version-row">
+        <div class="app-version-copy">
+          <strong id="appVersionText">Version 1.0.0</strong>
+          <span id="appUpdatedText">Updated 14 September 2026</span>
+        </div>
+        <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
+      </div>
+      <div id="updateCheckStatus" class="update-check-status" aria-live="polite"></div>
+    </div>
   </section>
 </div>
 
-<script src="site-config.js?v=20260914-quizrepeatfix1"></script>
-<script src="courses.js?v=20260914-quizrepeatfix1"></script>
-<script src="app.js?v=20260914-quizrepeatfix1"></script>
+<script src="site-config.js?v=20260914-appupdate1"></script>
+<script src="courses.js?v=20260914-appupdate1"></script>
+<script src="app.js?v=20260914-appupdate1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

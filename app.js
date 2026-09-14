@@ -39,6 +39,12 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
+const APP_VERSION='1.0.0';
+const APP_UPDATED='14 September 2026';
+let swRegistration=null;
+let swReloading=false;
+let updateCheckTimer=null;
+
 function save(){localStorage.setItem('gvaAppState',JSON.stringify(AS))}
 function cs(id){
   if(!AS.courses[id])AS.courses[id]=clone(COURSE_DEFAULT);
@@ -91,7 +97,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-bookmarkstate1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-appupdate1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -212,16 +218,81 @@ function cycleEndBehavior(){
   setEndBehavior(next);
 }
 function settingsCopy(){
-  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন'};
-  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',settings:'Einstellungen',close:'Einstellungen schließen'};
-  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',settings:'Settings',close:'Close settings'};
+  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৪ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন'};
+  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 14. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen'};
+  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings'};
 }
 function updateSettingsUI(){
   const s=settingsCopy();
   setText('#settingsTitle',s.title);setText('#settingsKicker',s.kicker);setText('#settingsLanguageLabel',s.language);setText('#settingsLanguageHint',s.languageHint);setText('#settingsAppearanceLabel',s.appearance);setText('#settingsAppearanceHint',s.appearanceHint);setText('#settingsFontLabel',s.font);setText('#settingsFontHint',s.fontHint);setText('#settingsQuizSoundLabel',s.quizSound);setText('#settingsQuizSoundHint',s.quizSoundHint);
+  setText('#settingsAppLabel',s.app);setText('#settingsAppHint',s.appHint);setText('#appVersionText',s.version);setText('#appUpdatedText',s.updated);setText('#checkUpdateBtn',s.check);
+  setText('#updateNoticeTitle',s.updateTitle);setText('#updateNoticeText',s.updateText);setText('#updateNowBtn',s.updateNow);setText('#updateLaterBtn',s.later);
   const settingsBtn=$('#settingsBtn');if(settingsBtn){settingsBtn.title=s.settings;settingsBtn.setAttribute('aria-label',s.settings)}
   const close=$('#settingsClose');if(close)close.setAttribute('aria-label',s.close);
   applyPreferences();updateLanguageButtons();
+}
+
+function setUpdateStatus(message){const el=$('#updateCheckStatus');if(el)el.textContent=message||''}
+function showUpdateNotice(){
+  if(sessionStorage.getItem('gvaUpdateLater')==='1')return;
+  updateSettingsUI();
+  const n=$('#updateNotice');if(n)n.classList.remove('hidden');
+  setUpdateStatus(settingsCopy().available);
+}
+function hideUpdateNotice(defer=false){
+  const n=$('#updateNotice');if(n)n.classList.add('hidden');
+  if(defer)sessionStorage.setItem('gvaUpdateLater','1');
+}
+function saveProgressBeforeUpdate(){
+  if(currentEp&&Number.isFinite(audio.currentTime)){
+    const S=courseState();S.positions[currentEp.episode]=audio.currentTime;S.maxPositions[currentEp.episode]=Math.max(+S.maxPositions[currentEp.episode]||0,audio.currentTime);save();
+  }else save();
+}
+async function applyWaitingUpdate(){
+  const reg=swRegistration||await navigator.serviceWorker?.getRegistration?.();
+  if(!reg?.waiting){await checkForAppUpdate();return}
+  saveProgressBeforeUpdate();
+  if(!audio.paused)audio.pause();
+  swReloading=true;
+  reg.waiting.postMessage({type:'SKIP_WAITING'});
+}
+async function checkForAppUpdate(){
+  const s=settingsCopy();setUpdateStatus(s.checking);
+  if(!('serviceWorker'in navigator)){setUpdateStatus(s.upToDate);return false}
+  try{
+    const reg=swRegistration||await navigator.serviceWorker.getRegistration();
+    if(!reg){setUpdateStatus(s.upToDate);return false}
+    swRegistration=reg;
+    sessionStorage.removeItem('gvaUpdateLater');
+    await reg.update();
+    await new Promise(r=>setTimeout(r,900));
+    if(reg.waiting){showUpdateNotice();setUpdateStatus(s.available);return true}
+    setUpdateStatus(s.upToDate);return false;
+  }catch(err){console.warn('Update check failed',err);setUpdateStatus(s.upToDate);return false}
+}
+function watchServiceWorkerRegistration(reg){
+  swRegistration=reg;
+  if(reg.waiting&&navigator.serviceWorker.controller)showUpdateNotice();
+  reg.addEventListener('updatefound',()=>{
+    const worker=reg.installing;if(!worker)return;
+    worker.addEventListener('statechange',()=>{
+      if(worker.state==='installed'&&navigator.serviceWorker.controller){sessionStorage.removeItem('gvaUpdateLater');showUpdateNotice()}
+    });
+  });
+  clearInterval(updateCheckTimer);
+  updateCheckTimer=setInterval(()=>reg.update().catch(()=>{}),30*60*1000);
+}
+function registerAppServiceWorker(){
+  if(!('serviceWorker'in navigator)||location.protocol==='file:')return;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(!swReloading){swReloading=true}
+    location.reload();
+  });
+  navigator.serviceWorker.register('sw.js').then(reg=>{
+    watchServiceWorkerRegistration(reg);
+    setTimeout(()=>reg.update().catch(()=>{}),2500);
+  }).catch(err=>console.warn('Service worker registration failed',err));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')swRegistration?.update().catch(()=>{})});
 }
 function openSettings(){updateSettingsUI();$('#settingsOverlay').classList.remove('hidden');document.body.classList.add('settings-open')}
 function closeSettings(){$('#settingsOverlay').classList.add('hidden');document.body.classList.remove('settings-open')}
@@ -578,7 +649,7 @@ function updateMediaSessionMetadata(){
       artist:'German Vocabulary Audiobook',
       album:COURSE_META[currentCourseId]?.title||'German Vocabulary Audiobook',
       artwork:[
-        {src:'logo-192-v2.png',sizes:'192x192',type:'image/png'}
+        {src:'logo-pwa-192-v4.png',sizes:'192x192',type:'image/png'}
       ]
     });
   }catch{}
@@ -941,7 +1012,7 @@ audio.onended=handleEpisodeEnded;
 audio.onerror=()=>$('#playerNote').textContent='Audio stream could not be opened. Please refresh and try again.';
 
 setupMediaSession();
-if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+registerAppServiceWorker();
 
 async function route(){
   const h=(location.hash||'#home').slice(1);
@@ -962,6 +1033,9 @@ $('#settingsBtn').onclick=openSettings;
 $('#settingsClose').onclick=closeSettings;
 $('#settingsOverlay').onclick=e=>{if(e.target===$('#settingsOverlay'))closeSettings()};
 $('#quizSoundToggle').onchange=e=>{AS.quizSound=e.target.checked;save();updateSettingsUI()};
+if($('#checkUpdateBtn'))$('#checkUpdateBtn').onclick=checkForAppUpdate;
+if($('#updateNowBtn'))$('#updateNowBtn').onclick=applyWaitingUpdate;
+if($('#updateLaterBtn'))$('#updateLaterBtn').onclick=()=>hideUpdateNotice(true);
 loadCourseData('b1').then(data=>{loaded.b1=data;if(!D&&AS.lastCourse==='b1'){D=data;currentCourseId='b1';entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));updateCourseNavigation();updateHeaderProgress();renderAppHome();updateStaticLanguage()}}).catch(()=>{});
 route();
 })();

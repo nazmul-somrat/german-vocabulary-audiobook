@@ -1107,3 +1107,35 @@ body.settings-open{overflow:hidden}
   color:#ffffff!important;
   border-color:#3b82f6!important;
 }
+
+
+/* v1.0.0 — settings version panel + in-app update notification */
+.app-update-group{padding-bottom:4px}
+.app-version-row{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.app-version-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.app-version-copy strong{font-size:14px}
+.app-version-copy span{font-size:11px;color:#98a9c0}
+.update-check-btn{width:auto!important;min-width:150px;padding:0 14px;flex:0 0 auto}
+.update-check-status{min-height:18px;margin-top:9px;font-size:11px;color:#91a5c1}
+.update-notice{
+  position:fixed;z-index:10050;right:18px;bottom:18px;width:min(560px,calc(100vw - 28px));
+  display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:12px;
+  padding:14px;border-radius:16px;border:1px solid #395174;background:#101b2c;color:#edf4ff;
+  box-shadow:0 18px 50px rgba(0,0,0,.32)
+}
+.update-notice.hidden{display:none!important}
+.update-notice-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#1e4f91;color:#fff;font-size:21px;font-weight:900}
+.update-notice-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.update-notice-copy strong{font-size:14px}.update-notice-copy span{font-size:11px;line-height:1.35;color:#aebed2}
+.update-notice-actions{display:flex;gap:7px;align-items:center}
+.update-now-btn,.update-later-btn{min-height:36px;border-radius:10px;padding:0 12px;font-weight:800;cursor:pointer}
+.update-now-btn{border:0;background:#3b82f6;color:#fff}.update-later-btn{border:1px solid #40536e;background:transparent;color:#dce7f7}
+:root[data-theme="light"] .app-version-copy span,:root[data-theme="light"] .update-check-status{color:#64748b}
+:root[data-theme="light"] .update-notice{background:#fff;color:#162033;border-color:#cbd8e8;box-shadow:0 18px 50px rgba(15,23,42,.2)}
+:root[data-theme="light"] .update-notice-copy span{color:#64748b}
+:root[data-theme="light"] .update-later-btn{background:#fff;color:#334155;border-color:#cbd5e1}
+@media(max-width:620px){
+  .app-version-row{align-items:stretch;flex-direction:column}.update-check-btn{width:100%!important}
+  .update-notice{left:10px;right:10px;bottom:10px;width:auto;grid-template-columns:38px 1fr}
+  .update-notice-actions{grid-column:1/-1;justify-content:flex-end}
+}
