@@ -7,7 +7,7 @@ const COURSE_META=Object.fromEntries(COURSE_LIST.map(c=>[c.id,c]));
 const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
-const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false};
+const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,endBehavior:'next'};
 const APP_DEFAULT={theme:'light',textSize:'normal',lastCourse:'b1',libraryLayout:'grid',courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
@@ -35,6 +35,7 @@ function cs(id){
   if(!AS.courses[id])AS.courses[id]=clone(COURSE_DEFAULT);
   const s=AS.courses[id];
   if(!s.sectionLastEpisodes)s.sectionLastEpisodes={};
+  if(!['next','repeat'].includes(s.endBehavior))s.endBehavior='next';
   return s;
 }
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -58,7 +59,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-a2';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-media1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -80,7 +81,7 @@ async function activateCourse(id){
       const last=epMap[+courseState().lastEpisode||0];
       activeEpisodeSection=currentEp&&currentEp.section?currentEp.section:(last?.section||activeEpisodeSection||'core');
     }else activeEpisodeSection=null;
-    populateSelect(activeEpisodeSection);updateCourseNavigation();updateHeaderProgress();return true;
+    populateSelect(activeEpisodeSection);updateCourseNavigation();updateHeaderProgress();updateEndBehaviorButton();return true;
   }catch(err){console.error(err);msg('Course data could not be loaded.');return false}
 }
 
@@ -142,12 +143,32 @@ function updateEpisodeNavButtons(){
   $('#prevEpisode').disabled=idx<=0;
   $('#nextEpisode').disabled=idx<0||idx>=list.length-1;
 }
-function moveEpisodeWithinSection(delta){
-  if(!currentEp)return;
+function adjacentEpisode(delta){
+  if(!currentEp)return null;
   const list=episodesForSection(currentEp.section||activeEpisodeSection);
   const idx=list.findIndex(ep=>ep.episode===currentEp.episode);
-  const target=list[idx+delta];
-  if(target)openEpisode(target.episode,null,true);
+  return idx>=0?(list[idx+delta]||null):null;
+}
+function moveEpisodeWithinSection(delta,seek=null){
+  const target=adjacentEpisode(delta);
+  if(target){openEpisode(target.episode,seek,true);return true}
+  return false;
+}
+function updateEndBehaviorButton(){
+  const btn=$('#endBehaviorBtn');
+  if(!btn)return;
+  const mode=courseState().endBehavior||'next';
+  btn.textContent=mode==='repeat'?'↻ Repeat':'Next →';
+  btn.classList.toggle('repeat',mode==='repeat');
+  btn.title=mode==='repeat'
+    ?'At episode end: repeat this episode. Click to switch to next episode.'
+    :'At episode end: continue to the next episode. Click to switch to repeat.';
+}
+function toggleEndBehavior(){
+  const S=courseState();
+  S.endBehavior=S.endBehavior==='repeat'?'next':'repeat';
+  save();updateEndBehaviorButton();
+  msg(S.endBehavior==='repeat'?'End behavior: repeat episode ↻':'End behavior: next episode →');
 }
 function openSidebar(){sidebar.classList.add('open');backdrop.classList.add('show')}
 function closeSidebar(){sidebar.classList.remove('open');backdrop.classList.remove('show')}
@@ -574,6 +595,69 @@ function checkBackCurrent(){
   let r=el.getBoundingClientRect(),top=$('#appHeader').offsetHeight+$('.player').offsetHeight+8,visible=r.bottom>top&&r.top<window.innerHeight-60;btn.classList.toggle('hidden',visible)
 }
 
+function updateMediaSessionMetadata(){
+  if(!('mediaSession' in navigator)||!currentEp)return;
+  try{
+    navigator.mediaSession.metadata=new MediaMetadata({
+      title:episodeDisplayLabel(currentEp),
+      artist:'German Vocabulary Audiobook',
+      album:COURSE_META[currentCourseId]?.title||'German Vocabulary Audiobook',
+      artwork:[
+        {src:'logo-192-v2.png',sizes:'192x192',type:'image/png'}
+      ]
+    });
+  }catch{}
+}
+function setupMediaSession(){
+  if(!('mediaSession' in navigator))return;
+  const set=(action,handler)=>{try{navigator.mediaSession.setActionHandler(action,handler)}catch{}};
+  set('play',()=>audio.play().catch(()=>{}));
+  set('pause',()=>audio.pause());
+  set('nexttrack',()=>{
+    if(!moveEpisodeWithinSection(1,0))msg('No next episode in this section');
+  });
+  set('previoustrack',()=>{
+    if(!moveEpisodeWithinSection(-1,0)){
+      audio.currentTime=0;
+      sync(true);
+    }
+  });
+  set('seekbackward',d=>{
+    const amount=d?.seekOffset||10;
+    audio.currentTime=Math.max(0,(audio.currentTime||0)-amount);
+    sync(true);
+  });
+  set('seekforward',d=>{
+    const amount=d?.seekOffset||10;
+    audio.currentTime=Math.min(currentEp?.duration||audio.duration||0,(audio.currentTime||0)+amount);
+    sync(true);
+  });
+}
+function handleEpisodeEnded(){
+  if(!currentEp)return;
+  const S=courseState();
+  S.completed[currentEp.episode]=true;
+  S.positions[currentEp.episode]=currentEp.duration;
+  S.maxPositions[currentEp.episode]=currentEp.duration;
+  save();updateHeaderProgress();updatePersistentPlayerVisibility();
+
+  if(S.endBehavior==='repeat'){
+    audio.currentTime=0;
+    updateMediaSessionMetadata();
+    audio.play().catch(()=>{});
+    msg('Repeating episode ↻');
+    return;
+  }
+
+  const target=adjacentEpisode(1);
+  if(target){
+    msg('Starting next episode →');
+    openEpisode(target.episode,0,true);
+  }else{
+    msg('Episode completed ✓ · End of section');
+  }
+}
+
 async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,keepCourseView=false){
   if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
   n=Math.max(1,Math.min(D.episodes.length,+n));currentEp=epMap[n];const S=courseState(),meta=COURSE_META[currentCourseId];
@@ -587,6 +671,8 @@ async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,kee
   updatePersistentPlayerVisibility();
   if($('#episodeSelect'))$('#episodeSelect').value=String(n);
   updateEpisodeNavButtons();
+  updateEndBehaviorButton();
+  updateMediaSessionMetadata();
   $('#episodeIntro').innerHTML=`<h1>${esc(episodeDisplayLabel(currentEp))}</h1><p>${fmt(currentEp.duration)} · ${currentEp.word_count} words · ${esc(currentEp.first_word)} → ${esc(currentEp.last_word)}</p><p>Tap a transcript line to seek. Tap ☆ to save a difficult word.</p>`;
   renderTranscript();
   if(!meta.audioBase){
@@ -666,6 +752,7 @@ $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.targ
 const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5};
 $('#speedSelect').onchange=e=>{courseState().speed=speeds[e.target.value]||1;audio.playbackRate=courseState().speed;save()};
 $('#currentBookmark').onclick=$('#lyricsStar').onclick=()=>{let e=currentEntry();if(e)toggleBookmark(e.entry_id)};
+$('#endBehaviorBtn').onclick=toggleEndBehavior;
 $('#backCurrent').onclick=()=>scrollToCurrentWord(true);
 
 const backTop=$('#backToTop');
@@ -694,18 +781,21 @@ audio.onloadedmetadata=()=>{
 audio.ontimeupdate=()=>sync();
 audio.onplay=()=>{
   $('#playBtn').textContent='❚❚';playerHasStarted=true;updatePersistentPlayerVisibility();
+  if('mediaSession' in navigator)try{navigator.mediaSession.playbackState='playing'}catch{}
   if(currentEp)setSectionNav(currentEp.section||null);
   if(!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
 };
 audio.onpause=()=>{
   $('#playBtn').textContent='▶';
+  if('mediaSession' in navigator)try{navigator.mediaSession.playbackState='paused'}catch{}
   if(currentEp){courseState().positions[currentEp.episode]=audio.currentTime;save()}
   updatePersistentPlayerVisibility();
   if(!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
 };
-audio.onended=()=>{if(!currentEp)return;const S=courseState();S.completed[currentEp.episode]=true;S.positions[currentEp.episode]=currentEp.duration;S.maxPositions[currentEp.episode]=currentEp.duration;save();updateHeaderProgress();updatePersistentPlayerVisibility();msg('Episode completed ✓')};
+audio.onended=handleEpisodeEnded;
 audio.onerror=()=>$('#playerNote').textContent='Audio stream could not be opened. Please refresh and try again.';
 
+setupMediaSession();
 if('serviceWorker'in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 async function route(){

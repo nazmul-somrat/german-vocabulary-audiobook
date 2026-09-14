@@ -151,20 +151,22 @@ button{cursor:pointer}
 :root[data-theme="dark"] .player{background:rgba(7,12,20,.97)}
 .episode-nav{display:grid;grid-template-columns:42px minmax(190px,1fr) 42px;gap:7px;max-width:560px;margin:auto}
 .episode-nav select,.speed{background:#202c3f;border:1px solid #43516a;color:#fff;border-radius:10px;padding:7px}
-.navbtn,.square,.starbtn{border:0;background:#263449;color:#fff;border-radius:10px;min-height:38px}
-.transport{display:grid;grid-template-columns:48px 50px 48px 75px 48px minmax(130px,1fr);gap:7px;align-items:center;max-width:760px;margin:8px auto 0}
+.navbtn,.square,.starbtn,.endbtn{border:0;background:#263449;color:#fff;border-radius:10px;min-height:38px}
+.transport{display:grid;grid-template-columns:48px 50px 48px 75px 48px 82px minmax(130px,1fr);gap:7px;align-items:center;max-width:860px;margin:8px auto 0}
 .play{border:0;background:#3b82f6;color:#fff;border-radius:12px;height:42px;font-size:18px}
 .starbtn.marked{background:#f2c84b;color:#2d260e}
+.endbtn{padding:0 8px;font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer}
+.endbtn.repeat{background:#315a47;color:#dff7e9}
 .playback-stats{text-align:right;font-variant-numeric:tabular-nums;display:flex;flex-direction:column;line-height:1.2}
 .playback-stats #timebox{font-size:12px;color:#d6e0ef}.playback-stats #wordProgress{font-size:11px;color:#93c5fd;margin-top:3px}
-.progress{display:block;width:min(760px,100%);margin:7px auto;accent-color:#60a5fa}
-.modebar{display:flex;gap:7px;align-items:center;max-width:760px;margin:auto;flex-wrap:wrap}
+.progress{display:block;width:min(860px,100%);margin:7px auto;accent-color:#60a5fa}
+.modebar{display:flex;gap:7px;align-items:center;max-width:860px;margin:auto;flex-wrap:wrap}
 .mode{border:1px solid #43516a;background:#1f2937;color:#dce5f2;border-radius:999px;padding:6px 10px;font-size:12px}
 .mode.active{background:#eaf2ff;color:#193a69;border-color:#bad5ff;font-weight:800}
 .modebar label{font-size:11px;color:#dce5f2}
 .option-toggle{padding:5px 8px;border:1px solid #37455b;border-radius:999px;background:#182334}
 .modebar .right{margin-left:auto}
-.player-note{max-width:760px;margin:4px auto 0;color:#9fb0c8;font-size:11px;min-height:15px}
+.player-note{max-width:860px;margin:4px auto 0;color:#9fb0c8;font-size:11px;min-height:15px}
 .episode-intro{padding:14px;margin-bottom:12px}.episode-intro h1{font-size:calc(21px * var(--text-scale));margin:0 0 5px}.episode-intro p{color:var(--muted)}
 .block-title{margin:21px 4px 8px;font-size:calc(12px * var(--text-scale));text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:900}
 .vocab-card,.recall-card{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:13px;margin:9px 0;box-shadow:0 4px 14px rgba(18,31,50,.04)}
@@ -241,7 +243,7 @@ button{cursor:pointer}
   .brand strong{font-size:14px}.ghost{padding:7px 9px}.topbar{padding:8px 10px}
   .page-main,.episode-main{padding-left:9px;padding-right:9px}
   .course-hero{grid-template-columns:1fr}.course-stats{grid-template-columns:repeat(3,1fr)}
-  .transport{grid-template-columns:43px 47px 43px 67px 43px 1fr}.playback-stats #timebox,.playback-stats #wordProgress{font-size:10px}
+  .transport{grid-template-columns:43px 47px 43px 67px 43px 76px 1fr}.playback-stats #timebox,.playback-stats #wordProgress{font-size:10px}
   .option-toggle{width:100%;order:5}.modebar .right{margin-left:0}
   .quick-card{align-items:flex-start;flex-direction:column}
 }
@@ -309,7 +311,8 @@ button{cursor:pointer}
 }
 :root[data-theme="light"] .navbtn,
 :root[data-theme="light"] .square,
-:root[data-theme="light"] .starbtn{
+:root[data-theme="light"] .starbtn,
+:root[data-theme="light"] .endbtn{
   background:#e9eef6;
   color:#21314a;
   border:1px solid #d6dfeb;
@@ -613,4 +616,11 @@ button{cursor:pointer}
   .brand strong{font-size:12px}
   .site-footer-inner{gap:8px}
   .site-footer-logo{width:21px;height:29px}
+}
+
+:root[data-theme="light"] .endbtn.repeat{background:#e3f4e9;color:#24543a;border-color:#bfdcc9}
+@media(max-width:520px){
+  .transport{grid-template-columns:38px 44px 38px 56px 38px minmax(66px,1fr);gap:4px}
+  .playback-stats{grid-column:1/-1;flex-direction:row;justify-content:center;gap:8px;text-align:center}
+  .endbtn{font-size:10px;padding:0 4px}
 }
