@@ -8,7 +8,7 @@ const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
 const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{}};
-const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',courses:{}};
+const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'next',courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function loadAppState(){
@@ -27,7 +27,7 @@ function loadAppState(){
   }
   s=Object.assign(clone(APP_DEFAULT),s||{});
   s.courses=s.courses||{};
-  if(!['stop','next','repeat'].includes(s.endBehavior))s.endBehavior='stop';
+  if(!['next','repeat'].includes(s.endBehavior))s.endBehavior='next';
   if(!['en','bn','de'].includes(s.uiLanguage))s.uiLanguage='en';
   if(typeof s.quizSound!=='boolean')s.quizSound=true;
   return s;
@@ -68,7 +68,7 @@ function tt(key,vars={}){let s=(UI_TEXT[lang()]&&UI_TEXT[lang()][key])||UI_TEXT.
 function courseTitle(id){return COURSE_TEXT[lang()]?.[id]?.title||COURSE_META[id]?.title||""}
 function courseDescription(id){return COURSE_TEXT[lang()]?.[id]?.description||COURSE_META[id]?.description||""}
 function courseLabel(id){if(id==="b1")return lang()==="bn"?"B1 শব্দভাণ্ডার":(lang()==="de"?"B1 Wortschatz":"B1 Vocabulary"); if(id==="technical")return lang()==="bn"?"কারিগরি শব্দভাণ্ডার":(lang()==="de"?"Technischer Wortschatz":"Technical Vocabulary"); if(id==="a1")return lang()==="bn"?"A1 শব্দভাণ্ডার":(lang()==="de"?"A1 Wortschatz":"A1 Vocabulary"); if(id==="a2")return lang()==="bn"?"A2 শব্দভাণ্ডার":(lang()==="de"?"A2 Wortschatz":"A2 Vocabulary"); return COURSE_META[id]?.title||id}
-function endModeText(mode){return mode==="repeat"?tt("afterRepeat"):mode==="next"?tt("afterNext"):tt("afterStop")}
+function endModeText(mode){return mode==="repeat"?tt("afterRepeat"):tt("afterNext")}
 function setText(sel,val){const el=$(sel);if(el)el.textContent=val}
 function setHTML(sel,val){const el=$(sel);if(el)el.innerHTML=val}
 function updateLanguageButtons(){$$("[data-lang]").forEach(b=>b.classList.toggle("active",b.dataset.lang===lang()))}
@@ -90,7 +90,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-settings1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-layoutfix2';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -192,22 +192,22 @@ function updateEndBehaviorControl(){
   const btn=$('#endBehaviorBtn');
   const icon=$('#endBehaviorIcon');
   if(!btn||!icon)return;
-  const mode=AS.endBehavior||'stop';
+  const mode=AS.endBehavior==='repeat'?'repeat':'next';
+  if(AS.endBehavior!==mode){AS.endBehavior=mode;save()}
   btn.dataset.mode=mode;
   btn.title=endModeText(mode);
   btn.setAttribute('aria-label',endModeText(mode));
   const icons={
-    stop:'<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"></rect></svg>',
-    next:'<svg viewBox="0 0 24 24"><path d="M5.5 5.5v13"></path><path d="M9.5 6.5l8 5.5-8 5.5z"></path></svg>',
-    repeat:'<svg viewBox="0 0 24 24"><path d="M6.5 8h9"></path><path d="M13.5 5l3.5 3-3.5 3"></path><path d="M17.5 16h-9"></path><path d="M10.5 13l-3.5 3 3.5 3"></path></svg>'
+    next:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 5.5l8.5 6.5-8.5 6.5z"></path><path d="M17.5 5.5v13"></path></svg>',
+    repeat:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7.5h8.5"></path><path d="M13.8 4.8l3 2.7-3 2.7"></path><path d="M17 16.5H8.5"></path><path d="M10.2 13.8l-3 2.7 3 2.7"></path><path d="M12 10.2v4.2"></path></svg>'
   };
-  icon.innerHTML=icons[mode]||icons.stop;
+  icon.innerHTML=icons[mode];
 }
 function setEndBehavior(mode){
-  if(!['stop','next','repeat'].includes(mode))mode='stop';
+  if(!['next','repeat'].includes(mode))mode='next';
   AS.endBehavior=mode;save();updateEndBehaviorControl();msg(endModeText(mode));
 }
-function cycleEndBehavior(){const order=['stop','next','repeat'];const i=order.indexOf(AS.endBehavior||'stop');setEndBehavior(order[(i+1)%order.length]);}
+function cycleEndBehavior(){setEndBehavior((AS.endBehavior==='repeat')?'next':'repeat');}
 function settingsCopy(){
   if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন'};
   if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',settings:'Einstellungen',close:'Einstellungen schließen'};
@@ -605,7 +605,7 @@ function setupMediaSession(){
     sync(true);
   });
 }
-function handleEpisodeEnded(){ if(!currentEp)return; const S=courseState(); S.completed[currentEp.episode]=true; S.positions[currentEp.episode]=currentEp.duration; S.maxPositions[currentEp.episode]=currentEp.duration; save(); updateHeaderProgress(); updatePersistentPlayerVisibility(); const mode=AS.endBehavior||'stop'; if(mode==='repeat'){audio.currentTime=0; updateMediaSessionMetadata(); audio.play().catch(()=>{}); msg(endModeText('repeat')); return;} if(mode==='next'){ const target=adjacentEpisode(1); if(target){msg(endModeText('next')); openEpisode(target.episode,0,true); return;} msg(lang()==='bn'?'এপিসোড শেষ ✓ · সেকশনের শেষ':lang()==='de'?'Episode beendet ✓ · Abschnittsende':'Episode completed ✓ · End of section'); return;} msg(lang()==='bn'?'এপিসোড শেষ ✓ · প্লেব্যাক বন্ধ':lang()==='de'?'Episode beendet ✓ · Wiedergabe gestoppt':'Episode completed ✓ · Playback stopped'); }
+function handleEpisodeEnded(){ if(!currentEp)return; const S=courseState(); S.completed[currentEp.episode]=true; S.positions[currentEp.episode]=currentEp.duration; S.maxPositions[currentEp.episode]=currentEp.duration; save(); updateHeaderProgress(); updatePersistentPlayerVisibility(); const mode=AS.endBehavior==='repeat'?'repeat':'next'; if(mode==='repeat'){audio.currentTime=0; updateMediaSessionMetadata(); audio.play().catch(()=>{}); msg(endModeText('repeat')); return;} const target=adjacentEpisode(1); if(target){msg(endModeText('next')); openEpisode(target.episode,0,true); return;} msg(lang()==='bn'?'এপিসোড শেষ ✓ · সেকশনের শেষ':lang()==='de'?'Episode beendet ✓ · Abschnittsende':'Episode completed ✓ · End of section'); }
 
 
 function shuffleCopy(arr){

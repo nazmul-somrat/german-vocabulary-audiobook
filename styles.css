@@ -874,3 +874,82 @@ body.settings-open{overflow:hidden}
   .playback-stats{grid-column:1/-1!important}
   .settings-btn{width:42px;height:42px}
 }
+
+
+/* v4 — sidebar scrolling, two-state end behavior, mobile player and 2-column grid */
+.sidebar{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;
+  min-height:0;
+}
+.side-nav{flex:0 0 auto}
+.side-footer{
+  flex:0 0 auto;
+  margin-top:auto;
+  padding-bottom:12px;
+}
+
+/* Same visual footprint as the Play/Pause control. */
+.end-mode-cycle{
+  width:100%!important;
+  height:42px!important;
+  min-height:42px!important;
+  border-radius:12px!important;
+  background:#3b82f6!important;
+  color:#fff!important;
+  box-shadow:none!important;
+}
+.end-mode-cycle:hover{background:#2f73df!important}
+.end-mode-cycle svg{width:22px!important;height:22px!important;fill:none;stroke:#fff;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.end-mode-cycle[data-mode="next"] svg path:first-child{fill:#fff;stroke:none}
+.end-mode-cycle[data-mode="repeat"] svg path:last-child{stroke-width:2.4}
+
+/* Desktop/tablet: end-mode button is the same 50px column as Play. */
+.transport{grid-template-columns:48px 50px 48px 75px 48px 50px minmax(130px,1fr)!important}
+
+/* Mobile: keep time + word progress on the same row, immediately to the right of the end-mode button. */
+@media(max-width:760px){
+  .transport{
+    grid-template-columns:40px 46px 40px 62px 40px 46px minmax(70px,1fr)!important;
+    gap:5px!important;
+    width:100%;
+    max-width:none;
+  }
+  .play,.end-mode-cycle{height:42px!important;min-height:42px!important}
+  .playback-stats{
+    grid-column:7!important;
+    grid-row:1!important;
+    min-width:0!important;
+    align-self:center;
+    text-align:right!important;
+    padding-left:1px;
+  }
+  .playback-stats #timebox,.playback-stats #wordProgress{font-size:9.5px!important;white-space:nowrap}
+}
+@media(max-width:520px){
+  .transport{
+    grid-template-columns:34px 40px 34px 52px 34px 40px minmax(58px,1fr)!important;
+    gap:4px!important;
+  }
+  .square,.starbtn,.play,.end-mode-cycle,.speed{min-width:0!important}
+  .square,.starbtn{padding-left:2px!important;padding-right:2px!important;font-size:12px!important}
+  .speed{padding-left:3px!important;padding-right:2px!important;font-size:11px!important}
+  .playback-stats{grid-column:7!important;grid-row:1!important}
+  .playback-stats #timebox,.playback-stats #wordProgress{font-size:8.5px!important}
+}
+
+/* Grid really means a 2-column episode grid on phones. */
+@media(max-width:620px){
+  .episode-grid.grid-view{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .episode-grid.grid-view .episode-grid-inner{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .episode-grid.grid-view .episode-card{padding:10px!important;border-radius:14px!important;min-width:0}
+  .episode-grid.grid-view .ephead{gap:4px;align-items:flex-start;flex-wrap:wrap}
+  .episode-grid.grid-view .epnum{font-size:calc(14px * var(--text-scale))!important}
+  .episode-grid.grid-view .status{font-size:calc(8px * var(--text-scale))!important;padding:3px 5px!important;white-space:nowrap}
+  .episode-grid.grid-view .epmeta{font-size:calc(9.5px * var(--text-scale))!important;margin:5px 0 8px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .episode-grid.grid-view .epwords{font-size:calc(9.5px * var(--text-scale))!important}
+  .episode-grid.grid-view .epbar{height:5px!important}
+}
