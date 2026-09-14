@@ -65,7 +65,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quiztest2';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quizall1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -316,12 +316,34 @@ function updateHeaderProgress(){
   label.textContent=`${meta.short} progress`;
   wordsEl.textContent=`${words} / ${total}`;
 }
+
+function quizSummaryFor(courseId=currentCourseId,data=(courseId===currentCourseId?D:loaded[courseId])){
+  const st=cs(courseId);
+  const best=st.quizBest||{};
+  const episodeIds=data?.episodes?.map(ep=>String(ep.episode))||Object.keys(best);
+  let points=0,passed=0;
+  for(const id of episodeIds){
+    const score=Math.max(0,Math.min(QUIZ_COUNT,+best[id]||0));
+    points+=score;
+    if(score>=QUIZ_PASS)passed++;
+  }
+  const totalEpisodes=data?.episodes?.length||COURSE_META[courseId]?.episodes||0;
+  return {points,max:totalEpisodes*QUIZ_COUNT,passed,totalEpisodes};
+}
+function updateCourseQuizPoints(){
+  if(!currentCourseId)return;
+  const q=quizSummaryFor(currentCourseId,D);
+  if($('#sideQuizPoints'))$('#sideQuizPoints').textContent=`${q.points} / ${q.max}`;
+  if($('#courseQuizPoints'))$('#courseQuizPoints').textContent=`${q.points} / ${q.max}`;
+}
+
 function updateCourseNavigation(){
   const meta=COURSE_META[currentCourseId];
   $('#navCourse').innerHTML=`<span>▶</span> ${esc(meta.short)} Vocabulary`;
   $('#navDifficult').title=`${meta.short} Difficult Words`;
   $$('.course-side').forEach(b=>b.classList.toggle('active-course',b.dataset.course===currentCourseId));
   $('#sideBookmarkCount').textContent=courseState().bookmarks.length;
+  updateCourseQuizPoints();
   if($('#navCore'))$('#navCore').classList.toggle('hidden',currentCourseId!=='b1');
   if($('#navAdvanced'))$('#navAdvanced').classList.toggle('hidden',currentCourseId!=='b1');
 }
@@ -331,11 +353,12 @@ function renderAppHome(){
   $('#courseGrid').innerHTML=COURSE_LIST.map(c=>{
     let progressHtml='',action='';
     if(c.status==='ready'&&loaded[c.id]){
-      const st=cs(c.id),data=loaded[c.id],words=progressWords(data,st),p=Math.round(100*words/data.total_words);
-      progressHtml=`<div class="course-card-meta"><span>${words} / ${data.total_words} words</span><span>${p}%</span></div><div class="thinbar"><i style="width:${p}%"></i></div>`;
+      const st=cs(c.id),data=loaded[c.id],words=progressWords(data,st),p=Math.round(100*words/data.total_words),q=quizSummaryFor(c.id,data);
+      progressHtml=`<div class="course-card-meta"><span>${words} / ${data.total_words} words</span><span>${p}%</span></div><div class="thinbar"><i style="width:${p}%"></i></div><div class="course-quiz-meta">Quiz ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} passed</div>`;
       action='<span class="coming-tag">Open course</span>';
     }else if(c.status==='ready'){
-      progressHtml='<div class="course-card-meta"><span>Progress loads with course</span><span></span></div><div class="thinbar"><i style="width:0"></i></div>';
+      const q=quizSummaryFor(c.id,null);
+      progressHtml=`<div class="course-card-meta"><span>Progress loads with course</span><span></span></div><div class="thinbar"><i style="width:0"></i></div><div class="course-quiz-meta">Quiz ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} passed</div>`;
       action='<span class="coming-tag">Open course</span>';
     }else{
       progressHtml='<div class="course-card-meta"><span>Course structure prepared</span><span></span></div>';
@@ -360,6 +383,7 @@ async function openCourse(id='b1',sectionToOpen=null){
   $('#courseProgressText').textContent=`${p}%`;
   $('#courseProgressInline').textContent=`${words} / ${D.total_words} words · ${p}%`;
   $('#courseProgressFill').style.width=`${p}%`;
+  updateCourseQuizPoints();
   const browserTitle=$('#episodeBrowserTitle');
   if(browserTitle)browserTitle.textContent=episodeBrowserTitle();
   $('#bookmarkCount').textContent=S.bookmarks.length;
@@ -679,8 +703,7 @@ function shuffleCopy(arr){
   return a;
 }
 function quizIsAvailable(){
-  // TEST RELEASE: only A1 Episode 01. After approval this gate can be removed.
-  return currentCourseId==='a1'&&currentEp?.episode===1;
+  return !!(currentEp&&D&&quizEligibleEntries().length>=QUIZ_COUNT);
 }
 function updateQuizButton(){
   const btn=$('#quizBtn');
@@ -731,18 +754,27 @@ function quizEligibleEntries(){
 }
 function quizDistractors(correct,pool){
   const correctMeaning=normalizedQuizEnglish(correct.english);
-  const unique=(items)=>{
-    const seen=new Set(),out=[];
+  const unique=(items,used=new Set())=>{
+    const out=[];
     for(const e of items){
       const m=normalizedQuizEnglish(e.english);
-      if(!m||m===correctMeaning||seen.has(m))continue;
-      seen.add(m);out.push(e);
+      if(!m||m===correctMeaning||used.has(m))continue;
+      used.add(m);out.push(e);
     }
     return out;
   };
-  const sameType=unique(pool.filter(e=>e.entry_id!==correct.entry_id&&e.type===correct.type));
-  const others=unique(pool.filter(e=>e.entry_id!==correct.entry_id&&e.type!==correct.type));
-  return shuffleCopy([...shuffleCopy(sameType),...shuffleCopy(others)]).slice(0,3);
+  const used=new Set();
+  const sameType=shuffleCopy(unique(
+    pool.filter(e=>e.entry_id!==correct.entry_id&&e.type===correct.type),used
+  ));
+  const picked=sameType.slice(0,3);
+  if(picked.length<3){
+    const others=shuffleCopy(unique(
+      pool.filter(e=>e.entry_id!==correct.entry_id&&e.type!==correct.type),used
+    ));
+    picked.push(...others.slice(0,3-picked.length));
+  }
+  return picked;
 }
 
 let quizAudioContext=null;
@@ -826,7 +858,7 @@ function renderQuiz(){
   const selected=quizState.answers[quizState.index];
   const pct=Math.round((quizState.index/QUIZ_COUNT)*100);
   body.innerHTML=`
-    <div class="quiz-kicker">A1 VOCABULARY · EPISODE 01</div>
+    <div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div>
     <h2 id="quizTitle">Episode Quiz</h2>
     <div class="quiz-meta"><span>Question ${quizState.index+1} of ${QUIZ_COUNT}</span><span>Pass: ${QUIZ_PASS}/${QUIZ_COUNT}</span></div>
     <div class="quiz-progress"><span style="width:${pct}%"></span></div>
@@ -869,7 +901,7 @@ function finishQuiz(){
   S.quizBest=S.quizBest||{};
   const old=+(S.quizBest[currentEp.episode]||0);
   if(score>old)S.quizBest[currentEp.episode]=score;
-  save();updateQuizButton();
+  save();updateQuizButton();updateCourseQuizPoints();
   renderQuizResult();
   if(score>=QUIZ_PASS)setTimeout(playQuizPassSound,120);
 }
@@ -883,7 +915,7 @@ function renderQuizResult(){
     if(!answer?.correct)wrong.push({german:q.german,yours:answer?.label||'No answer',correct:q.correct});
   });
   body.innerHTML=`
-    <div class="quiz-kicker">A1 VOCABULARY · EPISODE 01</div>
+    <div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div>
     <h2 id="quizTitle">${passed?'Passed':'Review recommended'}</h2>
     <div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${passed?'Great — you reached the 12/15 target.':'Listen to this episode again, then retake the quiz.'}</span></div>
     ${wrong.length?`<section class="quiz-review">
