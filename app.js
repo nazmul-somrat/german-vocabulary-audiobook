@@ -91,7 +91,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quizrepeatfix1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-bookmarkstate1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}

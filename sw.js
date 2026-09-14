@@ -1,16 +1,16 @@
-const CACHE='german-vocab-audiobook-singlecycle-v1';
+const CACHE='german-vocab-audiobook-bookmarkstate-v1';
 const CORE=[
   './',
   './index.html',
-  './styles.css?v=20260914-singlecycle1',
-  './site-config.js?v=20260914-singlecycle1',
-  './courses.js?v=20260914-singlecycle1',
-  './app.js?v=20260914-singlecycle1',
+  './styles.css?v=20260914-bookmarkstate1',
+  './site-config.js?v=20260914-bookmarkstate1',
+  './courses.js?v=20260914-bookmarkstate1',
+  './app.js?v=20260914-bookmarkstate1',
   './manifest.webmanifest',
-  './courses/a1/data.js?v=20260914-singlecycle1',
-  './courses/a2/data.js?v=20260914-singlecycle1',
-  './courses/b1/data.js?v=20260914-singlecycle1',
-  './courses/technical/data.js?v=20260914-singlecycle1'
+  './courses/a1/data.js?v=20260914-bookmarkstate1',
+  './courses/a2/data.js?v=20260914-bookmarkstate1',
+  './courses/b1/data.js?v=20260914-bookmarkstate1',
+  './courses/technical/data.js?v=20260914-bookmarkstate1'
 ];
 self.addEventListener('install',e=>{
   self.skipWaiting();
