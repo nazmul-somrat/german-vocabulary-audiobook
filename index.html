@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="logo-32-v2.png">
 <link rel="apple-touch-icon" href="logo-pwa-192-v4.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=20260914-appupdate2">
+<link rel="stylesheet" href="styles.css?v=20260914-langfix1">
 <title>German Vocabulary Audiobook</title>
 </head>
 <body>
@@ -100,8 +100,8 @@
           <button data-mode="study" class="mode active">Study</button>
           <button data-mode="german" class="mode">German-only</button>
           <button data-mode="lyrics" class="mode">Lyrics</button>
-          <label class="option-toggle" title="In Study mode, hide future English until its audio begins"><input id="revealEnglishToggle" type="checkbox"> Reveal English with audio</label>
-          <label><input id="followToggle" type="checkbox" checked> Auto-follow</label>
+          <label class="option-toggle" title="In Study mode, hide future English until its audio begins"><input id="revealEnglishToggle" type="checkbox"> <span id="revealEnglishText">Reveal English with audio</span></label>
+          <label><input id="followToggle" type="checkbox" checked> <span id="autoFollowText">Auto-follow</span></label>
           <button id="quizBtn" class="mode quiz-launch hidden" type="button">Quiz</button>
           <button id="episodeLibrary" class="mode">Episodes</button>
         </div>
@@ -114,7 +114,7 @@
         <section class="app-hero">
           <p class="eyebrow" id="homeEyebrow">VOCABULARY AUDIOBOOK COLLECTION</p>
           <h1 id="homeTitle">Learn German vocabulary by listening, reading and recalling.</h1>
-          <p id="homeSubtitle">One player for multiple vocabulary courses. Your progress and difficult words stay separate for each course.</p>
+          <p id="homeSubtitle">One player for multiple vocabulary courses. Your progress and bookmarked words stay separate for each course.</p>
         </section>
 
         <div class="section-head simple"><h2 id="homeCoursesHeading">Courses</h2></div>
@@ -171,7 +171,7 @@
 
         <section class="home-tools">
           <input id="searchInput" placeholder="Search German or English…">
-          <button id="bookmarksBtn" class="pill toggle-pill">★ Difficult words <span id="bookmarkCount">0</span></button>
+          <button id="bookmarksBtn" class="pill toggle-pill">★ Bookmarked Words <span id="bookmarkCount">0</span></button>
         </section>
         <div id="searchPanel" class="panel hidden"></div>
         <div id="bookmarksPanel" class="panel hidden"></div>
@@ -186,7 +186,7 @@
     <section id="difficultView" class="view hidden">
       <main class="page-main">
         <div class="page-title-row">
-          <div><p class="eyebrow" id="difficultEyebrow">PERSONAL REVIEW</p><h1 id="difficultTitle">Difficult Words</h1><p id="difficultSubtitle">Words you marked with ★ while listening.</p></div>
+          <div><p class="eyebrow" id="difficultEyebrow">PERSONAL REVIEW</p><h1 id="difficultTitle">Bookmarked Words</h1><p id="difficultSubtitle">Words you bookmarked with ★ while listening.</p></div>
         </div>
         <div id="difficultFullPanel" class="panel"></div>
       </main>
@@ -199,7 +199,7 @@
         <section id="lyricsView" class="lyrics-view">
           <div id="lyricPrev" class="lyric prev"></div>
           <div id="lyricCurrent" class="lyric current"></div>
-          <button id="lyricsStar" class="lyrics-star">☆ Difficult word</button>
+          <button id="lyricsStar" class="lyrics-star">☆ Bookmark word</button>
           <div id="lyricNext" class="lyric next"></div>
         </section>
       </main>
@@ -273,7 +273,7 @@
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.0</strong>
+          <strong id="appVersionText">Version 1.0.2</strong>
           <span id="appUpdatedText">Updated 14 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
@@ -283,9 +283,9 @@
   </section>
 </div>
 
-<script src="site-config.js?v=20260914-appupdate2"></script>
-<script src="courses.js?v=20260914-appupdate2"></script>
-<script src="app.js?v=20260914-appupdate2"></script>
+<script src="site-config.js?v=20260914-langfix1"></script>
+<script src="courses.js?v=20260914-langfix1"></script>
+<script src="app.js?v=20260914-langfix1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
