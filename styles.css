@@ -741,3 +741,54 @@ body.quiz-open{overflow:hidden}
 @media(max-width:520px){
   .course-stats{grid-template-columns:repeat(2,1fr)}
 }
+
+.quiz-instant-feedback{
+  min-height:52px;
+  margin-top:16px;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 14px;
+  font-size:14px;
+  font-weight:750;
+}
+.quiz-instant-feedback.placeholder{
+  border:1px dashed transparent;
+  background:transparent;
+}
+.quiz-instant-feedback.correct{
+  background:#123426;
+  border:1px solid #245b43;
+  color:#bdf3d2;
+}
+.quiz-instant-feedback.wrong{
+  background:#3a1c1c;
+  border:1px solid #6e2d2d;
+  color:#ffd1d1;
+}
+.quiz-instant-feedback.wrong span{
+  color:#f3aaaa;
+  font-weight:700;
+}
+.quiz-instant-feedback.wrong strong{
+  color:#fff;
+  font-size:15px;
+}
+:root[data-theme="light"] .quiz-instant-feedback.correct{
+  background:#e9f8ef;
+  border-color:#b9e4c8;
+  color:#17663b;
+}
+:root[data-theme="light"] .quiz-instant-feedback.wrong{
+  background:#fff0f0;
+  border-color:#efbcbc;
+  color:#a32020;
+}
+:root[data-theme="light"] .quiz-instant-feedback.wrong span{
+  color:#b94747;
+}
+:root[data-theme="light"] .quiz-instant-feedback.wrong strong{
+  color:#8c1717;
+}

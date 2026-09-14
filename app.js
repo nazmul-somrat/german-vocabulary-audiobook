@@ -65,7 +65,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quizall1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-quizall2';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -869,6 +869,11 @@ function renderQuiz(){
         <span class="quiz-letter">${String.fromCharCode(65+i)}</span><span>${esc(o.label)}</span>
       </button>`).join('')}
     </div>
+    ${selected!=null?(
+      q.options[selected]?.correct
+        ? `<div class="quiz-instant-feedback correct">✓ Correct</div>`
+        : `<div class="quiz-instant-feedback wrong"><span>Correct answer:</span> <strong>${esc(q.correct)}</strong></div>`
+    ):`<div class="quiz-instant-feedback placeholder" aria-hidden="true">&nbsp;</div>`}
     <div class="quiz-actions">
       <button id="quizPrev" class="quiz-secondary" type="button" ${quizState.index===0?'disabled':''}>Back</button>
       <button id="quizNext" class="quiz-primary" type="button" ${selected==null?'disabled':''}>${quizState.index===QUIZ_COUNT-1?'Finish':'Next'}</button>
