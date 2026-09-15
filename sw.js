@@ -1,18 +1,18 @@
-const CACHE='german-vocab-audiobook-v1.0.5-fastseek1';
+const CACHE='german-vocab-audiobook-v1.0.3-playback1';
 const CORE=[
   './',
   './index.html',
-  './styles.css?v=20260915-fastseek1',
-  './site-config.js?v=20260915-fastseek1',
-  './courses.js?v=20260915-fastseek1',
-  './app.js?v=20260915-fastseek1',
+  './styles.css?v=20260915-playback1',
+  './site-config.js?v=20260915-playback1',
+  './courses.js?v=20260915-playback1',
+  './app.js?v=20260915-playback1',
   './manifest.webmanifest',
   './logo-pwa-192-v4.png',
   './logo-pwa-512-v4.png',
-  './courses/a1/data.js?v=20260915-fastseek1',
-  './courses/a2/data.js?v=20260915-fastseek1',
-  './courses/b1/data.js?v=20260915-fastseek1',
-  './courses/technical/data.js?v=20260915-fastseek1'
+  './courses/a1/data.js?v=20260915-playback1',
+  './courses/a2/data.js?v=20260915-playback1',
+  './courses/b1/data.js?v=20260915-playback1',
+  './courses/technical/data.js?v=20260915-playback1'
 ];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)));

@@ -39,7 +39,7 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.5';
+const APP_VERSION='1.0.3';
 const APP_UPDATED='15 September 2026';
 let swRegistration=null;
 let swReloading=false;
@@ -125,7 +125,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260915-fastseek1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260915-playback1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -384,29 +384,6 @@ function scrollElementBelowPlayer(el,smooth=true){
   const y=el.getBoundingClientRect().top+window.scrollY-stickyTopOffset();
   window.scrollTo({top:Math.max(0,y),behavior:smooth?'smooth':'auto'});
 }
-
-// Direct, no-animation jump used for intentional manual seeks. This bypasses
-// the global html{scroll-behavior:smooth} rule so large timeline jumps do not
-// slowly animate through all skipped transcript content.
-function jumpElementInstantly(el,block='center'){
-  if(!el)return;
-  const scroller=document.scrollingElement||document.documentElement;
-  const html=document.documentElement,body=document.body;
-  const prevHtml=html.style.scrollBehavior,prevBody=body.style.scrollBehavior;
-  html.style.scrollBehavior='auto';
-  body.style.scrollBehavior='auto';
-  // Force the temporary style to take effect before changing scrollTop.
-  void html.offsetHeight;
-  const r=el.getBoundingClientRect();
-  let target=window.scrollY+r.top;
-  if(block==='center')target-=Math.max(0,(window.innerHeight-r.height)/2);
-  else if(block==='end')target-=Math.max(0,window.innerHeight-r.height);
-  scroller.scrollTop=Math.max(0,target);
-  requestAnimationFrame(()=>{
-    html.style.scrollBehavior=prevHtml;
-    body.style.scrollBehavior=prevBody;
-  });
-}
 function activeEpisodeCardForSection(sectionId){
   if(!currentEp||!playerHasStarted||currentEp.section!==sectionId)return null;
   return document.querySelector(`.episode-card[data-ep="${currentEp.episode}"]`);
@@ -655,7 +632,7 @@ function renderTranscript(){
   $$('.line[data-start]').forEach(el=>el.onclick=e=>{
     if(el.classList.contains('recall-answer')&&el.classList.contains('auto-hidden')){manualRecall.add(el.dataset.event);el.classList.add('revealed');e.stopPropagation();return}
     if(el.classList.contains('english')&&el.classList.contains('hidden-en')){manualEnglish.add(el.dataset.event);el.classList.add('user-revealed');applyEnglishVisibility(audio.currentTime||0);e.stopPropagation();return}
-    audio.currentTime=+el.dataset.start;sync(true,'instant');updateMediaSessionPosition(true);msg(ux('jumpedTo',{time:fmt(audio.currentTime)}))
+    audio.currentTime=+el.dataset.start;msg(ux('jumpedTo',{time:fmt(audio.currentTime)}))
   });
   applyMode()
 }
@@ -677,7 +654,7 @@ function applyMode(){
   normal.classList.toggle('normal-hidden',m==='lyrics');lyrics.classList.toggle('visible',m==='lyrics');
   $('#revealEnglishToggle').checked=!!S.revealEnglishOnAudio;applyEnglishVisibility(audio.currentTime||0);updateRecall(audio.currentTime||0);checkBackCurrent();sync(true)
 }
-function sync(force=false,followMode='smooth'){
+function sync(force=false){
   if(!currentEp)return;const S=courseState(),t=audio.currentTime||0;
   $('#progress').value=t;$('#timebox').textContent=`${fmt(t)} / ${fmt(currentEp.duration)}`;updateWordProgress();updateRecall(t);
   if(segmentStop&&t>=segmentStop){setPlaybackIntent(false);audio.pause();segmentStop=null;$('#playerNote').textContent=ux('reviewFinished');msg(ux('reviewComplete'))}
@@ -685,20 +662,15 @@ function sync(force=false,followMode='smooth'){
   if(i!==lastActive||force){
     $$('.line.active').forEach(x=>x.classList.remove('active'));let ev=currentEp.events[i],el=document.querySelector(`.line[data-event="${ev.id}"]`);if(el)el.classList.add('active');
     renderLyrics(i);applyEnglishVisibility(t);
-    const effectiveFollow=manualSeekActive?'none':followMode;
-    if($('#followToggle').checked&&S.mode!=='lyrics'&&el&&i!==lastActive&&effectiveFollow!=='none'){
-      if(effectiveFollow==='instant')jumpElementInstantly(el,'center');
-      else el.scrollIntoView({behavior:'smooth',block:'center'});
-    }
+    if($('#followToggle').checked&&S.mode!=='lyrics'&&el&&i!==lastActive)el.scrollIntoView({behavior:'smooth',block:'center'});
     lastActive=i;setTimeout(checkBackCurrent,220)
   }
   if(Date.now()-saveTick>1800){S.positions[currentEp.episode]=t;S.maxPositions[currentEp.episode]=Math.max(+S.maxPositions[currentEp.episode]||0,t);S.lastEpisode=currentEp.episode;save();saveTick=Date.now();updateHeaderProgress()}
   updateStars()
 }
 function scrollToCurrentWord(smooth=true){
-  if(!currentEp)return;let ev=currentEp.events[activeIndex(audio.currentTime||0)],id=ev&&ev.entry_id,card=id&&document.getElementById(`entry-${id}`),lineEl=ev&&document.querySelector(`.line[data-event="${ev.id}"]`),target=lineEl||card;
-  if(target){if(smooth)target.scrollIntoView({behavior:'smooth',block:'center'});else jumpElementInstantly(target,'center')}
-  $('#backCurrent').classList.add('hidden')
+  if(!currentEp)return;let ev=currentEp.events[activeIndex(audio.currentTime||0)],id=ev&&ev.entry_id,card=id&&document.getElementById(`entry-${id}`),lineEl=ev&&document.querySelector(`.line[data-event="${ev.id}"]`);
+  (lineEl||card)?.scrollIntoView({behavior:smooth?'smooth':'auto',block:'center'});$('#backCurrent').classList.add('hidden')
 }
 function checkBackCurrent(){
   const S=courseState(),btn=$('#backCurrent');if(!currentEp||S.mode==='lyrics'||$('#episodeView').classList.contains('hidden')){btn.classList.add('hidden');return}
@@ -712,7 +684,6 @@ let resumeWhenReady=false;
 let recoveryTimer=null;
 let recoveryAttempts=0;
 let mediaPositionTick=0;
-let manualSeekActive=false;
 
 function clearPlaybackRecovery(){
   if(recoveryTimer){clearTimeout(recoveryTimer);recoveryTimer=null;}
@@ -812,12 +783,12 @@ function setupMediaSession(){
   set('seekbackward',d=>{
     const amount=d?.seekOffset||10;
     audio.currentTime=Math.max(0,(audio.currentTime||0)-amount);
-    sync(true,'instant');updateMediaSessionPosition(true);
+    sync(true);updateMediaSessionPosition(true);
   });
   set('seekforward',d=>{
     const amount=d?.seekOffset||10;
     audio.currentTime=Math.min(currentEp?.duration||audio.duration||0,(audio.currentTime||0)+amount);
-    sync(true,'instant');updateMediaSessionPosition(true);
+    sync(true);updateMediaSessionPosition(true);
   });
 }
 function handleEpisodeEnded(){
@@ -1104,21 +1075,10 @@ $('#episodeLibrary').onclick=()=>openCourse(currentCourseId,currentEp?.section||
 $('#quizBtn').onclick=openQuiz;
 $('#quizClose').onclick=closeQuiz;
 $('#quizOverlay').onclick=e=>{if(e.target===$('#quizOverlay'))closeQuiz()};
-$('#back10').onclick=()=>{audio.currentTime=Math.max(0,audio.currentTime-10);sync(true,'instant');updateMediaSessionPosition(true)};
-$('#fwd10').onclick=()=>{audio.currentTime=Math.min(currentEp.duration,audio.currentTime+10);sync(true,'instant');updateMediaSessionPosition(true)};
+$('#back10').onclick=()=>audio.currentTime=Math.max(0,audio.currentTime-10);
+$('#fwd10').onclick=()=>audio.currentTime=Math.min(currentEp.duration,audio.currentTime+10);
 $('#playBtn').onclick=()=>audio.paused?(setPlaybackIntent(true),safePlay('player-button')):pauseByUser();
-const progressEl=$('#progress');
-const beginManualSeek=()=>{manualSeekActive=true};
-const finishManualSeek=()=>{if(!manualSeekActive)return;manualSeekActive=false;sync(true,'instant');updateMediaSessionPosition(true)};
-progressEl.addEventListener('pointerdown',beginManualSeek);
-progressEl.addEventListener('touchstart',beginManualSeek,{passive:true});
-progressEl.addEventListener('mousedown',beginManualSeek);
-progressEl.oninput=e=>{manualSeekActive=true;audio.currentTime=+e.target.value;sync(true,'none');updateMediaSessionPosition(true)};
-progressEl.addEventListener('pointerup',finishManualSeek);
-progressEl.addEventListener('touchend',finishManualSeek);
-progressEl.addEventListener('mouseup',finishManualSeek);
-progressEl.addEventListener('change',finishManualSeek);
-progressEl.addEventListener('keyup',finishManualSeek);
+$('#progress').oninput=e=>{audio.currentTime=+e.target.value;sync(true)};
 $('#followToggle').onchange=()=>sync(true);
 $$('.mode[data-mode]').forEach(b=>b.onclick=()=>{courseState().mode=b.dataset.mode;save();applyMode()});
 $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.target.checked;save();applyEnglishVisibility(audio.currentTime||0);msg(e.target.checked?(lang()==='bn'?'ইংরেজি তার অডিওর সাথে দেখাবে':lang()==='de'?'Englisch erscheint mit dem Audio':'English will appear with its audio'):(lang()==='bn'?'স্টাডি মোডে ইংরেজি সবসময় দেখা যাবে':lang()==='de'?'Englisch ist im Lernmodus immer sichtbar':'English always visible in Study mode'))};
