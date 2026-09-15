@@ -39,7 +39,7 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.4';
+const APP_VERSION='1.0.5';
 const APP_UPDATED='15 September 2026';
 let swRegistration=null;
 let swReloading=false;
@@ -125,7 +125,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260915-seek1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260915-fastseek1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -383,6 +383,29 @@ function scrollElementBelowPlayer(el,smooth=true){
   if(!el)return;
   const y=el.getBoundingClientRect().top+window.scrollY-stickyTopOffset();
   window.scrollTo({top:Math.max(0,y),behavior:smooth?'smooth':'auto'});
+}
+
+// Direct, no-animation jump used for intentional manual seeks. This bypasses
+// the global html{scroll-behavior:smooth} rule so large timeline jumps do not
+// slowly animate through all skipped transcript content.
+function jumpElementInstantly(el,block='center'){
+  if(!el)return;
+  const scroller=document.scrollingElement||document.documentElement;
+  const html=document.documentElement,body=document.body;
+  const prevHtml=html.style.scrollBehavior,prevBody=body.style.scrollBehavior;
+  html.style.scrollBehavior='auto';
+  body.style.scrollBehavior='auto';
+  // Force the temporary style to take effect before changing scrollTop.
+  void html.offsetHeight;
+  const r=el.getBoundingClientRect();
+  let target=window.scrollY+r.top;
+  if(block==='center')target-=Math.max(0,(window.innerHeight-r.height)/2);
+  else if(block==='end')target-=Math.max(0,window.innerHeight-r.height);
+  scroller.scrollTop=Math.max(0,target);
+  requestAnimationFrame(()=>{
+    html.style.scrollBehavior=prevHtml;
+    body.style.scrollBehavior=prevBody;
+  });
 }
 function activeEpisodeCardForSection(sectionId){
   if(!currentEp||!playerHasStarted||currentEp.section!==sectionId)return null;
@@ -664,7 +687,8 @@ function sync(force=false,followMode='smooth'){
     renderLyrics(i);applyEnglishVisibility(t);
     const effectiveFollow=manualSeekActive?'none':followMode;
     if($('#followToggle').checked&&S.mode!=='lyrics'&&el&&i!==lastActive&&effectiveFollow!=='none'){
-      el.scrollIntoView({behavior:effectiveFollow==='instant'?'auto':'smooth',block:'center'});
+      if(effectiveFollow==='instant')jumpElementInstantly(el,'center');
+      else el.scrollIntoView({behavior:'smooth',block:'center'});
     }
     lastActive=i;setTimeout(checkBackCurrent,220)
   }
@@ -672,8 +696,9 @@ function sync(force=false,followMode='smooth'){
   updateStars()
 }
 function scrollToCurrentWord(smooth=true){
-  if(!currentEp)return;let ev=currentEp.events[activeIndex(audio.currentTime||0)],id=ev&&ev.entry_id,card=id&&document.getElementById(`entry-${id}`),lineEl=ev&&document.querySelector(`.line[data-event="${ev.id}"]`);
-  (lineEl||card)?.scrollIntoView({behavior:smooth?'smooth':'auto',block:'center'});$('#backCurrent').classList.add('hidden')
+  if(!currentEp)return;let ev=currentEp.events[activeIndex(audio.currentTime||0)],id=ev&&ev.entry_id,card=id&&document.getElementById(`entry-${id}`),lineEl=ev&&document.querySelector(`.line[data-event="${ev.id}"]`),target=lineEl||card;
+  if(target){if(smooth)target.scrollIntoView({behavior:'smooth',block:'center'});else jumpElementInstantly(target,'center')}
+  $('#backCurrent').classList.add('hidden')
 }
 function checkBackCurrent(){
   const S=courseState(),btn=$('#backCurrent');if(!currentEp||S.mode==='lyrics'||$('#episodeView').classList.contains('hidden')){btn.classList.add('hidden');return}
