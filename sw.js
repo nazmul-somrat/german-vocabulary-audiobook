@@ -1,4 +1,4 @@
-const CACHE='german-vocab-audiobook-v1.0.3-playback1';
+const CACHE='german-vocab-audiobook-v1.0.4-seek1';
 const CORE=[
   './',
   './index.html',
