@@ -4,10 +4,10 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const COURSE_LIST=window.GVA_COURSES||[];
 const COURSE_META=Object.fromEntries(COURSE_LIST.map(c=>[c.id,c]));
-const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
+const views=['#appHomeView','#courseHomeView','#quizHistoryView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
-const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{}};
+const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{},quizHistory:{},quizHistoryVersion:1};
 const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:4,courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
@@ -39,7 +39,7 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.4';
+const APP_VERSION='1.0.5';
 const APP_UPDATED='15 September 2026';
 let swRegistration=null;
 let swReloading=false;
@@ -56,6 +56,19 @@ function cs(id){
   const s=AS.courses[id];
   if(!s.sectionLastEpisodes)s.sectionLastEpisodes={};
   if(!s.quizBest)s.quizBest={};
+  if(!s.quizHistory)s.quizHistory={};
+  // Preserve an earlier best score as one legacy history item. After three
+  // newer attempts, it drops out and the course score follows the newest 3 only.
+  if(s.quizHistoryVersion!==1){
+    for(const [ep,raw] of Object.entries(s.quizBest||{})){
+      const score=Math.max(0,Math.min(QUIZ_COUNT,+raw||0));
+      if(score>0&&!Array.isArray(s.quizHistory[ep])){
+        s.quizHistory[ep]=[{id:`legacy-${ep}`,score,at:null,legacy:true,review:null}];
+      }
+    }
+    s.quizHistoryVersion=1;
+    save();
+  }
   return s;
 }
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -75,6 +88,12 @@ const UI_MORE={
   bn:{all:'সব',grid:'গ্রিড',list:'তালিকা',searchPlaceholder:'জার্মান বা ইংরেজি খুঁজুন…',bookmarkedWords:'বুকমার্ক করা শব্দ',myBookmarks:'আমার বুকমার্ক করা শব্দ ({n})',clearBookmarks:'সব বুকমার্ক মুছুন',noBookmarks:'এখনও কোনো শব্দ বুকমার্ক করা হয়নি।',bookmarkHelp:'রিভিউর জন্য শব্দ সংরক্ষণ করতে পড়ার সময় ☆ চাপুন।',review:'রিভিউ',open:'খুলুন',clearConfirm:'সব বুকমার্ক করা শব্দ মুছে ফেলবেন?',bookmarkRemoved:'বুকমার্ক মুছে ফেলা হয়েছে',bookmarkSaved:'শব্দ বুকমার্ক করা হয়েছে',searchResults:'সার্চ ফলাফল ({n}{plus})',forQuery:'“{q}” এর জন্য',noMatching:'কোনো মিল পাওয়া যায়নি।',word:'শব্দ',sectionEmpty:'নির্বাচিত ফিল্টারে এই সেকশনে কোনো এপিসোড নেই।',episodesEmpty:'এই ফিল্টারে কোনো এপিসোড নেই।',learningBlock:'লার্নিং ব্লক {n}',germanWordTwice:'জার্মান শব্দ · দুইবার বলা হয়েছে',englishMeaning:'ইংরেজি অর্থ',grammarForms:'ব্যাকরণ / বহুবচন / ক্রিয়ার রূপ',germanExample:'জার্মান উদাহরণ {n} · দুইবার বলা হয়েছে',englishTranslation:'ইংরেজি অনুবাদ {n}',recallAfter:'◆ ব্লক {n} শেষে রিকল',deEnRecall:'জার্মান → ইংরেজি · ৪ সেকেন্ড রিকল',enDeRecall:'ইংরেজি → জার্মান · ৪ সেকেন্ড রিকল',answer:'উত্তর',jumpedTo:'{time} এ যাওয়া হয়েছে',reviewFinished:'বুকমার্ক রিভিউ শেষ হয়েছে।',reviewComplete:'রিভিউ সম্পন্ন',noNextEpisode:'এই সেকশনে পরের এপিসোড নেই',audioCourse:'অডিও কোর্স',transcriptHint:'কোনো ট্রান্সক্রিপ্ট লাইনে চাপলে সেখানে যাবে। শব্দ বুকমার্ক করতে ☆ চাপুন।',gatewayMissing:'নিরাপদ অডিও গেটওয়ে এখনো কনফিগার করা হয়নি।',bookmarkReviewStop:'বুকমার্ক রিভিউ: এই এন্ট্রি শেষে অডিও স্বয়ংক্রিয়ভাবে থামবে।',resetConfirm:'সব {n}টি এপিসোডের শোনার প্রগ্রেস রিসেট করবেন? বুকমার্কগুলো রাখা হবে।',progressReset:'প্রগ্রেস রিসেট হয়েছে',study:'স্টাডি',germanOnly:'শুধু জার্মান',lyrics:'লিরিক্স',revealEnglish:'অডিওর সাথে ইংরেজি দেখান',autoFollow:'অটো-ফলো',current:'বর্তমান',playing:'চলছে',easy:'সহজ',medium:'মাঝারি',hard:'কঠিন',noun:'বিশেষ্য',verb:'ক্রিয়া',other:'অন্যান্য',adjective:'বিশেষণ',adverb:'ক্রিয়া বিশেষণ',pronoun:'সর্বনাম',preposition:'পদান্বয়ী অব্যয়',conjunction:'সংযোজক',article:'আর্টিকেল'},
   de:{all:'Alle',grid:'Raster',list:'Liste',searchPlaceholder:'Deutsch oder Englisch suchen…',bookmarkedWords:'Gespeicherte Wörter',myBookmarks:'Meine gespeicherten Wörter ({n})',clearBookmarks:'Lesezeichen löschen',noBookmarks:'Noch keine Wörter gespeichert.',bookmarkHelp:'Tippe beim Lernen auf ☆, um Wörter für die Wiederholung zu speichern.',review:'Wiederholen',open:'Öffnen',clearConfirm:'Alle gespeicherten Wörter löschen?',bookmarkRemoved:'Lesezeichen entfernt',bookmarkSaved:'Wort gespeichert',searchResults:'Suchergebnisse ({n}{plus})',forQuery:'für „{q}“',noMatching:'Keine passenden Wörter gefunden.',word:'Wort',sectionEmpty:'In diesem Abschnitt passen keine Episoden zum gewählten Filter.',episodesEmpty:'Keine Episoden passen zu diesem Filter.',learningBlock:'Lernblock {n}',germanWordTwice:'Deutsches Wort · zweimal gesprochen',englishMeaning:'Englische Bedeutung',grammarForms:'Grammatik / Plural / Verbformen',germanExample:'Deutsches Beispiel {n} · zweimal gesprochen',englishTranslation:'Englische Übersetzung {n}',recallAfter:'◆ Abruf nach Block {n}',deEnRecall:'Deutsch → Englisch · 4 Sekunden Abruf',enDeRecall:'Englisch → Deutsch · 4 Sekunden Abruf',answer:'Antwort',jumpedTo:'Zu {time} gesprungen',reviewFinished:'Wiederholung der gespeicherten Wörter beendet.',reviewComplete:'Wiederholung abgeschlossen',noNextEpisode:'Keine nächste Episode in diesem Abschnitt',audioCourse:'AUDIOKURS',transcriptHint:'Tippe auf eine Transkriptzeile, um dorthin zu springen. Tippe auf ☆, um ein Wort zu speichern.',gatewayMissing:'Das sichere Audio-Gateway ist noch nicht konfiguriert.',bookmarkReviewStop:'Wiederholung gespeicherter Wörter: Dieser Eintrag stoppt automatisch.',resetConfirm:'Hörfortschritt für alle {n} Episoden zurücksetzen? Gespeicherte Wörter bleiben erhalten.',progressReset:'Fortschritt zurückgesetzt',study:'Lernen',germanOnly:'Nur Deutsch',lyrics:'Lyrics',revealEnglish:'Englisch mit Audio anzeigen',autoFollow:'Auto-Folge',current:'Aktuell',playing:'Läuft',easy:'leicht',medium:'mittel',hard:'schwer',noun:'Substantiv',verb:'Verb',other:'Sonstiges',adjective:'Adjektiv',adverb:'Adverb',pronoun:'Pronomen',preposition:'Präposition',conjunction:'Konjunktion',article:'Artikel'}
 };
+const QUIZ_HISTORY_TEXT={
+  en:{title:'Quiz History',subtitle:'Your last 3 quiz attempts for each episode. Course quiz points use the best score among those 3 attempts.',allEpisodes:'All episodes',attemptedOnly:'Attempted only',allSections:'All sections',core:'B1 Core',advanced:'B1+ Advanced',best:'Best',latest:'Latest',attempts:'Attempts',notAttempted:'Not attempted',attempt:'Attempt',previousBest:'Earlier score',detailsUnavailable:'Detailed review was not stored for this earlier quiz score.',quizResult:'Quiz result',backToHistory:'Back to Quiz History',noEpisodes:'No episodes match this filter.',newest:'Newest',savedLocally:'Quiz history is stored on this device.',listenPractice:'Tap a time to open that word in the transcript and start the audio there.'},
+  bn:{title:'কুইজ হিস্ট্রি',subtitle:'প্রতি এপিসোডের সর্বশেষ ৩টি কুইজ চেষ্টা। কোর্স কুইজ পয়েন্ট এই ৩টির মধ্যে সর্বোচ্চ স্কোর থেকে গণনা হয়।',allEpisodes:'সব এপিসোড',attemptedOnly:'শুধু চেষ্টা করা',allSections:'সব সেকশন',core:'B1 কোর',advanced:'B1+ অ্যাডভান্সড',best:'সেরা',latest:'সর্বশেষ',attempts:'চেষ্টা',notAttempted:'এখনও কুইজ দেওয়া হয়নি',attempt:'চেষ্টা',previousBest:'আগের স্কোর',detailsUnavailable:'এই পুরোনো কুইজ স্কোরের বিস্তারিত রিভিউ আগে সংরক্ষিত হয়নি।',quizResult:'কুইজ রেজাল্ট',backToHistory:'কুইজ হিস্ট্রিতে ফিরুন',noEpisodes:'এই ফিল্টারে কোনো এপিসোড নেই।',newest:'সর্বশেষ',savedLocally:'কুইজ হিস্ট্রি এই ডিভাইসে সংরক্ষিত থাকে।',listenPractice:'সময়ে চাপলে সেই শব্দের ট্রান্সক্রিপ্টে গিয়ে অডিও চালু হবে।'},
+  de:{title:'Quiz-Verlauf',subtitle:'Die letzten 3 Quizversuche pro Episode. Die Quizpunkte des Kurses verwenden den besten Wert aus genau diesen 3 Versuchen.',allEpisodes:'Alle Episoden',attemptedOnly:'Nur versucht',allSections:'Alle Abschnitte',core:'B1 Grundkurs',advanced:'B1+ Aufbau',best:'Bestwert',latest:'Letzter',attempts:'Versuche',notAttempted:'Noch nicht versucht',attempt:'Versuch',previousBest:'Früherer Wert',detailsUnavailable:'Für diesen älteren Quizwert wurde noch keine Detailansicht gespeichert.',quizResult:'Quiz-Ergebnis',backToHistory:'Zurück zum Quiz-Verlauf',noEpisodes:'Keine Episoden entsprechen diesem Filter.',newest:'Neueste',savedLocally:'Der Quiz-Verlauf wird auf diesem Gerät gespeichert.',listenPractice:'Tippe auf eine Zeit, um das Wort im Transkript zu öffnen und das Audio dort zu starten.'}
+};
+function qh(key,vars={}){let x=QUIZ_HISTORY_TEXT[lang()]?.[key]??QUIZ_HISTORY_TEXT.en[key]??key;return String(x).replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'')}
 function ux(key,vars={}){let s=UI_MORE[lang()]?.[key]??UI_MORE.en[key]??key;return String(s).replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'')}
 function difficultyLabel(v){return ux(String(v||'').toLowerCase())||v}
 function typeLabel(v){return ux(String(v||'').toLowerCase())||v}
@@ -172,8 +191,8 @@ function showView(id){
   updatePersistentPlayerVisibility();
 }
 function setActiveNav(view){
-  $$('.side-link').forEach(x=>x.classList.remove('active'));
-  let nav=view==='#appHomeView'?'home':view==='#difficultView'?'difficult':view==='#courseHomeView'?'course':view==='#episodeView'?'course':'';
+  $$('.side-link,.side-quiz-points').forEach(x=>x.classList.remove('active'));
+  let nav=view==='#appHomeView'?'home':view==='#difficultView'?'difficult':view==='#quizHistoryView'?'quiz-history':view==='#courseHomeView'?'course':view==='#episodeView'?'course':'';
   const b=$(`[data-nav="${nav}"]`);if(b)b.classList.add('active');
 }
 
@@ -477,13 +496,26 @@ function updateHeaderProgress(){
   ring.style.setProperty('--pct',pct); pctEl.textContent=`${pct}%`; label.textContent=`${meta.short} ${tt('progress')}`; wordsEl.textContent=`${words} / ${total}`;
 }
 
+function quizAttempts(st,episodeId){
+  const arr=st?.quizHistory?.[String(episodeId)];
+  return Array.isArray(arr)?arr.slice(0,3):[];
+}
+function quizBestFromAttempts(st,episodeId){
+  const arr=quizAttempts(st,episodeId);
+  return arr.length?Math.max(...arr.map(a=>Math.max(0,Math.min(QUIZ_COUNT,+a.score||0)))):0;
+}
+function syncQuizBestFromHistory(st,episodeId){
+  st.quizBest=st.quizBest||{};
+  const id=String(episodeId),best=quizBestFromAttempts(st,id);
+  if(best>0)st.quizBest[id]=best;else delete st.quizBest[id];
+  return best;
+}
 function quizSummaryFor(courseId=currentCourseId,data=(courseId===currentCourseId?D:loaded[courseId])){
   const st=cs(courseId);
-  const best=st.quizBest||{};
-  const episodeIds=data?.episodes?.map(ep=>String(ep.episode))||Object.keys(best);
+  const episodeIds=data?.episodes?.map(ep=>String(ep.episode))||Object.keys(st.quizHistory||{});
   let points=0,passed=0;
   for(const id of episodeIds){
-    const score=Math.max(0,Math.min(QUIZ_COUNT,+best[id]||0));
+    const score=quizBestFromAttempts(st,id);
     points+=score;
     if(score>=QUIZ_PASS)passed++;
   }
@@ -495,6 +527,43 @@ function updateCourseQuizPoints(){
   const q=quizSummaryFor(currentCourseId,D);
   if($('#sideQuizPoints'))$('#sideQuizPoints').textContent=`${q.points} / ${q.max}`;
   if($('#courseQuizPoints'))$('#courseQuizPoints').textContent=`${q.points} / ${q.max}`;
+}
+let quizHistoryFilter='all',quizHistorySection='all';
+function attemptDate(at){
+  if(!at)return'';
+  try{return new Intl.DateTimeFormat(lang()==='de'?'de-DE':lang()==='bn'?'bn-BD':'en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(at))}catch{return''}
+}
+function openStoredQuizResult(episodeId,attempt){
+  const ep=epMap[+episodeId];if(!ep||!attempt)return;
+  quizState={finished:true,history:true,episode:+episodeId,score:+attempt.score||0,review:Array.isArray(attempt.review)?attempt.review:[],legacy:!!attempt.legacy,attempt};
+  $('#quizOverlay').classList.remove('hidden');document.body.classList.add('quiz-open');renderQuizResult();
+}
+function renderQuizHistory(){
+  if(!D)return;
+  const st=courseState(),host=$('#quizHistoryList');if(!host)return;
+  setText('#quizHistoryEyebrow',`${COURSE_META[currentCourseId]?.short||''} ${qh('title').toUpperCase()}`);
+  setText('#quizHistoryTitle',qh('title'));setText('#quizHistorySubtitle',qh('subtitle'));setText('#quizHistoryLocalNote',qh('savedLocally'));
+  const allBtn=$('#quizHistoryAll'),attemptedBtn=$('#quizHistoryAttempted');if(allBtn)allBtn.textContent=qh('allEpisodes');if(attemptedBtn)attemptedBtn.textContent=qh('attemptedOnly');
+  if(allBtn)allBtn.classList.toggle('active',quizHistoryFilter==='all');if(attemptedBtn)attemptedBtn.classList.toggle('active',quizHistoryFilter==='attempted');
+  const sections=$('#quizHistorySections');
+  if(sections){
+    sections.classList.toggle('hidden',currentCourseId!=='b1');
+    if(currentCourseId==='b1')sections.innerHTML=`<button class="chip ${quizHistorySection==='all'?'active':''}" data-qh-section="all">${esc(qh('allSections'))}</button><button class="chip ${quizHistorySection==='core'?'active':''}" data-qh-section="core">${esc(qh('core'))}</button><button class="chip ${quizHistorySection==='advanced'?'active':''}" data-qh-section="advanced">${esc(qh('advanced'))}</button>`;
+  }
+  let eps=D.episodes.filter(ep=>(quizHistorySection==='all'||currentCourseId!=='b1'||ep.section===quizHistorySection));
+  if(quizHistoryFilter==='attempted')eps=eps.filter(ep=>quizAttempts(st,ep.episode).length);
+  host.innerHTML=eps.length?eps.map(ep=>{
+    const attempts=quizAttempts(st,ep.episode),best=attempts.length?Math.max(...attempts.map(a=>+a.score||0)):null,latest=attempts[0]?.score;
+    const attemptHtml=attempts.length?attempts.map((a,i)=>`<button type="button" class="quiz-history-attempt" data-qh-ep="${ep.episode}" data-qh-attempt="${i}"><span>${a.legacy?esc(qh('previousBest')):(i===0?esc(qh('newest')):`${esc(qh('attempt'))} ${i+1}`)}</span><strong>${Math.max(0,Math.min(QUIZ_COUNT,+a.score||0))}/${QUIZ_COUNT}</strong>${a.at?`<small>${esc(attemptDate(a.at))}</small>`:''}</button>`).join(''):`<div class="quiz-history-empty">${esc(qh('notAttempted'))}</div>`;
+    return `<article class="quiz-history-episode"><div class="quiz-history-episode-head"><div><strong>${esc(episodeDisplayLabel(ep))}</strong><small>${fmt(ep.duration)} · ${ep.word_count} ${tt('words')}</small></div><div class="quiz-history-summary"><span>${esc(qh('best'))}<b>${best==null?'—':`${best}/${QUIZ_COUNT}`}</b></span><span>${esc(qh('latest'))}<b>${latest==null?'—':`${latest}/${QUIZ_COUNT}`}</b></span><span>${esc(qh('attempts'))}<b>${attempts.length}/3</b></span></div></div><div class="quiz-history-attempts">${attemptHtml}</div></article>`;
+  }).join(''):`<div class="quiz-history-no-results">${esc(qh('noEpisodes'))}</div>`;
+  $$('[data-qh-section]').forEach(b=>b.onclick=()=>{quizHistorySection=b.dataset.qhSection;renderQuizHistory()});
+  $$('.quiz-history-attempt').forEach(b=>b.onclick=()=>{const arr=quizAttempts(st,b.dataset.qhEp);openStoredQuizResult(+b.dataset.qhEp,arr[+b.dataset.qhAttempt])});
+  updateCourseQuizPoints();
+}
+async function openQuizHistory(courseId=currentCourseId){
+  if(!(await activateCourse(courseId)))return;
+  showView('#quizHistoryView');location.hash=`quiz-history-${currentCourseId}`;renderQuizHistory();updateHeaderProgress();
 }
 
 function updateCourseNavigation(){
@@ -857,7 +926,7 @@ function shuffleCopy(arr){
 function quizIsAvailable(){
   return !!(currentEp&&D&&quizEligibleEntries().length>=QUIZ_COUNT);
 }
-function updateQuizButton(){ const btn=$('#quizBtn'); if(!btn)return; const available=quizIsAvailable(); btn.classList.toggle('hidden',!available); if(!available)return; const best=+(courseState().quizBest?.[currentEp.episode]||0); btn.textContent=best>0?`${tt('quiz')} · ${tt('best')} ${best}/${QUIZ_COUNT}`:tt('quiz'); }
+function updateQuizButton(){ const btn=$('#quizBtn'); if(!btn)return; const available=quizIsAvailable(); btn.classList.toggle('hidden',!available); if(!available)return; const best=quizBestFromAttempts(courseState(),currentEp.episode); btn.textContent=best>0?`${tt('quiz')} · ${tt('best')} ${best}/${QUIZ_COUNT}`:tt('quiz'); }
 function normalizedQuizGerman(s){
   return String(s||'').trim().toLocaleLowerCase('de-DE').replace(/\s+/g,' ');
 }
@@ -977,6 +1046,7 @@ function buildQuiz(){
     ]);
     questions.push({
       entry_id:correct.entry_id,
+      start:+correct.start||0,
       german:correct.german,
       grammar:quizGrammarLabel(correct),
       correct:correct.english,
@@ -992,24 +1062,51 @@ function closeQuiz(){
   document.body.classList.remove('quiz-open');
 }
 function renderQuiz(){ if(!quizState)return; const body=$('#quizBody'); if(quizState.finished){renderQuizResult();return} const q=quizState.questions[quizState.index], selected=quizState.answers[quizState.index], pct=Math.round((quizState.index/QUIZ_COUNT)*100); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${tt('quizTitle')}</h2><div class="quiz-meta"><span>${tt('question',{n:quizState.index+1,t:QUIZ_COUNT})}</span><span>${tt('pass',{p:QUIZ_PASS,t:QUIZ_COUNT})}</span></div><div class="quiz-progress"><span style="width:${pct}%"></span></div><div class="quiz-word">${esc(q.german)}${q.grammar?` <span class="quiz-grammar">(${esc(q.grammar)})</span>`:''}</div><p class="quiz-prompt">${tt('quizPrompt')}</p><div class="quiz-options">${q.options.map((o,i)=>`<button type="button" class="quiz-option ${selected===i?'selected':''} ${selected!=null?'locked':''}" data-qoption="${i}" ${selected!=null?'disabled':''}><span class="quiz-letter">${String.fromCharCode(65+i)}</span><span>${esc(o.label)}</span></button>`).join('')}</div>${selected!=null?(q.options[selected]?.correct?`<div class="quiz-instant-feedback correct">${tt('correct')}</div>`:`<div class="quiz-instant-feedback wrong"><span>${tt('correctAnswer')}</span> <strong>${esc(q.correct)}</strong></div>`):`<div class="quiz-instant-feedback placeholder" aria-hidden="true">&nbsp;</div>`}<div class="quiz-actions"><button id="quizPrev" class="quiz-secondary" type="button" ${quizState.index===0?'disabled':''}>${tt('back')}</button><button id="quizNext" class="quiz-primary" type="button" ${selected==null?'disabled':''}>${quizState.index===QUIZ_COUNT-1?tt('finish'):tt('next')}</button></div>`; $$('[data-qoption]').forEach(btn=>btn.onclick=()=>{if(quizState.answers[quizState.index]!=null)return; const i=+btn.dataset.qoption,opt=q.options[i]; quizState.answers[quizState.index]=i; playQuizFeedback(!!opt.correct); renderQuiz();}); $('#quizPrev').onclick=()=>{if(quizState.index>0){quizState.index--;renderQuiz()}}; $('#quizNext').onclick=()=>{if(quizState.answers[quizState.index]==null)return; if(quizState.index<QUIZ_COUNT-1){quizState.index++;renderQuiz();}else{finishQuiz();}}; }
+function collectQuizReview(){
+  if(!quizState?.questions)return [];
+  const wrong=[];
+  quizState.questions.forEach((q,i)=>{
+    const answer=q.options[quizState.answers[i]];
+    if(!answer?.correct)wrong.push({entry_id:q.entry_id,german:q.german,yours:answer?.label||'—',correct:q.correct,start:+q.start||+entryIndex[q.entry_id]?.start||0});
+  });
+  return wrong;
+}
+function saveQuizAttempt(score,review){
+  const S=courseState(),id=String(currentEp.episode);
+  S.quizHistory=S.quizHistory||{};
+  const next={id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,score:+score||0,at:Date.now(),legacy:false,review:clone(review||[])};
+  const current=Array.isArray(S.quizHistory[id])?S.quizHistory[id]:[];
+  S.quizHistory[id]=[next,...current].slice(0,3);
+  syncQuizBestFromHistory(S,id);
+  save();
+}
 function finishQuiz(){
   if(!quizState)return;
   let score=0;
-  quizState.questions.forEach((q,i)=>{
-    const a=q.options[quizState.answers[i]];
-    if(a?.correct)score++;
-  });
-  quizState.score=score;
-  quizState.finished=true;
-  const S=courseState();
-  S.quizBest=S.quizBest||{};
-  const old=+(S.quizBest[currentEp.episode]||0);
-  if(score>old)S.quizBest[currentEp.episode]=score;
-  save();updateQuizButton();updateCourseQuizPoints();
+  quizState.questions.forEach((q,i)=>{const a=q.options[quizState.answers[i]];if(a?.correct)score++});
+  quizState.score=score;quizState.finished=true;quizState.episode=currentEp.episode;quizState.review=collectQuizReview();
+  saveQuizAttempt(score,quizState.review);
+  updateQuizButton();updateCourseQuizPoints();
   renderQuizResult();
   if(score>=QUIZ_PASS)setTimeout(playQuizPassSound,120);
 }
-function renderQuizResult(){ const body=$('#quizBody'), score=quizState.score||0, passed=score>=QUIZ_PASS, wrong=[]; quizState.questions.forEach((q,i)=>{const answer=q.options[quizState.answers[i]]; if(!answer?.correct)wrong.push({german:q.german,yours:answer?.label||'—',correct:q.correct})}); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${passed?tt('passed'):tt('reviewRecommended')}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${passed?tt('greatTarget'):tt('listenAgainThen')}</span></div>${wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)}</span></div>`).join('')}</section>`:`<div class="quiz-perfect">${tt('allCorrect')}</div>`}<div class="quiz-result-actions"><button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`; $('#quizRetake').onclick=()=>{const q=buildQuiz(); if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; renderQuiz()}}; $('#quizListenAgain').onclick=()=>{closeQuiz(); audio.currentTime=0; sync(true); setPlaybackIntent(true); safePlay('quiz-listen-again');}; $('#quizDone').onclick=closeQuiz; }
+async function practiceQuizAnswer(episodeId,entryId,start){
+  closeQuiz();
+  const x=entryIndex[entryId],seek=Number.isFinite(+start)?+start:(+x?.start||0);
+  await openEpisode(+episodeId,seek,true,null,entryId||null);
+}
+function renderQuizResult(){
+  const body=$('#quizBody'),score=+quizState?.score||0,passed=score>=QUIZ_PASS;
+  const episodeId=+quizState?.episode||currentEp?.episode||1,ep=epMap[episodeId]||currentEp;
+  const wrong=Array.isArray(quizState?.review)?quizState.review:collectQuizReview();
+  const legacy=!!quizState?.legacy;
+  body.innerHTML=`<div class="quiz-kicker">${esc(ep?episodeDisplayLabel(ep):'')}</div><h2 id="quizTitle">${esc(quizState?.history?qh('quizResult'):(passed?tt('passed'):tt('reviewRecommended')))}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${legacy?qh('detailsUnavailable'):(passed?tt('greatTarget'):tt('listenAgainThen'))}</span></div>${!legacy&&wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3><p class="quiz-practice-hint">${esc(qh('listenPractice'))}</p>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)} <button type="button" class="quiz-time-link" data-qtime-entry="${esc(x.entry_id||'')}" data-qtime-start="${+x.start||0}" data-qtime-episode="${episodeId}">▶ ${fmt(+x.start||0)}</button></span></div>`).join('')}</section>`:(!legacy?`<div class="quiz-perfect">${tt('allCorrect')}</div>`:'')}<div class="quiz-result-actions">${quizState?.history?`<button id="quizBackHistory" class="quiz-secondary" type="button">${esc(qh('backToHistory'))}</button>`:''}<button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`;
+  $$('.quiz-time-link').forEach(b=>b.onclick=()=>practiceQuizAnswer(+b.dataset.qtimeEpisode,b.dataset.qtimeEntry,+b.dataset.qtimeStart));
+  if($('#quizBackHistory'))$('#quizBackHistory').onclick=()=>{closeQuiz();openQuizHistory(currentCourseId)};
+  $('#quizRetake').onclick=async()=>{if(quizState?.history){closeQuiz();await openEpisode(episodeId,null,false);openQuiz();return}const q=buildQuiz();if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false};renderQuiz()}};
+  $('#quizListenAgain').onclick=async()=>{closeQuiz();if(currentEp?.episode===episodeId){audio.currentTime=0;sync(true);setPlaybackIntent(true);safePlay('quiz-listen-again');}else await openEpisode(episodeId,0,true)};
+  $('#quizDone').onclick=closeQuiz;
+}
 
 async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,keepCourseView=false){
   if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
@@ -1080,6 +1177,7 @@ $('#brandHome').onclick=renderAppHome;
 $('[data-nav="home"]').onclick=renderAppHome;
 $('#navCourse').onclick=()=>openCourse(currentCourseId);
 $('#navDifficult').onclick=openDifficult;
+if($('#navQuizHistory'))$('#navQuizHistory').onclick=()=>openQuizHistory(currentCourseId);
 if($('#navCore'))$('#navCore').onclick=()=>openCourse('b1','core');
 if($('#navAdvanced'))$('#navAdvanced').onclick=()=>openCourse('b1','advanced');
 $$('.course-side').forEach(b=>b.onclick=()=>openCourse(b.dataset.course));
@@ -1087,6 +1185,12 @@ $$('.course-side').forEach(b=>b.onclick=()=>openCourse(b.dataset.course));
 $('#continueBtn').onclick=()=>{const S=courseState(),ep=+S.lastEpisode||1;openEpisode(ep,+S.positions[ep]||0)};
 $('#openLibraryBtn').onclick=$('#quickLibrary').onclick=()=>scrollToEpisodeBrowser();
 $('#bookmarksBtn').onclick=()=>renderCourseBookmarkPanel(true);
+if($('#courseQuizPointsCard')){
+  $('#courseQuizPointsCard').onclick=()=>openQuizHistory(currentCourseId);
+  $('#courseQuizPointsCard').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openQuizHistory(currentCourseId)}};
+}
+if($('#quizHistoryAll'))$('#quizHistoryAll').onclick=()=>{quizHistoryFilter='all';renderQuizHistory()};
+if($('#quizHistoryAttempted'))$('#quizHistoryAttempted').onclick=()=>{quizHistoryFilter='attempted';renderQuizHistory()};
 $('#searchInput').oninput=search;
 $('#resetProgress').onclick=()=>{if(confirm(ux('resetConfirm',{n:D.episodes.length}))){const S=courseState();S.positions={};S.maxPositions={};S.completed={};S.lastEpisode=1;save();renderEpisodeGrid();updateHeaderProgress();openCourse(currentCourseId);msg(ux('progressReset'))}};
 $$('[data-library-filter]').forEach(b=>b.onclick=()=>{libraryFilter=b.dataset.libraryFilter;$$('[data-library-filter]').forEach(x=>x.classList.toggle('active',x===b));renderEpisodeGrid()});
@@ -1181,6 +1285,7 @@ async function route(){
   if((m=h.match(/^course-(.+)$/))){await openCourse(m[1]);return}
   if((m=h.match(/^library-(.+)$/))){await openCourse(m[1]);return}
   if((m=h.match(/^difficult-(.+)$/))){if(await activateCourse(m[1]))await openDifficult();return}
+  if((m=h.match(/^quiz-history-(.+)$/))){await openQuizHistory(m[1]);return}
   if((m=h.match(/^episode-([^-]+)-(\d+)$/))){if(await activateCourse(m[1]))await openEpisode(+m[2]);return}
   renderAppHome()
 }
