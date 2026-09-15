@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="logo-32-v2.png">
 <link rel="apple-touch-icon" href="logo-pwa-192-v4.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=20260915-playback1">
+<link rel="stylesheet" href="styles.css?v=20260915-feedback2">
 <title>German Vocabulary Audiobook</title>
 </head>
 <body>
@@ -269,11 +269,62 @@
       </label>
     </div>
 
+    <div class="settings-group settings-expand-group">
+      <details id="installDetails" class="settings-details">
+        <summary>
+          <div class="settings-row-head settings-summary-head"><strong id="settingsInstallLabel">Install app</strong><span id="settingsInstallHint">Android, iPhone / iPad and Windows</span></div>
+          <span class="settings-details-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="install-guides">
+          <article class="install-guide-card">
+            <div class="install-guide-visual" aria-hidden="true">
+              <svg viewBox="0 0 240 118" role="img"><rect x="66" y="5" width="108" height="108" rx="14" class="device-shell"/><rect x="74" y="18" width="92" height="20" rx="7" class="browser-bar"/><circle cx="150" cy="28" r="2.2"/><circle cx="157" cy="28" r="2.2"/><circle cx="164" cy="28" r="2.2"/><rect x="94" y="45" width="78" height="48" rx="8" class="menu-card"/><path d="M106 62h16m-8-8v16"/><path d="M132 60h28M132 69h22M105 82h54"/></svg>
+            </div>
+            <div class="install-guide-copy"><strong id="installAndroidLabel">Android</strong><p id="installAndroidSteps">Open in Chrome → ⋮ menu → Install app / Add to Home screen → Install</p></div>
+          </article>
+          <article class="install-guide-card">
+            <div class="install-guide-visual" aria-hidden="true">
+              <svg viewBox="0 0 240 118" role="img"><rect x="70" y="5" width="100" height="108" rx="15" class="device-shell"/><rect x="77" y="15" width="86" height="72" rx="7" class="screen-fill"/><path d="M120 102V82M111 91l9-9 9 9"/><rect x="106" y="93" width="28" height="13" rx="4" class="share-tray"/></svg>
+            </div>
+            <div class="install-guide-copy"><strong id="installIphoneLabel">iPhone / iPad</strong><p id="installIphoneSteps">Open in Safari → Share → Add to Home Screen → Open as Web App → Add</p></div>
+          </article>
+          <article class="install-guide-card">
+            <div class="install-guide-visual" aria-hidden="true">
+              <svg viewBox="0 0 240 118" role="img"><rect x="45" y="12" width="150" height="82" rx="8" class="device-shell"/><rect x="53" y="22" width="134" height="18" rx="6" class="browser-bar"/><path d="M164 26v10M159 31h10"/><path d="M31 101h178l-13 9H44z" class="laptop-base"/><rect x="72" y="50" width="96" height="29" rx="7" class="menu-card"/><path d="M86 61h18m-9-7v14M112 60h44M112 69h34"/></svg>
+            </div>
+            <div class="install-guide-copy"><strong id="installWindowsLabel">Windows</strong><p id="installWindowsSteps">Open in Chrome or Edge → Install icon in the address bar / menu → Install</p></div>
+          </article>
+        </div>
+        <p id="installNote" class="settings-helper-note">After installation, the audiobook opens like a separate app from your Home Screen or desktop.</p>
+      </details>
+    </div>
+
+    <div class="settings-group settings-expand-group">
+      <details id="feedbackDetails" class="settings-details">
+        <summary>
+          <div class="settings-row-head settings-summary-head"><strong id="settingsFeedbackLabel">Feedback</strong><span id="settingsFeedbackHint">Send a bug report, suggestion or any comment</span></div>
+          <span class="settings-details-chevron" aria-hidden="true">⌄</span>
+        </summary>
+        <div class="feedback-panel">
+          <p id="feedbackIntro">Write anything you want to tell us.</p>
+          <form id="feedbackForm" class="feedback-form" action="https://docs.google.com/forms/d/e/1FAIpQLScEKZKveuF1hHjbw02KzIdpuKbmfOtMWAHPFngRqmOtT5FV2Q/formResponse" method="POST" target="feedbackSubmitFrame" novalidate>
+            <textarea id="feedbackText" name="entry.928501120" rows="6" maxlength="3000" required placeholder="Write your feedback here..." aria-label="Feedback"></textarea>
+            <div class="feedback-form-footer">
+              <span id="feedbackStatus" class="feedback-status" role="status" aria-live="polite"></span>
+              <button id="feedbackSubmitBtn" class="feedback-submit-btn" type="submit">Send feedback</button>
+            </div>
+          </form>
+          <iframe id="feedbackSubmitFrame" name="feedbackSubmitFrame" class="feedback-submit-frame" title="Feedback submission" aria-hidden="true" tabindex="-1"></iframe>
+          <p id="feedbackDirect" class="settings-helper-note">No Google Forms page will open.</p>
+        </div>
+      </details>
+    </div>
+
     <div class="settings-group app-update-group">
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.3</strong>
+          <strong id="appVersionText">Version 1.0.4</strong>
           <span id="appUpdatedText">Updated 15 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
@@ -285,7 +336,7 @@
 
 <script src="site-config.js?v=20260915-playback1"></script>
 <script src="courses.js?v=20260915-playback1"></script>
-<script src="app.js?v=20260915-playback1"></script>
+<script src="app.js?v=20260915-feedback2"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

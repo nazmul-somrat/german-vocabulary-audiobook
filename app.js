@@ -39,7 +39,7 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.3';
+const APP_VERSION='1.0.4';
 const APP_UPDATED='15 September 2026';
 let swRegistration=null;
 let swReloading=false;
@@ -62,7 +62,7 @@ function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function fmt(t){t=Math.max(0,Math.floor(+t||0));let h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
 function msg(x){toast.textContent=x;toast.classList.add('show');clearTimeout(msg.t);msg.t=setTimeout(()=>toast.classList.remove('show'),1300)}
 
-let currentCourseId='b1', D=null, entryIndex={}, epMap={}, currentEp=null;
+let currentCourseId=(COURSE_META[AS.lastCourse]?.status==='ready'?AS.lastCourse:'b1'), D=null, entryIndex={}, epMap={}, currentEp=null;
 let lastActive=-1, segmentStop=null, manualEnglish=new Set(), manualRecall=new Set();
 
 const UI_TEXT={
@@ -246,13 +246,15 @@ function cycleEndBehavior(){
   setEndBehavior(next);
 }
 function settingsCopy(){
-  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৫ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
-  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 15. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
-  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings',browserAuto:'The web version updates automatically when you refresh.'};
+  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',install:'অ্যাপ ইনস্টল করুন',installHint:'Android, iPhone / iPad ও Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Chrome খুলুন → ⋮ মেনু → Install app / Add to Home screen → Install',iphoneSteps:'Safari খুলুন → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Chrome বা Edge খুলুন → address bar-এর Install আইকন / menu → Install',installNote:'ইনস্টল করলে অডিওবুকটি আলাদা অ্যাপের মতো Home Screen বা Desktop থেকে খুলবে।',feedback:'ফিডব্যাক',feedbackHint:'বাগ, পরামর্শ বা যেকোনো মন্তব্য পাঠান',feedbackIntro:'আপনি যা বলতে চান নিচে লিখুন।',feedbackPlaceholder:'এখানে আপনার ফিডব্যাক লিখুন...',feedbackSend:'ফিডব্যাক পাঠান',feedbackSending:'পাঠানো হচ্ছে…',feedbackSent:'✓ ধন্যবাদ! আপনার ফিডব্যাক পাঠানো হয়েছে।',feedbackEmpty:'প্রথমে আপনার ফিডব্যাক লিখুন।',feedbackDirect:'কোনো Google Forms পেজ খুলবে না।',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৫ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
+  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',install:'App installieren',installHint:'Android, iPhone / iPad und Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'In Chrome öffnen → ⋮ Menü → App installieren / Zum Startbildschirm hinzufügen → Installieren',iphoneSteps:'In Safari öffnen → Teilen → Zum Home-Bildschirm → Als Web-App öffnen → Hinzufügen',windowsSteps:'In Chrome oder Edge öffnen → Installationssymbol in der Adressleiste / Menü → Installieren',installNote:'Nach der Installation lässt sich das Hörbuch wie eine eigene App vom Home-Bildschirm oder Desktop starten.',feedback:'Feedback',feedbackHint:'Fehler, Vorschläge oder andere Rückmeldungen senden',feedbackIntro:'Schreibe unten alles, was du uns mitteilen möchtest.',feedbackPlaceholder:'Feedback hier eingeben...',feedbackSend:'Feedback senden',feedbackSending:'Wird gesendet…',feedbackSent:'✓ Danke! Dein Feedback wurde gesendet.',feedbackEmpty:'Bitte schreibe zuerst dein Feedback.',feedbackDirect:'Es wird keine Google-Forms-Seite geöffnet.',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 15. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
+  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',install:'Install app',installHint:'Android, iPhone / iPad and Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Open in Chrome → ⋮ menu → Install app / Add to Home screen → Install',iphoneSteps:'Open in Safari → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Open in Chrome or Edge → Install icon in the address bar / menu → Install',installNote:'After installation, the audiobook opens like a separate app from your Home Screen or desktop.',feedback:'Feedback',feedbackHint:'Send a bug report, suggestion or any comment',feedbackIntro:'Write anything you want to tell us.',feedbackPlaceholder:'Write your feedback here...',feedbackSend:'Send feedback',feedbackSending:'Sending…',feedbackSent:'✓ Thank you! Your feedback has been sent.',feedbackEmpty:'Please write your feedback first.',feedbackDirect:'No Google Forms page will open.',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings',browserAuto:'The web version updates automatically when you refresh.'};
 }
 function updateSettingsUI(){
   const s=settingsCopy();
   setText('#settingsTitle',s.title);setText('#settingsKicker',s.kicker);setText('#settingsLanguageLabel',s.language);setText('#settingsLanguageHint',s.languageHint);setText('#settingsAppearanceLabel',s.appearance);setText('#settingsAppearanceHint',s.appearanceHint);setText('#settingsFontLabel',s.font);setText('#settingsFontHint',s.fontHint);setText('#settingsQuizSoundLabel',s.quizSound);setText('#settingsQuizSoundHint',s.quizSoundHint);
+  setText('#settingsInstallLabel',s.install);setText('#settingsInstallHint',s.installHint);setText('#installAndroidLabel',s.android);setText('#installIphoneLabel',s.iphone);setText('#installWindowsLabel',s.windows);setText('#installAndroidSteps',s.androidSteps);setText('#installIphoneSteps',s.iphoneSteps);setText('#installWindowsSteps',s.windowsSteps);setText('#installNote',s.installNote);
+  setText('#settingsFeedbackLabel',s.feedback);setText('#settingsFeedbackHint',s.feedbackHint);setText('#feedbackIntro',s.feedbackIntro);setText('#feedbackDirect',s.feedbackDirect);const feedbackText=$('#feedbackText');if(feedbackText)feedbackText.placeholder=s.feedbackPlaceholder;const feedbackBtn=$('#feedbackSubmitBtn');if(feedbackBtn&&!feedbackBtn.disabled)feedbackBtn.textContent=s.feedbackSend;
   setText('#settingsAppLabel',s.app);setText('#settingsAppHint',s.appHint);setText('#appVersionText',s.version);setText('#appUpdatedText',s.updated);setText('#checkUpdateBtn',s.check);
   const checkBtn=$('#checkUpdateBtn');if(checkBtn)checkBtn.classList.toggle('hidden',!isInstalledApp());
   const updateStatus=$('#updateCheckStatus');if(updateStatus&&!isInstalledApp())updateStatus.textContent=s.browserAuto;
@@ -260,6 +262,30 @@ function updateSettingsUI(){
   const settingsBtn=$('#settingsBtn');if(settingsBtn){settingsBtn.title=s.settings;settingsBtn.setAttribute('aria-label',s.settings)}
   const close=$('#settingsClose');if(close)close.setAttribute('aria-label',s.close);
   applyPreferences();updateLanguageButtons();
+}
+
+let feedbackSubmissionPending=false;
+let feedbackSubmissionTimer=null;
+function finishFeedbackSubmission(){
+  if(!feedbackSubmissionPending)return;
+  feedbackSubmissionPending=false;
+  clearTimeout(feedbackSubmissionTimer);
+  const form=$('#feedbackForm'),btn=$('#feedbackSubmitBtn'),status=$('#feedbackStatus'),s=settingsCopy();
+  if(form)form.reset();
+  if(btn){btn.disabled=false;btn.textContent=s.feedbackSend}
+  if(status){status.className='feedback-status success';status.textContent=s.feedbackSent}
+}
+function setupFeedbackForm(){
+  const form=$('#feedbackForm'),text=$('#feedbackText'),btn=$('#feedbackSubmitBtn'),status=$('#feedbackStatus'),frame=$('#feedbackSubmitFrame');
+  if(!form||!text||!btn||!status||!frame)return;
+  form.addEventListener('submit',e=>{
+    const value=text.value.trim(),s=settingsCopy();
+    if(!value){e.preventDefault();status.className='feedback-status error';status.textContent=s.feedbackEmpty;text.focus();return}
+    text.value=value;feedbackSubmissionPending=true;btn.disabled=true;btn.textContent=s.feedbackSending;status.className='feedback-status sending';status.textContent=s.feedbackSending;
+    clearTimeout(feedbackSubmissionTimer);feedbackSubmissionTimer=setTimeout(finishFeedbackSubmission,1800);
+  });
+  frame.addEventListener('load',()=>{if(feedbackSubmissionPending)setTimeout(finishFeedbackSubmission,180)});
+  text.addEventListener('input',()=>{if(status.classList.contains('error')){status.className='feedback-status';status.textContent=''}});
 }
 
 function setUpdateStatus(message){const el=$('#updateCheckStatus');if(el)el.textContent=message||''}
@@ -1170,6 +1196,25 @@ $('#quizSoundToggle').onchange=e=>{AS.quizSound=e.target.checked;save();updateSe
 if($('#checkUpdateBtn'))$('#checkUpdateBtn').onclick=checkForAppUpdate;
 if($('#updateNowBtn'))$('#updateNowBtn').onclick=applyWaitingUpdate;
 if($('#updateLaterBtn'))$('#updateLaterBtn').onclick=()=>hideUpdateNotice(true);
-loadCourseData('b1').then(data=>{loaded.b1=data;if(!D&&AS.lastCourse==='b1'){D=data;currentCourseId='b1';entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));updateCourseNavigation();updateHeaderProgress();renderAppHome();updateStaticLanguage()}}).catch(()=>{});
-route();
+setupFeedbackForm();
+async function preloadReadyCoursesForHome(){
+  const ready=COURSE_LIST.filter(c=>c.status==='ready').map(c=>c.id);
+  const preferred=COURSE_META[AS.lastCourse]?.status==='ready'?AS.lastCourse:null;
+  const order=[preferred,...ready].filter((id,i,a)=>id&&a.indexOf(id)===i);
+  for(const id of order){
+    try{
+      const data=await loadCourseData(id);
+      if(!D&&id===preferred){
+        D=data;currentCourseId=id;entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));
+        updateCourseNavigation();updateStaticLanguage();
+      }
+      if(!$('#appHomeView').classList.contains('hidden'))renderAppHome();
+    }catch(err){console.warn(`Could not preload ${id} progress`,err)}
+  }
+}
+async function bootstrapApp(){
+  await route();
+  preloadReadyCoursesForHome();
+}
+bootstrapApp();
 })();

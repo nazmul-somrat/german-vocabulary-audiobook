@@ -1139,3 +1139,67 @@ body.settings-open{overflow:hidden}
   .update-notice{left:10px;right:10px;bottom:10px;width:auto;grid-template-columns:38px 1fr}
   .update-notice-actions{grid-column:1/-1;justify-content:flex-end}
 }
+
+
+/* v1.0.4 — install guides, native feedback and settings details */
+.settings-expand-group{padding:0!important}
+.settings-details{border:0}
+.settings-details>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 0;cursor:pointer;user-select:none}
+.settings-details>summary::-webkit-details-marker{display:none}
+.settings-summary-head{margin:0!important;flex:1;min-width:0}
+.settings-summary-head strong{display:block}
+.settings-summary-head span{display:block;max-width:190px}
+.settings-details-chevron{color:#8fa4bf;font-size:17px;line-height:1;transition:transform .18s ease}
+.settings-details[open] .settings-details-chevron{transform:rotate(180deg)}
+.install-guides{display:grid;gap:10px;padding:0 0 8px}
+.install-guide-card{display:grid;grid-template-columns:116px minmax(0,1fr);align-items:center;gap:12px;padding:10px;border:1px solid #2d405b;border-radius:14px;background:#121e30}
+.install-guide-visual{border-radius:11px;overflow:hidden;background:#0c1625;color:#7fb0ff}
+.install-guide-visual svg{display:block;width:100%;height:auto;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.install-guide-visual .device-shell{fill:#15253a;stroke:#7ea8e8}
+.install-guide-visual .browser-bar{fill:#1d314b;stroke:#55749d}
+.install-guide-visual .screen-fill{fill:#122238;stroke:#55749d}
+.install-guide-visual .menu-card{fill:#172b43;stroke:#5f83b4}
+.install-guide-visual .share-tray,.install-guide-visual .laptop-base{fill:#182c44;stroke:#7ea8e8}
+.install-guide-copy strong{font-size:13px;display:block;margin-bottom:5px}
+.install-guide-copy p{margin:0;color:#9eb0c6;font-size:11px;line-height:1.45}
+.settings-helper-note{margin:8px 1px 14px;color:#91a5bd;font-size:10.5px;line-height:1.45}
+.feedback-panel{padding:0 0 10px}
+.feedback-panel>p:first-child{margin:0 0 10px;color:#9eb0c6;font-size:11px;line-height:1.5}
+.feedback-form{display:grid;gap:10px}
+.feedback-form textarea{box-sizing:border-box;width:100%;min-height:148px;resize:vertical;border:1px solid #30445f;border-radius:13px;background:#0c1625;color:#f3f7fc;padding:12px 13px;font:inherit;font-size:12px;line-height:1.55;outline:none;transition:border-color .15s ease,box-shadow .15s ease,background .15s ease}
+.feedback-form textarea::placeholder{color:#788da7}
+.feedback-form textarea:focus{border-color:#4b8df8;box-shadow:0 0 0 3px rgba(59,130,246,.16)}
+.feedback-form-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:36px}
+.feedback-status{min-width:0;color:#91a5bd;font-size:10.5px;line-height:1.35}
+.feedback-status.success{color:#6ee7a5}
+.feedback-status.error{color:#fca5a5}
+.feedback-status.sending{color:#93c5fd}
+.feedback-submit-btn{flex:0 0 auto;border:1px solid #3d7fe7;border-radius:10px;background:#2f73df;color:#fff;padding:9px 14px;font:inherit;font-size:11px;font-weight:800;cursor:pointer;transition:transform .12s ease,filter .12s ease,opacity .12s ease}
+.feedback-submit-btn:hover{filter:brightness(1.08)}
+.feedback-submit-btn:active{transform:translateY(1px)}
+.feedback-submit-btn:disabled{cursor:default;opacity:.65}
+.feedback-submit-frame{position:absolute!important;width:1px!important;height:1px!important;border:0!important;opacity:0!important;pointer-events:none!important}
+:root[data-theme="light"] .install-guide-card{background:#f8fafc;border-color:#d7e0ec}
+:root[data-theme="light"] .install-guide-visual{background:#eef5ff;color:#3979d9}
+:root[data-theme="light"] .install-guide-visual .device-shell{fill:#f8fbff;stroke:#6d9fe5}
+:root[data-theme="light"] .install-guide-visual .browser-bar,
+:root[data-theme="light"] .install-guide-visual .screen-fill,
+:root[data-theme="light"] .install-guide-visual .menu-card,
+:root[data-theme="light"] .install-guide-visual .share-tray,
+:root[data-theme="light"] .install-guide-visual .laptop-base{fill:#e7f0fd;stroke:#7ea6dd}
+:root[data-theme="light"] .install-guide-copy p,
+:root[data-theme="light"] .settings-helper-note,
+:root[data-theme="light"] .feedback-panel>p:first-child{color:#64748b}
+:root[data-theme="light"] .feedback-form textarea{background:#fff;color:#152238;border-color:#d6e0ec}
+:root[data-theme="light"] .feedback-form textarea::placeholder{color:#94a3b8}
+:root[data-theme="light"] .feedback-form textarea:focus{border-color:#3979d9;box-shadow:0 0 0 3px rgba(57,121,217,.13)}
+:root[data-theme="light"] .feedback-status{color:#64748b}
+:root[data-theme="light"] .feedback-status.success{color:#16834a}
+:root[data-theme="light"] .feedback-status.error{color:#c24141}
+:root[data-theme="light"] .feedback-status.sending{color:#3979d9}
+@media(max-width:420px){
+  .install-guide-card{grid-template-columns:92px minmax(0,1fr);gap:9px;padding:8px}
+  .install-guide-copy p{font-size:10px}
+  .feedback-form textarea{min-height:132px}
+  .feedback-form-footer{align-items:flex-end}
+}
