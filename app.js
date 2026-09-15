@@ -39,8 +39,8 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.2';
-const APP_UPDATED='14 September 2026';
+const APP_VERSION='1.0.3';
+const APP_UPDATED='15 September 2026';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -101,7 +101,14 @@ function updateStaticLanguage(){document.documentElement.lang=lang()==="bn"?"bn"
   const reveal=$('#revealEnglishText');if(reveal)reveal.textContent=ux('revealEnglish'); const follow=$('#autoFollowText');if(follow)follow.textContent=ux('autoFollow');
   if($('#episodeLibrary'))$('#episodeLibrary').textContent=tt('episodes'); if($('#quizBtn'))updateQuizButton(); if($('#backCurrent'))$('#backCurrent').textContent=lang()==='bn'?'↩ বর্তমান শব্দে ফিরুন':lang()==='de'?'↩ Zum aktuellen Wort':'↩ Back to current word';
   updateLanguageButtons();}
-function setUILanguage(next){AS.uiLanguage=["en","bn","de"].includes(next)?next:"en";save();updateStaticLanguage();updateSettingsUI();route();}
+function setUILanguage(next){
+  AS.uiLanguage=["en","bn","de"].includes(next)?next:"en";
+  save();
+  updateStaticLanguage();
+  updateSettingsUI();
+  if(D)updateCourseNavigation();
+  route();
+}
 
 let pendingSeek=null,pendingFocusId=null,saveTick=0,libraryFilter='all',scrollTimer=null;
 let libraryOpenSections=new Set();
@@ -118,7 +125,7 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260914-langfix2';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260915-playback1';
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
@@ -239,8 +246,8 @@ function cycleEndBehavior(){
   setEndBehavior(next);
 }
 function settingsCopy(){
-  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৪ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
-  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 14. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
+  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৫ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
+  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 15. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
   return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings',browserAuto:'The web version updates automatically when you refresh.'};
 }
 function updateSettingsUI(){
@@ -650,7 +657,7 @@ function applyMode(){
 function sync(force=false){
   if(!currentEp)return;const S=courseState(),t=audio.currentTime||0;
   $('#progress').value=t;$('#timebox').textContent=`${fmt(t)} / ${fmt(currentEp.duration)}`;updateWordProgress();updateRecall(t);
-  if(segmentStop&&t>=segmentStop){audio.pause();segmentStop=null;$('#playerNote').textContent=ux('reviewFinished');msg(ux('reviewComplete'))}
+  if(segmentStop&&t>=segmentStop){setPlaybackIntent(false);audio.pause();segmentStop=null;$('#playerNote').textContent=ux('reviewFinished');msg(ux('reviewComplete'))}
   let i=activeIndex(t);
   if(i!==lastActive||force){
     $$('.line.active').forEach(x=>x.classList.remove('active'));let ev=currentEp.events[i],el=document.querySelector(`.line[data-event="${ev.id}"]`);if(el)el.classList.add('active');
@@ -671,6 +678,80 @@ function checkBackCurrent(){
   let r=el.getBoundingClientRect(),top=$('#appHeader').offsetHeight+$('.player').offsetHeight+8,visible=r.bottom>top&&r.top<window.innerHeight-60;btn.classList.toggle('hidden',visible)
 }
 
+
+let playbackRequested=false;
+let resumeWhenReady=false;
+let recoveryTimer=null;
+let recoveryAttempts=0;
+let mediaPositionTick=0;
+
+function clearPlaybackRecovery(){
+  if(recoveryTimer){clearTimeout(recoveryTimer);recoveryTimer=null;}
+}
+function playbackNote(text){
+  const el=$('#playerNote');if(el&&text)el.textContent=text;
+}
+function setPlaybackIntent(value){
+  playbackRequested=!!value;
+  if(!playbackRequested){resumeWhenReady=false;clearPlaybackRecovery();recoveryAttempts=0;}
+}
+function safePlay(reason='play',allowRecovery=true){
+  if(!currentEp)return Promise.resolve(false);
+  playbackRequested=true;
+  let result;
+  try{result=audio.play()}catch(err){result=Promise.reject(err)}
+  if(!result||typeof result.then!=='function')return Promise.resolve(true);
+  return result.then(()=>{
+    resumeWhenReady=false;clearPlaybackRecovery();recoveryAttempts=0;
+    return true;
+  }).catch(err=>{
+    console.warn('[GVA playback]',reason,err?.name||err,err?.message||'');
+    resumeWhenReady=true;
+    if(err?.name==='NotAllowedError'){
+      playbackNote(lang()==='bn'?'Android/Chrome প্লেব্যাক থামিয়েছে। আবার Play চাপুন।':lang()==='de'?'Android/Chrome hat die Wiedergabe angehalten. Bitte Play erneut drücken.':'Android/Chrome paused playback. Tap Play to resume.');
+      return false;
+    }
+    if(allowRecovery)schedulePlaybackRecovery(reason,1800);
+    return false;
+  });
+}
+function pauseByUser(){
+  setPlaybackIntent(false);
+  audio.pause();
+}
+function schedulePlaybackRecovery(reason='network',delay=6000){
+  if(!playbackRequested||!currentEp||audio.ended||recoveryTimer)return;
+  recoveryTimer=setTimeout(()=>{
+    recoveryTimer=null;
+    if(!playbackRequested||!currentEp||audio.ended)return;
+    recoverAudioStream(reason);
+  },delay);
+}
+function recoverAudioStream(reason='network'){
+  if(!playbackRequested||!currentEp)return;
+  if(recoveryAttempts>=3){
+    playbackNote(lang()==='bn'?'অডিও সংযোগ থেমে গেছে। Play চাপলে আবার চেষ্টা হবে।':lang()==='de'?'Die Audioverbindung wurde unterbrochen. Mit Play erneut versuchen.':'Audio connection was interrupted. Tap Play to retry.');
+    return;
+  }
+  recoveryAttempts++;
+  const pos=Math.max(0,audio.currentTime||+courseState().positions[currentEp.episode]||0);
+  const src=audio.currentSrc||audio.getAttribute('src');
+  if(!src)return;
+  console.warn('[GVA playback] reconnecting',reason,'attempt',recoveryAttempts,'at',pos);
+  pendingSeek=pos;
+  resumeWhenReady=true;
+  try{audio.pause();audio.src=src;audio.load();}catch(err){console.warn('[GVA playback] reconnect failed',err)}
+  updateMediaSessionMetadata();
+}
+function updateMediaSessionPosition(force=false){
+  if(!('mediaSession' in navigator)||!currentEp||!navigator.mediaSession.setPositionState)return;
+  const now=Date.now();if(!force&&now-mediaPositionTick<3000)return;mediaPositionTick=now;
+  const duration=Number.isFinite(audio.duration)&&audio.duration>0?audio.duration:+currentEp.duration||0;
+  const position=Math.min(Math.max(0,audio.currentTime||0),Math.max(0,duration-.001));
+  if(!(duration>0))return;
+  try{navigator.mediaSession.setPositionState({duration,playbackRate:audio.playbackRate||1,position})}catch{}
+}
+
 function updateMediaSessionMetadata(){
   if(!('mediaSession' in navigator)||!currentEp)return;
   try{
@@ -687,26 +768,27 @@ function updateMediaSessionMetadata(){
 function setupMediaSession(){
   if(!('mediaSession' in navigator))return;
   const set=(action,handler)=>{try{navigator.mediaSession.setActionHandler(action,handler)}catch{}};
-  set('play',()=>audio.play().catch(()=>{}));
-  set('pause',()=>audio.pause());
+  set('play',()=>{setPlaybackIntent(true);safePlay('media-session-play')});
+  set('pause',()=>pauseByUser());
   set('nexttrack',()=>{
+    setPlaybackIntent(true);
     if(!moveEpisodeWithinSection(1,0))msg(ux('noNextEpisode'));
   });
   set('previoustrack',()=>{
+    setPlaybackIntent(true);
     if(!moveEpisodeWithinSection(-1,0)){
-      audio.currentTime=0;
-      sync(true);
+      audio.currentTime=0;sync(true);updateMediaSessionPosition(true);
     }
   });
   set('seekbackward',d=>{
     const amount=d?.seekOffset||10;
     audio.currentTime=Math.max(0,(audio.currentTime||0)-amount);
-    sync(true);
+    sync(true);updateMediaSessionPosition(true);
   });
   set('seekforward',d=>{
     const amount=d?.seekOffset||10;
     audio.currentTime=Math.min(currentEp?.duration||audio.duration||0,(audio.currentTime||0)+amount);
-    sync(true);
+    sync(true);updateMediaSessionPosition(true);
   });
 }
 function handleEpisodeEnded(){
@@ -718,18 +800,22 @@ function handleEpisodeEnded(){
   save();updateHeaderProgress();updatePersistentPlayerVisibility();
   const mode=['repeat','next'].includes(AS.endBehavior)?AS.endBehavior:'stop';
   if(mode==='repeat'){
+    setPlaybackIntent(true);
     audio.currentTime=0;
-    updateMediaSessionMetadata();
-    audio.play().catch(()=>{});
+    updateMediaSessionMetadata();updateMediaSessionPosition(true);
+    safePlay('episode-repeat');
     msg(endModeText('repeat'));
     return;
   }
   if(mode==='next'){
+    setPlaybackIntent(true);
     const target=adjacentEpisode(1);
     if(target){msg(endModeText('next'));openEpisode(target.episode,0,true);return;}
+    setPlaybackIntent(false);
     msg(lang()==='bn'?'এপিসোড শেষ ✓ · সেকশনের শেষ':lang()==='de'?'Episode beendet ✓ · Abschnittsende':'Episode completed ✓ · End of section');
     return;
   }
+  setPlaybackIntent(false);
   msg(lang()==='bn'?'এপিসোড শেষ ✓ · প্লেব্যাক বন্ধ':lang()==='de'?'Episode beendet ✓ · Wiedergabe gestoppt':'Episode completed ✓ · Playback stopped');
 }
 
@@ -873,7 +959,7 @@ function buildQuiz(){
   }
   return questions;
 }
-function openQuiz(){ if(!quizIsAvailable())return; audio.pause(); const questions=buildQuiz(); if(!questions){msg('This episode does not have enough unique quiz words yet.');return} quizState={questions,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; $('#quizOverlay').classList.remove('hidden'); $('#quizBtn').classList.add('active'); document.body.classList.add('quiz-open'); renderQuiz(); }
+function openQuiz(){ if(!quizIsAvailable())return; setPlaybackIntent(false); audio.pause(); const questions=buildQuiz(); if(!questions){msg('This episode does not have enough unique quiz words yet.');return} quizState={questions,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; $('#quizOverlay').classList.remove('hidden'); $('#quizBtn').classList.add('active'); document.body.classList.add('quiz-open'); renderQuiz(); }
 function closeQuiz(){
   $('#quizOverlay').classList.add('hidden');
   $('#quizBtn').classList.remove('active');
@@ -897,7 +983,7 @@ function finishQuiz(){
   renderQuizResult();
   if(score>=QUIZ_PASS)setTimeout(playQuizPassSound,120);
 }
-function renderQuizResult(){ const body=$('#quizBody'), score=quizState.score||0, passed=score>=QUIZ_PASS, wrong=[]; quizState.questions.forEach((q,i)=>{const answer=q.options[quizState.answers[i]]; if(!answer?.correct)wrong.push({german:q.german,yours:answer?.label||'—',correct:q.correct})}); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${passed?tt('passed'):tt('reviewRecommended')}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${passed?tt('greatTarget'):tt('listenAgainThen')}</span></div>${wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)}</span></div>`).join('')}</section>`:`<div class="quiz-perfect">${tt('allCorrect')}</div>`}<div class="quiz-result-actions"><button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`; $('#quizRetake').onclick=()=>{const q=buildQuiz(); if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; renderQuiz()}}; $('#quizListenAgain').onclick=()=>{closeQuiz(); audio.currentTime=0; sync(true); audio.play().catch(()=>{});}; $('#quizDone').onclick=closeQuiz; }
+function renderQuizResult(){ const body=$('#quizBody'), score=quizState.score||0, passed=score>=QUIZ_PASS, wrong=[]; quizState.questions.forEach((q,i)=>{const answer=q.options[quizState.answers[i]]; if(!answer?.correct)wrong.push({german:q.german,yours:answer?.label||'—',correct:q.correct})}); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${passed?tt('passed'):tt('reviewRecommended')}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${passed?tt('greatTarget'):tt('listenAgainThen')}</span></div>${wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)}</span></div>`).join('')}</section>`:`<div class="quiz-perfect">${tt('allCorrect')}</div>`}<div class="quiz-result-actions"><button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`; $('#quizRetake').onclick=()=>{const q=buildQuiz(); if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; renderQuiz()}}; $('#quizListenAgain').onclick=()=>{closeQuiz(); audio.currentTime=0; sync(true); setPlaybackIntent(true); safePlay('quiz-listen-again');}; $('#quizDone').onclick=closeQuiz; }
 
 async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,keepCourseView=false){
   if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
@@ -924,6 +1010,8 @@ async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,kee
   }
   let src=`${meta.audioBase}${currentEp.audio}`;
   pendingSeek=seek!=null?+seek:(+S.positions[n]||0);
+  if(autoplay){setPlaybackIntent(true);resumeWhenReady=true;}
+  else if(stop!=null)setPlaybackIntent(false);
   $('#playerNote').textContent=stop!=null?ux('bookmarkReviewStop'):tt('savedAutomatically');
   if(audio.getAttribute('src')!==src){
     audio.src=src;
@@ -932,11 +1020,11 @@ async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,kee
     // delayed play() from loadedmetadata as autoplay, even though the episode
     // change itself came from a user gesture. The pending seek is applied in
     // onloadedmetadata before normal playback can begin.
-    if(autoplay)audio.play().catch(()=>{})
+    if(autoplay)safePlay('episode-source-change')
   }else{
     audio.currentTime=pendingSeek||0;pendingSeek=null;sync(true);
     if(pendingFocusId)setTimeout(scrollFocusEntry,80);
-    if(autoplay)audio.play().catch(()=>{})
+    if(autoplay)safePlay('episode-existing-source')
   }
   location.hash=keepCourseView?`course-${currentCourseId}`:`episode-${currentCourseId}-${n}`;
   updateHeaderProgress();
@@ -989,13 +1077,13 @@ $('#quizClose').onclick=closeQuiz;
 $('#quizOverlay').onclick=e=>{if(e.target===$('#quizOverlay'))closeQuiz()};
 $('#back10').onclick=()=>audio.currentTime=Math.max(0,audio.currentTime-10);
 $('#fwd10').onclick=()=>audio.currentTime=Math.min(currentEp.duration,audio.currentTime+10);
-$('#playBtn').onclick=()=>audio.paused?audio.play().catch(()=>{}):audio.pause();
+$('#playBtn').onclick=()=>audio.paused?(setPlaybackIntent(true),safePlay('player-button')):pauseByUser();
 $('#progress').oninput=e=>{audio.currentTime=+e.target.value;sync(true)};
 $('#followToggle').onchange=()=>sync(true);
 $$('.mode[data-mode]').forEach(b=>b.onclick=()=>{courseState().mode=b.dataset.mode;save();applyMode()});
 $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.target.checked;save();applyEnglishVisibility(audio.currentTime||0);msg(e.target.checked?(lang()==='bn'?'ইংরেজি তার অডিওর সাথে দেখাবে':lang()==='de'?'Englisch erscheint mit dem Audio':'English will appear with its audio'):(lang()==='bn'?'স্টাডি মোডে ইংরেজি সবসময় দেখা যাবে':lang()==='de'?'Englisch ist im Lernmodus immer sichtbar':'English always visible in Study mode'))};
-const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5};
-$('#speedSelect').onchange=e=>{courseState().speed=speeds[e.target.value]||1;audio.playbackRate=courseState().speed;save()};
+const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5,'1.75×':1.75,'2×':2};
+$('#speedSelect').onchange=e=>{courseState().speed=speeds[e.target.value]||1;audio.playbackRate=courseState().speed;save();updateMediaSessionPosition(true)};
 $('#currentBookmark').onclick=$('#lyricsStar').onclick=()=>{let e=currentEntry();if(e)toggleBookmark(e.entry_id)};
 if($('#endBehaviorControl'))$('#endBehaviorControl').onclick=cycleEndBehavior;
 $('#backCurrent').onclick=()=>scrollToCurrentWord(true);
@@ -1022,10 +1110,11 @@ window.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('#quizOve
 audio.onloadedmetadata=()=>{
   if(!currentEp)return;const S=courseState();$('#progress').max=currentEp.duration;audio.playbackRate=+S.speed||1;
   let key=Object.entries(speeds).find(([k,v])=>v===+S.speed)?.[0]||'1×';$('#speedSelect').value=key;
-  if(pendingSeek!=null){audio.currentTime=Math.min(pendingSeek,audio.duration-.1);pendingSeek=null}sync(true);if(pendingFocusId)setTimeout(scrollFocusEntry,150)
+  if(pendingSeek!=null){audio.currentTime=Math.min(pendingSeek,audio.duration-.1);pendingSeek=null}sync(true);updateMediaSessionPosition(true);if(resumeWhenReady&&playbackRequested&&audio.paused)safePlay('metadata-ready',false);if(pendingFocusId)setTimeout(scrollFocusEntry,150)
 };
-audio.ontimeupdate=()=>sync();
+audio.ontimeupdate=()=>{sync();updateMediaSessionPosition()};
 audio.onplay=()=>{
+  playbackRequested=true;resumeWhenReady=false;clearPlaybackRecovery();recoveryAttempts=0;
   $('#playBtn').textContent='❚❚';playerHasStarted=true;updatePersistentPlayerVisibility();
   if('mediaSession' in navigator)try{navigator.mediaSession.playbackState='playing'}catch{}
   if(currentEp)setSectionNav(currentEp.section||null);
@@ -1039,7 +1128,22 @@ audio.onpause=()=>{
   if(!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
 };
 audio.onended=handleEpisodeEnded;
-audio.onerror=()=>$('#playerNote').textContent='Audio stream could not be opened. Please refresh and try again.';
+audio.onwaiting=()=>{if(playbackRequested)schedulePlaybackRecovery('waiting',12000)};
+audio.onstalled=()=>{if(playbackRequested)schedulePlaybackRecovery('stalled',5000)};
+audio.oncanplay=()=>{clearPlaybackRecovery();if(resumeWhenReady&&playbackRequested&&audio.paused)safePlay('canplay-ready',false)};
+audio.onplaying=()=>{clearPlaybackRecovery();recoveryAttempts=0;resumeWhenReady=false;updateMediaSessionPosition(true)};
+audio.onerror=()=>{
+  playbackNote(lang()==='bn'?'অডিও স্ট্রিমে সমস্যা হয়েছে — পুনরায় সংযোগের চেষ্টা চলছে…':lang()==='de'?'Problem mit dem Audiostream — Verbindung wird wiederhergestellt…':'Audio stream interrupted — trying to reconnect…');
+  if(playbackRequested)schedulePlaybackRecovery('media-error',1200);
+};
+window.addEventListener('online',()=>{if(playbackRequested&&currentEp){resumeWhenReady=true;safePlay('network-online')}});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&currentEp){
+    updateMediaSessionMetadata();updateMediaSessionPosition(true);
+    if(playbackRequested&&audio.paused&&!audio.ended)safePlay('foreground-return',false);
+  }
+});
+window.addEventListener('pageshow',()=>{if(currentEp){updateMediaSessionMetadata();updateMediaSessionPosition(true)}});
 
 setupMediaSession();
 registerAppServiceWorker();
