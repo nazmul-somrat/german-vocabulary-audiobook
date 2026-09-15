@@ -4,10 +4,10 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const COURSE_LIST=window.GVA_COURSES||[];
 const COURSE_META=Object.fromEntries(COURSE_LIST.map(c=>[c.id,c]));
-const views=['#appHomeView','#courseHomeView','#difficultView','#episodeView'];
+const views=['#appHomeView','#courseHomeView','#quizHistoryView','#difficultView','#episodeView'];
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
-const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{}};
+const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{},quizHistory:{},quizHistoryVersion:1};
 const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:4,courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
@@ -39,7 +39,7 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.4';
+const APP_VERSION='1.0.6';
 const APP_UPDATED='15 September 2026';
 let swRegistration=null;
 let swReloading=false;
@@ -56,6 +56,19 @@ function cs(id){
   const s=AS.courses[id];
   if(!s.sectionLastEpisodes)s.sectionLastEpisodes={};
   if(!s.quizBest)s.quizBest={};
+  if(!s.quizHistory)s.quizHistory={};
+  // Preserve an earlier best score as one legacy history item. After three
+  // newer attempts, it drops out and the course score follows the newest 3 only.
+  if(s.quizHistoryVersion!==1){
+    for(const [ep,raw] of Object.entries(s.quizBest||{})){
+      const score=Math.max(0,Math.min(QUIZ_COUNT,+raw||0));
+      if(score>0&&!Array.isArray(s.quizHistory[ep])){
+        s.quizHistory[ep]=[{id:`legacy-${ep}`,score,at:null,legacy:true,review:null}];
+      }
+    }
+    s.quizHistoryVersion=1;
+    save();
+  }
   return s;
 }
 function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
@@ -75,6 +88,12 @@ const UI_MORE={
   bn:{all:'সব',grid:'গ্রিড',list:'তালিকা',searchPlaceholder:'জার্মান বা ইংরেজি খুঁজুন…',bookmarkedWords:'বুকমার্ক করা শব্দ',myBookmarks:'আমার বুকমার্ক করা শব্দ ({n})',clearBookmarks:'সব বুকমার্ক মুছুন',noBookmarks:'এখনও কোনো শব্দ বুকমার্ক করা হয়নি।',bookmarkHelp:'রিভিউর জন্য শব্দ সংরক্ষণ করতে পড়ার সময় ☆ চাপুন।',review:'রিভিউ',open:'খুলুন',clearConfirm:'সব বুকমার্ক করা শব্দ মুছে ফেলবেন?',bookmarkRemoved:'বুকমার্ক মুছে ফেলা হয়েছে',bookmarkSaved:'শব্দ বুকমার্ক করা হয়েছে',searchResults:'সার্চ ফলাফল ({n}{plus})',forQuery:'“{q}” এর জন্য',noMatching:'কোনো মিল পাওয়া যায়নি।',word:'শব্দ',sectionEmpty:'নির্বাচিত ফিল্টারে এই সেকশনে কোনো এপিসোড নেই।',episodesEmpty:'এই ফিল্টারে কোনো এপিসোড নেই।',learningBlock:'লার্নিং ব্লক {n}',germanWordTwice:'জার্মান শব্দ · দুইবার বলা হয়েছে',englishMeaning:'ইংরেজি অর্থ',grammarForms:'ব্যাকরণ / বহুবচন / ক্রিয়ার রূপ',germanExample:'জার্মান উদাহরণ {n} · দুইবার বলা হয়েছে',englishTranslation:'ইংরেজি অনুবাদ {n}',recallAfter:'◆ ব্লক {n} শেষে রিকল',deEnRecall:'জার্মান → ইংরেজি · ৪ সেকেন্ড রিকল',enDeRecall:'ইংরেজি → জার্মান · ৪ সেকেন্ড রিকল',answer:'উত্তর',jumpedTo:'{time} এ যাওয়া হয়েছে',reviewFinished:'বুকমার্ক রিভিউ শেষ হয়েছে।',reviewComplete:'রিভিউ সম্পন্ন',noNextEpisode:'এই সেকশনে পরের এপিসোড নেই',audioCourse:'অডিও কোর্স',transcriptHint:'কোনো ট্রান্সক্রিপ্ট লাইনে চাপলে সেখানে যাবে। শব্দ বুকমার্ক করতে ☆ চাপুন।',gatewayMissing:'নিরাপদ অডিও গেটওয়ে এখনো কনফিগার করা হয়নি।',bookmarkReviewStop:'বুকমার্ক রিভিউ: এই এন্ট্রি শেষে অডিও স্বয়ংক্রিয়ভাবে থামবে।',resetConfirm:'সব {n}টি এপিসোডের শোনার প্রগ্রেস রিসেট করবেন? বুকমার্কগুলো রাখা হবে।',progressReset:'প্রগ্রেস রিসেট হয়েছে',study:'স্টাডি',germanOnly:'শুধু জার্মান',lyrics:'লিরিক্স',revealEnglish:'অডিওর সাথে ইংরেজি দেখান',autoFollow:'অটো-ফলো',current:'বর্তমান',playing:'চলছে',easy:'সহজ',medium:'মাঝারি',hard:'কঠিন',noun:'বিশেষ্য',verb:'ক্রিয়া',other:'অন্যান্য',adjective:'বিশেষণ',adverb:'ক্রিয়া বিশেষণ',pronoun:'সর্বনাম',preposition:'পদান্বয়ী অব্যয়',conjunction:'সংযোজক',article:'আর্টিকেল'},
   de:{all:'Alle',grid:'Raster',list:'Liste',searchPlaceholder:'Deutsch oder Englisch suchen…',bookmarkedWords:'Gespeicherte Wörter',myBookmarks:'Meine gespeicherten Wörter ({n})',clearBookmarks:'Lesezeichen löschen',noBookmarks:'Noch keine Wörter gespeichert.',bookmarkHelp:'Tippe beim Lernen auf ☆, um Wörter für die Wiederholung zu speichern.',review:'Wiederholen',open:'Öffnen',clearConfirm:'Alle gespeicherten Wörter löschen?',bookmarkRemoved:'Lesezeichen entfernt',bookmarkSaved:'Wort gespeichert',searchResults:'Suchergebnisse ({n}{plus})',forQuery:'für „{q}“',noMatching:'Keine passenden Wörter gefunden.',word:'Wort',sectionEmpty:'In diesem Abschnitt passen keine Episoden zum gewählten Filter.',episodesEmpty:'Keine Episoden passen zu diesem Filter.',learningBlock:'Lernblock {n}',germanWordTwice:'Deutsches Wort · zweimal gesprochen',englishMeaning:'Englische Bedeutung',grammarForms:'Grammatik / Plural / Verbformen',germanExample:'Deutsches Beispiel {n} · zweimal gesprochen',englishTranslation:'Englische Übersetzung {n}',recallAfter:'◆ Abruf nach Block {n}',deEnRecall:'Deutsch → Englisch · 4 Sekunden Abruf',enDeRecall:'Englisch → Deutsch · 4 Sekunden Abruf',answer:'Antwort',jumpedTo:'Zu {time} gesprungen',reviewFinished:'Wiederholung der gespeicherten Wörter beendet.',reviewComplete:'Wiederholung abgeschlossen',noNextEpisode:'Keine nächste Episode in diesem Abschnitt',audioCourse:'AUDIOKURS',transcriptHint:'Tippe auf eine Transkriptzeile, um dorthin zu springen. Tippe auf ☆, um ein Wort zu speichern.',gatewayMissing:'Das sichere Audio-Gateway ist noch nicht konfiguriert.',bookmarkReviewStop:'Wiederholung gespeicherter Wörter: Dieser Eintrag stoppt automatisch.',resetConfirm:'Hörfortschritt für alle {n} Episoden zurücksetzen? Gespeicherte Wörter bleiben erhalten.',progressReset:'Fortschritt zurückgesetzt',study:'Lernen',germanOnly:'Nur Deutsch',lyrics:'Lyrics',revealEnglish:'Englisch mit Audio anzeigen',autoFollow:'Auto-Folge',current:'Aktuell',playing:'Läuft',easy:'leicht',medium:'mittel',hard:'schwer',noun:'Substantiv',verb:'Verb',other:'Sonstiges',adjective:'Adjektiv',adverb:'Adverb',pronoun:'Pronomen',preposition:'Präposition',conjunction:'Konjunktion',article:'Artikel'}
 };
+const QUIZ_HISTORY_TEXT={
+  en:{title:'Quiz History',subtitle:'Your last 3 quiz attempts for each episode. Course quiz points use the best score among those 3 attempts.',allEpisodes:'All episodes',attemptedOnly:'Attempted only',allSections:'All sections',core:'B1 Core',advanced:'B1+ Advanced',chooseSection:'Choose B1 Core or B1+ Advanced to view episode quiz scores.',backSections:'Back to B1 quiz folders',best:'Best',latest:'Latest',attempts:'Attempts',notAttempted:'Not attempted',attempt:'Attempt',previousBest:'Earlier score',detailsUnavailable:'Detailed review was not stored for this earlier quiz score.',quizResult:'Quiz result',backToHistory:'Back to Quiz History',noEpisodes:'No episodes match this filter.',newest:'Newest',savedLocally:'Quiz history is stored on this device.',listenPractice:'Tap a time to open that word in the transcript and start the audio there.'},
+  bn:{title:'কুইজ হিস্ট্রি',subtitle:'প্রতি এপিসোডের সর্বশেষ ৩টি কুইজ চেষ্টা। কোর্স কুইজ পয়েন্ট এই ৩টির মধ্যে সর্বোচ্চ স্কোর থেকে গণনা হয়।',allEpisodes:'সব এপিসোড',attemptedOnly:'শুধু চেষ্টা করা',allSections:'সব সেকশন',core:'B1 কোর',advanced:'B1+ অ্যাডভান্সড',chooseSection:'এপিসোডের কুইজ স্কোর দেখতে B1 কোর অথবা B1+ অ্যাডভান্সড নির্বাচন করুন।',backSections:'B1 কুইজ ফোল্ডারে ফিরুন',best:'সেরা',latest:'সর্বশেষ',attempts:'চেষ্টা',notAttempted:'এখনও কুইজ দেওয়া হয়নি',attempt:'চেষ্টা',previousBest:'আগের স্কোর',detailsUnavailable:'এই পুরোনো কুইজ স্কোরের বিস্তারিত রিভিউ আগে সংরক্ষিত হয়নি।',quizResult:'কুইজ রেজাল্ট',backToHistory:'কুইজ হিস্ট্রিতে ফিরুন',noEpisodes:'এই ফিল্টারে কোনো এপিসোড নেই।',newest:'সর্বশেষ',savedLocally:'কুইজ হিস্ট্রি এই ডিভাইসে সংরক্ষিত থাকে।',listenPractice:'সময়ে চাপলে সেই শব্দের ট্রান্সক্রিপ্টে গিয়ে অডিও চালু হবে।'},
+  de:{title:'Quiz-Verlauf',subtitle:'Die letzten 3 Quizversuche pro Episode. Die Quizpunkte des Kurses verwenden den besten Wert aus genau diesen 3 Versuchen.',allEpisodes:'Alle Episoden',attemptedOnly:'Nur versucht',allSections:'Alle Abschnitte',core:'B1 Grundkurs',advanced:'B1+ Aufbau',chooseSection:'Wähle B1 Grundkurs oder B1+ Aufbau, um die Quiz-Ergebnisse der Episoden zu sehen.',backSections:'Zurück zu den B1-Quiz-Ordnern',best:'Bestwert',latest:'Letzter',attempts:'Versuche',notAttempted:'Noch nicht versucht',attempt:'Versuch',previousBest:'Früherer Wert',detailsUnavailable:'Für diesen älteren Quizwert wurde noch keine Detailansicht gespeichert.',quizResult:'Quiz-Ergebnis',backToHistory:'Zurück zum Quiz-Verlauf',noEpisodes:'Keine Episoden entsprechen diesem Filter.',newest:'Neueste',savedLocally:'Der Quiz-Verlauf wird auf diesem Gerät gespeichert.',listenPractice:'Tippe auf eine Zeit, um das Wort im Transkript zu öffnen und das Audio dort zu starten.'}
+};
+function qh(key,vars={}){let x=QUIZ_HISTORY_TEXT[lang()]?.[key]??QUIZ_HISTORY_TEXT.en[key]??key;return String(x).replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'')}
 function ux(key,vars={}){let s=UI_MORE[lang()]?.[key]??UI_MORE.en[key]??key;return String(s).replace(/\{(\w+)\}/g,(_,k)=>vars[k]??'')}
 function difficultyLabel(v){return ux(String(v||'').toLowerCase())||v}
 function typeLabel(v){return ux(String(v||'').toLowerCase())||v}
@@ -112,6 +131,7 @@ function setUILanguage(next){
 
 let pendingSeek=null,pendingFocusId=null,saveTick=0,libraryFilter='all',scrollTimer=null;
 let libraryOpenSections=new Set();
+let librarySectionFilter=null;
 let activeEpisodeSection=null;
 let playerHasStarted=false;
 const loaded={};
@@ -172,8 +192,8 @@ function showView(id){
   updatePersistentPlayerVisibility();
 }
 function setActiveNav(view){
-  $$('.side-link').forEach(x=>x.classList.remove('active'));
-  let nav=view==='#appHomeView'?'home':view==='#difficultView'?'difficult':view==='#courseHomeView'?'course':view==='#episodeView'?'course':'';
+  $$('.side-link,.side-quiz-points').forEach(x=>x.classList.remove('active'));
+  let nav=view==='#appHomeView'?'home':view==='#difficultView'?'difficult':view==='#quizHistoryView'?'quiz-history':view==='#courseHomeView'?'course':view==='#episodeView'?'course':'';
   const b=$(`[data-nav="${nav}"]`);if(b)b.classList.add('active');
 }
 
@@ -246,15 +266,15 @@ function cycleEndBehavior(){
   setEndBehavior(next);
 }
 function settingsCopy(){
-  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',install:'অ্যাপ ইনস্টল করুন',installHint:'Android, iPhone / iPad ও Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Chrome খুলুন → ⋮ মেনু → Install app / Add to Home screen → Install',iphoneSteps:'Safari খুলুন → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Chrome বা Edge খুলুন → address bar-এর Install আইকন / menu → Install',installNote:'ইনস্টল করলে অডিওবুকটি আলাদা অ্যাপের মতো Home Screen বা Desktop থেকে খুলবে।',feedback:'ফিডব্যাক',feedbackHint:'বাগ, পরামর্শ বা যেকোনো মন্তব্য পাঠান',feedbackIntro:'নিচের বক্সে আপনি যা বলতে চান লিখে Submit চাপুন। কোনো আলাদা Google Forms লিংকে যেতে হবে না।',feedbackDirect:'আপনার উত্তর সরাসরি German Audiobook Feedback ফর্মে জমা হবে।',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৫ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
-  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',install:'App installieren',installHint:'Android, iPhone / iPad und Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'In Chrome öffnen → ⋮ Menü → App installieren / Zum Startbildschirm hinzufügen → Installieren',iphoneSteps:'In Safari öffnen → Teilen → Zum Home-Bildschirm → Als Web-App öffnen → Hinzufügen',windowsSteps:'In Chrome oder Edge öffnen → Installationssymbol in der Adressleiste / Menü → Installieren',installNote:'Nach der Installation lässt sich das Hörbuch wie eine eigene App vom Home-Bildschirm oder Desktop starten.',feedback:'Feedback',feedbackHint:'Fehler, Vorschläge oder andere Rückmeldungen senden',feedbackIntro:'Schreibe unten deine Nachricht und tippe auf Senden. Du musst keinen separaten Google-Forms-Link öffnen.',feedbackDirect:'Deine Antwort wird direkt an das Formular German Audiobook Feedback gesendet.',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 15. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
-  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',install:'Install app',installHint:'Android, iPhone / iPad and Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Open in Chrome → ⋮ menu → Install app / Add to Home screen → Install',iphoneSteps:'Open in Safari → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Open in Chrome or Edge → Install icon in the address bar / menu → Install',installNote:'After installation, the audiobook opens like a separate app from your Home Screen or desktop.',feedback:'Feedback',feedbackHint:'Send a bug report, suggestion or any comment',feedbackIntro:'Write anything you want in the box below and press Submit. You do not need to open a separate Google Forms link.',feedbackDirect:'Your response is submitted directly to the German Audiobook Feedback form.',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings',browserAuto:'The web version updates automatically when you refresh.'};
+  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',install:'অ্যাপ ইনস্টল করুন',installHint:'Android, iPhone / iPad ও Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Chrome খুলুন → ⋮ মেনু → Install app / Add to Home screen → Install',iphoneSteps:'Safari খুলুন → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Chrome বা Edge খুলুন → address bar-এর Install আইকন / menu → Install',installNote:'ইনস্টল করলে অডিওবুকটি আলাদা অ্যাপের মতো Home Screen বা Desktop থেকে খুলবে।',feedback:'ফিডব্যাক',feedbackHint:'বাগ, পরামর্শ বা যেকোনো মন্তব্য পাঠান',feedbackIntro:'আপনি যা বলতে চান নিচে লিখুন।',feedbackPlaceholder:'এখানে আপনার ফিডব্যাক লিখুন...',feedbackSend:'ফিডব্যাক পাঠান',feedbackSending:'পাঠানো হচ্ছে…',feedbackSent:'✓ ধন্যবাদ! আপনার ফিডব্যাক পাঠানো হয়েছে।',feedbackEmpty:'প্রথমে আপনার ফিডব্যাক লিখুন।',feedbackDirect:'কোনো Google Forms পেজ খুলবে না।',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৫ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
+  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',install:'App installieren',installHint:'Android, iPhone / iPad und Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'In Chrome öffnen → ⋮ Menü → App installieren / Zum Startbildschirm hinzufügen → Installieren',iphoneSteps:'In Safari öffnen → Teilen → Zum Home-Bildschirm → Als Web-App öffnen → Hinzufügen',windowsSteps:'In Chrome oder Edge öffnen → Installationssymbol in der Adressleiste / Menü → Installieren',installNote:'Nach der Installation lässt sich das Hörbuch wie eine eigene App vom Home-Bildschirm oder Desktop starten.',feedback:'Feedback',feedbackHint:'Fehler, Vorschläge oder andere Rückmeldungen senden',feedbackIntro:'Schreibe unten alles, was du uns mitteilen möchtest.',feedbackPlaceholder:'Feedback hier eingeben...',feedbackSend:'Feedback senden',feedbackSending:'Wird gesendet…',feedbackSent:'✓ Danke! Dein Feedback wurde gesendet.',feedbackEmpty:'Bitte schreibe zuerst dein Feedback.',feedbackDirect:'Es wird keine Google-Forms-Seite geöffnet.',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 15. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
+  return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',install:'Install app',installHint:'Android, iPhone / iPad and Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Open in Chrome → ⋮ menu → Install app / Add to Home screen → Install',iphoneSteps:'Open in Safari → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Open in Chrome or Edge → Install icon in the address bar / menu → Install',installNote:'After installation, the audiobook opens like a separate app from your Home Screen or desktop.',feedback:'Feedback',feedbackHint:'Send a bug report, suggestion or any comment',feedbackIntro:'Write anything you want to tell us.',feedbackPlaceholder:'Write your feedback here...',feedbackSend:'Send feedback',feedbackSending:'Sending…',feedbackSent:'✓ Thank you! Your feedback has been sent.',feedbackEmpty:'Please write your feedback first.',feedbackDirect:'No Google Forms page will open.',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings',browserAuto:'The web version updates automatically when you refresh.'};
 }
 function updateSettingsUI(){
   const s=settingsCopy();
   setText('#settingsTitle',s.title);setText('#settingsKicker',s.kicker);setText('#settingsLanguageLabel',s.language);setText('#settingsLanguageHint',s.languageHint);setText('#settingsAppearanceLabel',s.appearance);setText('#settingsAppearanceHint',s.appearanceHint);setText('#settingsFontLabel',s.font);setText('#settingsFontHint',s.fontHint);setText('#settingsQuizSoundLabel',s.quizSound);setText('#settingsQuizSoundHint',s.quizSoundHint);
   setText('#settingsInstallLabel',s.install);setText('#settingsInstallHint',s.installHint);setText('#installAndroidLabel',s.android);setText('#installIphoneLabel',s.iphone);setText('#installWindowsLabel',s.windows);setText('#installAndroidSteps',s.androidSteps);setText('#installIphoneSteps',s.iphoneSteps);setText('#installWindowsSteps',s.windowsSteps);setText('#installNote',s.installNote);
-  setText('#settingsFeedbackLabel',s.feedback);setText('#settingsFeedbackHint',s.feedbackHint);setText('#feedbackIntro',s.feedbackIntro);setText('#feedbackDirect',s.feedbackDirect);
+  setText('#settingsFeedbackLabel',s.feedback);setText('#settingsFeedbackHint',s.feedbackHint);setText('#feedbackIntro',s.feedbackIntro);setText('#feedbackDirect',s.feedbackDirect);const feedbackText=$('#feedbackText');if(feedbackText)feedbackText.placeholder=s.feedbackPlaceholder;const feedbackBtn=$('#feedbackSubmitBtn');if(feedbackBtn&&!feedbackBtn.disabled)feedbackBtn.textContent=s.feedbackSend;
   setText('#settingsAppLabel',s.app);setText('#settingsAppHint',s.appHint);setText('#appVersionText',s.version);setText('#appUpdatedText',s.updated);setText('#checkUpdateBtn',s.check);
   const checkBtn=$('#checkUpdateBtn');if(checkBtn)checkBtn.classList.toggle('hidden',!isInstalledApp());
   const updateStatus=$('#updateCheckStatus');if(updateStatus&&!isInstalledApp())updateStatus.textContent=s.browserAuto;
@@ -262,6 +282,30 @@ function updateSettingsUI(){
   const settingsBtn=$('#settingsBtn');if(settingsBtn){settingsBtn.title=s.settings;settingsBtn.setAttribute('aria-label',s.settings)}
   const close=$('#settingsClose');if(close)close.setAttribute('aria-label',s.close);
   applyPreferences();updateLanguageButtons();
+}
+
+let feedbackSubmissionPending=false;
+let feedbackSubmissionTimer=null;
+function finishFeedbackSubmission(){
+  if(!feedbackSubmissionPending)return;
+  feedbackSubmissionPending=false;
+  clearTimeout(feedbackSubmissionTimer);
+  const form=$('#feedbackForm'),btn=$('#feedbackSubmitBtn'),status=$('#feedbackStatus'),s=settingsCopy();
+  if(form)form.reset();
+  if(btn){btn.disabled=false;btn.textContent=s.feedbackSend}
+  if(status){status.className='feedback-status success';status.textContent=s.feedbackSent}
+}
+function setupFeedbackForm(){
+  const form=$('#feedbackForm'),text=$('#feedbackText'),btn=$('#feedbackSubmitBtn'),status=$('#feedbackStatus'),frame=$('#feedbackSubmitFrame');
+  if(!form||!text||!btn||!status||!frame)return;
+  form.addEventListener('submit',e=>{
+    const value=text.value.trim(),s=settingsCopy();
+    if(!value){e.preventDefault();status.className='feedback-status error';status.textContent=s.feedbackEmpty;text.focus();return}
+    text.value=value;feedbackSubmissionPending=true;btn.disabled=true;btn.textContent=s.feedbackSending;status.className='feedback-status sending';status.textContent=s.feedbackSending;
+    clearTimeout(feedbackSubmissionTimer);feedbackSubmissionTimer=setTimeout(finishFeedbackSubmission,1800);
+  });
+  frame.addEventListener('load',()=>{if(feedbackSubmissionPending)setTimeout(finishFeedbackSubmission,180)});
+  text.addEventListener('input',()=>{if(status.classList.contains('error')){status.className='feedback-status';status.textContent=''}});
 }
 
 function setUpdateStatus(message){const el=$('#updateCheckStatus');if(el)el.textContent=message||''}
@@ -453,13 +497,26 @@ function updateHeaderProgress(){
   ring.style.setProperty('--pct',pct); pctEl.textContent=`${pct}%`; label.textContent=`${meta.short} ${tt('progress')}`; wordsEl.textContent=`${words} / ${total}`;
 }
 
+function quizAttempts(st,episodeId){
+  const arr=st?.quizHistory?.[String(episodeId)];
+  return Array.isArray(arr)?arr.slice(0,3):[];
+}
+function quizBestFromAttempts(st,episodeId){
+  const arr=quizAttempts(st,episodeId);
+  return arr.length?Math.max(...arr.map(a=>Math.max(0,Math.min(QUIZ_COUNT,+a.score||0)))):0;
+}
+function syncQuizBestFromHistory(st,episodeId){
+  st.quizBest=st.quizBest||{};
+  const id=String(episodeId),best=quizBestFromAttempts(st,id);
+  if(best>0)st.quizBest[id]=best;else delete st.quizBest[id];
+  return best;
+}
 function quizSummaryFor(courseId=currentCourseId,data=(courseId===currentCourseId?D:loaded[courseId])){
   const st=cs(courseId);
-  const best=st.quizBest||{};
-  const episodeIds=data?.episodes?.map(ep=>String(ep.episode))||Object.keys(best);
+  const episodeIds=data?.episodes?.map(ep=>String(ep.episode))||Object.keys(st.quizHistory||{});
   let points=0,passed=0;
   for(const id of episodeIds){
-    const score=Math.max(0,Math.min(QUIZ_COUNT,+best[id]||0));
+    const score=quizBestFromAttempts(st,id);
     points+=score;
     if(score>=QUIZ_PASS)passed++;
   }
@@ -471,6 +528,76 @@ function updateCourseQuizPoints(){
   const q=quizSummaryFor(currentCourseId,D);
   if($('#sideQuizPoints'))$('#sideQuizPoints').textContent=`${q.points} / ${q.max}`;
   if($('#courseQuizPoints'))$('#courseQuizPoints').textContent=`${q.points} / ${q.max}`;
+}
+let quizHistoryFilter='all',quizHistorySection=null;
+function attemptDate(at){
+  if(!at)return'';
+  try{return new Intl.DateTimeFormat(lang()==='de'?'de-DE':lang()==='bn'?'bn-BD':'en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(at))}catch{return''}
+}
+function openStoredQuizResult(episodeId,attempt){
+  const ep=epMap[+episodeId];if(!ep||!attempt)return;
+  quizState={finished:true,history:true,episode:+episodeId,score:+attempt.score||0,review:Array.isArray(attempt.review)?attempt.review:[],legacy:!!attempt.legacy,attempt};
+  $('#quizOverlay').classList.remove('hidden');document.body.classList.add('quiz-open');renderQuizResult();
+}
+function quizSectionSummary(sectionId){
+  const st=courseState(),eps=D?.episodes?.filter(ep=>ep.section===sectionId)||[];
+  let points=0,attempted=0,passed=0;
+  for(const ep of eps){
+    const attempts=quizAttempts(st,ep.episode),score=quizBestFromAttempts(st,ep.episode);
+    if(attempts.length)attempted++;
+    points+=score;
+    if(score>=QUIZ_PASS)passed++;
+  }
+  return {points,max:eps.length*QUIZ_COUNT,attempted,passed,episodes:eps.length};
+}
+function quizHistoryFolderHtml(sectionId){
+  const sec=sectionMeta(sectionId),sum=quizSectionSummary(sectionId),advanced=sectionId==='advanced';
+  const title=sectionDisplayTitle(sec);
+  const badge=advanced?'B1+':'B1';
+  return `<button type="button" class="quiz-history-folder ${advanced?'advanced':''}" data-qh-folder="${sectionId}"><span class="quiz-history-folder-badge">${badge}</span><span class="quiz-history-folder-copy"><strong>${esc(title)}</strong><small>${sum.episodes} ${tt('episodes')} · ${sum.points} / ${sum.max} ${tt('quizPointsLower')}</small></span><span class="quiz-history-folder-arrow" aria-hidden="true">›</span></button>`;
+}
+function renderQuizHistory(){
+  if(!D)return;
+  const st=courseState(),host=$('#quizHistoryList');if(!host)return;
+  const isB1=currentCourseId==='b1',inB1Section=isB1&&['core','advanced'].includes(quizHistorySection);
+  setText('#quizHistoryEyebrow',`${COURSE_META[currentCourseId]?.short||''} ${qh('title').toUpperCase()}`);
+  setText('#quizHistoryTitle',inB1Section?sectionDisplayTitle(sectionMeta(quizHistorySection)):qh('title'));
+  setText('#quizHistorySubtitle',isB1&&!inB1Section?qh('chooseSection'):qh('subtitle'));
+  setText('#quizHistoryLocalNote',qh('savedLocally'));
+  const allBtn=$('#quizHistoryAll'),attemptedBtn=$('#quizHistoryAttempted'),mainFilters=$('.quiz-history-main-filters'),toolbar=$('.quiz-history-toolbar');
+  if(allBtn)allBtn.textContent=qh('allEpisodes');if(attemptedBtn)attemptedBtn.textContent=qh('attemptedOnly');
+  if(allBtn)allBtn.classList.toggle('active',quizHistoryFilter==='all');if(attemptedBtn)attemptedBtn.classList.toggle('active',quizHistoryFilter==='attempted');
+  if(mainFilters)mainFilters.classList.toggle('hidden',isB1&&!inB1Section);
+  if(toolbar)toolbar.classList.toggle('hidden',isB1&&!inB1Section);
+  const sections=$('#quizHistorySections');
+  if(sections){
+    sections.classList.toggle('hidden',!inB1Section);
+    sections.innerHTML=inB1Section?`<button class="chip quiz-history-back-folders" data-qh-back-folders type="button">← ${esc(qh('backSections'))}</button>`:'';
+  }
+  if(isB1&&!inB1Section){
+    host.innerHTML=`<div class="quiz-history-folders">${quizHistoryFolderHtml('core')}${quizHistoryFolderHtml('advanced')}</div>`;
+    $$('[data-qh-folder]').forEach(b=>b.onclick=()=>openQuizHistory('b1',b.dataset.qhFolder));
+    setSectionNav(null);updateCourseQuizPoints();return;
+  }
+  let eps=D.episodes.filter(ep=>(!isB1||ep.section===quizHistorySection));
+  if(quizHistoryFilter==='attempted')eps=eps.filter(ep=>quizAttempts(st,ep.episode).length);
+  host.innerHTML=eps.length?eps.map(ep=>{
+    const attempts=quizAttempts(st,ep.episode),best=attempts.length?Math.max(...attempts.map(a=>+a.score||0)):null,latest=attempts[0]?.score;
+    const attemptHtml=attempts.length?attempts.map((a,i)=>`<button type="button" class="quiz-history-attempt" data-qh-ep="${ep.episode}" data-qh-attempt="${i}"><span>${a.legacy?esc(qh('previousBest')):(i===0?esc(qh('newest')):`${esc(qh('attempt'))} ${i+1}`)}</span><strong>${Math.max(0,Math.min(QUIZ_COUNT,+a.score||0))}/${QUIZ_COUNT}</strong>${a.at?`<small>${esc(attemptDate(a.at))}</small>`:''}</button>`).join(''):`<div class="quiz-history-empty">${esc(qh('notAttempted'))}</div>`;
+    return `<article class="quiz-history-episode"><div class="quiz-history-episode-head"><div><strong>${esc(episodeDisplayLabel(ep))}</strong><small>${fmt(ep.duration)} · ${ep.word_count} ${tt('words')}</small></div><div class="quiz-history-summary"><span>${esc(qh('best'))}<b>${best==null?'—':`${best}/${QUIZ_COUNT}`}</b></span><span>${esc(qh('latest'))}<b>${latest==null?'—':`${latest}/${QUIZ_COUNT}`}</b></span><span>${esc(qh('attempts'))}<b>${attempts.length}/3</b></span></div></div><div class="quiz-history-attempts">${attemptHtml}</div></article>`;
+  }).join(''):`<div class="quiz-history-no-results">${esc(qh('noEpisodes'))}</div>`;
+  const back=$('[data-qh-back-folders]');if(back)back.onclick=()=>openQuizHistory('b1',null);
+  $$('.quiz-history-attempt').forEach(b=>b.onclick=()=>{const arr=quizAttempts(st,b.dataset.qhEp);openStoredQuizResult(+b.dataset.qhEp,arr[+b.dataset.qhAttempt])});
+  setSectionNav(inB1Section?quizHistorySection:null);
+  updateCourseQuizPoints();
+}
+async function openQuizHistory(courseId=currentCourseId,section=null){
+  if(!(await activateCourse(courseId)))return;
+  quizHistorySection=currentCourseId==='b1'&&['core','advanced'].includes(section)?section:null;
+  showView('#quizHistoryView');
+  setSectionNav(quizHistorySection);
+  location.hash=quizHistorySection?`quiz-history-${currentCourseId}-${quizHistorySection}`:`quiz-history-${currentCourseId}`;
+  renderQuizHistory();updateHeaderProgress();
 }
 
 function updateCourseNavigation(){
@@ -496,8 +623,13 @@ async function openCourse(id='b1',sectionToOpen=null){
   $('#courseEyebrow').textContent=`${meta.short} ${ux('audioCourse')}`; $('#courseTitle').textContent=courseTitle(id); $('#courseDescription').textContent=courseDescription(id); $('#courseWords').textContent=D.total_words.toLocaleString(); $('#courseEpisodes').textContent=D.episodes.length; $('#courseProgressText').textContent=`${p}%`; $('#courseProgressInline').textContent=`${words} / ${D.total_words} ${tt('words')} · ${p}%`; $('#courseProgressFill').style.width=`${p}%`; updateCourseQuizPoints();
   const browserTitle=$('#episodeBrowserTitle'); if(browserTitle)browserTitle.textContent=episodeBrowserTitle(); $('#bookmarkCount').textContent=S.bookmarks.length; $('#sideBookmarkCount').textContent=S.bookmarks.length;
   let le=+S.lastEpisode||1,pos=+S.positions[le]||0,lastEp=epMap[le]||D.episodes[0],lastLabel=episodeDisplayLabel(lastEp); $('#continueBtn').textContent=pos>5?`${tt('continueWord')} ${lastLabel} · ${fmt(pos)}`:`${tt('startWord')} ${lastLabel}`; $('#continueSummary').textContent=pos>5?tt('lastPosition',{label:lastLabel,time:fmt(pos)}):tt('savedAutomatically');
-  libraryOpenSections=new Set(sectionToOpen?[sectionToOpen]:[]); if(id==='b1'&&sectionToOpen)setActiveEpisodeSection(sectionToOpen); else if(id==='b1')setActiveEpisodeSection(currentEp?.section||activeEpisodeSection||'core'); else setActiveEpisodeSection(null);
-  renderEpisodeGrid(); $('#searchInput').value='';$('#searchPanel').classList.add('hidden');$('#bookmarksPanel').classList.add('hidden');$('#bookmarksBtn').classList.remove('active'); showView('#courseHomeView');location.hash=`course-${id}`;updateHeaderProgress();refreshBookmarkCounts();renderCourseBookmarkPanel();updatePersistentPlayerVisibility();updateStaticLanguage();
+  librarySectionFilter=id==='b1'&&['core','advanced'].includes(sectionToOpen)?sectionToOpen:null;
+  libraryOpenSections=new Set(librarySectionFilter?[librarySectionFilter]:[]);
+  if(librarySectionFilter)setActiveEpisodeSection(librarySectionFilter); else if(id!=='b1')setActiveEpisodeSection(null);
+  renderEpisodeGrid(); $('#searchInput').value='';$('#searchPanel').classList.add('hidden');$('#bookmarksPanel').classList.add('hidden');$('#bookmarksBtn').classList.remove('active'); showView('#courseHomeView');
+  setSectionNav(librarySectionFilter);
+  location.hash=librarySectionFilter?`course-${id}-${librarySectionFilter}`:`course-${id}`;
+  updateHeaderProgress();refreshBookmarkCounts();renderCourseBookmarkPanel();updatePersistentPlayerVisibility();updateStaticLanguage();
 }
 
 function episodeCardHtml(ep){ let p=pct(ep),st=statusLabel(ep),cw=completedWords(ep); const isCurrent=!!(currentEp&&playerHasStarted&&currentEp.episode===ep.episode); const currentState=isCurrent?(audio.paused?[`● ${ux('current')}`,'current-now']:[`▶ ${ux('playing')}`,'playing-now']):st; return `<article class="episode-card ${ep.section==='advanced'?'advanced':''} ${isCurrent?'current-episode':''}" data-ep="${ep.episode}"><div class="ephead"><span class="epnum">${tt('episodeLabel')} ${String(epDisplay(ep)).padStart(2,'0')}</span><span class="status ${currentState[1]}">${currentState[0]}</span></div><div class="epmeta">${fmt(ep.duration)} · ${cw} / ${ep.word_count} ${tt('words')}</div><div class="epbar"><i style="width:${p}%"></i></div><div class="epwords">${esc(ep.first_word)} → ${esc(ep.last_word)}</div></article>` }
@@ -521,6 +653,16 @@ function setLibraryLayout(layout){
   AS.libraryLayout=layout==='list'?'list':'grid';save();applyLibraryLayout();
 }
 function toggleLibrarySection(id){
+  if(currentCourseId==='b1'){
+    if(librarySectionFilter===id){
+      libraryOpenSections=new Set([id]);
+      setSectionNav(id);
+      renderEpisodeGrid();
+      return;
+    }
+    openCourse('b1',id);
+    return;
+  }
   if(libraryOpenSections.has(id)){
     libraryOpenSections.delete(id);
     setSectionNav(null);
@@ -532,7 +674,7 @@ function toggleLibrarySection(id){
     setTimeout(()=>scrollSectionToActiveEpisode(id,true),90);
   }
 }
-function renderEpisodeGrid(){ if(!D||!$('#episodeGrid'))return; const filtered=D.episodes.filter(ep=>libraryFilter==='all'||statusKey(ep)===libraryFilter); let html=''; if(D.sections?.length){ for(const sec of D.sections){ const eps=filtered.filter(ep=>ep.section===sec.id); const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id); html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}"><button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}"><div><span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span><h2>${esc(sectionDisplayTitle(sec))}</h2><p>${sec.episodes} ${tt('episodes')} · ${sec.total_words.toLocaleString()} ${tt('words')}</p></div><div class="library-section-head-right"><strong>${p.pct}%</strong><span class="section-chevron" aria-hidden="true">⌄</span></div></button><div class="library-section-body ${isOpen?'':'hidden'}"><div class="episode-grid-inner">${eps.length?eps.map(episodeCardHtml).join(''):`<div class="empty-state">${ux('sectionEmpty')}</div>`}</div></div></section>`; } } else html=filtered.map(episodeCardHtml).join(''); $('#episodeGrid').innerHTML=html||`<div class="empty-state">${ux('episodesEmpty')}</div>`; applyLibraryLayout(); $$('[data-section-toggle]').forEach(x=>x.onclick=()=>toggleLibrarySection(x.dataset.sectionToggle)); $$('.episode-card').forEach(x=>x.onclick=()=>openEpisode(+x.dataset.ep,null,true)); }
+function renderEpisodeGrid(){ if(!D||!$('#episodeGrid'))return; const filtered=D.episodes.filter(ep=>libraryFilter==='all'||statusKey(ep)===libraryFilter); let html=''; if(D.sections?.length){ const sectionsToRender=currentCourseId==='b1'&&librarySectionFilter?D.sections.filter(sec=>sec.id===librarySectionFilter):D.sections; for(const sec of sectionsToRender){ const eps=filtered.filter(ep=>ep.section===sec.id); const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id); html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}"><button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}"><div><span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span><h2>${esc(sectionDisplayTitle(sec))}</h2><p>${sec.episodes} ${tt('episodes')} · ${sec.total_words.toLocaleString()} ${tt('words')}</p></div><div class="library-section-head-right"><strong>${p.pct}%</strong><span class="section-chevron" aria-hidden="true">⌄</span></div></button><div class="library-section-body ${isOpen?'':'hidden'}"><div class="episode-grid-inner">${eps.length?eps.map(episodeCardHtml).join(''):`<div class="empty-state">${ux('sectionEmpty')}</div>`}</div></div></section>`; } } else html=filtered.map(episodeCardHtml).join(''); $('#episodeGrid').innerHTML=html||`<div class="empty-state">${ux('episodesEmpty')}</div>`; applyLibraryLayout(); $$('[data-section-toggle]').forEach(x=>x.onclick=()=>toggleLibrarySection(x.dataset.sectionToggle)); $$('.episode-card').forEach(x=>x.onclick=()=>openEpisode(+x.dataset.ep,null,true)); }
 function bookmarksHtml(){
   const S=courseState();
   if(!S.bookmarks.length)return `<b>${ux('noBookmarks')}</b><p>${ux('bookmarkHelp')}</p>`;
@@ -833,7 +975,7 @@ function shuffleCopy(arr){
 function quizIsAvailable(){
   return !!(currentEp&&D&&quizEligibleEntries().length>=QUIZ_COUNT);
 }
-function updateQuizButton(){ const btn=$('#quizBtn'); if(!btn)return; const available=quizIsAvailable(); btn.classList.toggle('hidden',!available); if(!available)return; const best=+(courseState().quizBest?.[currentEp.episode]||0); btn.textContent=best>0?`${tt('quiz')} · ${tt('best')} ${best}/${QUIZ_COUNT}`:tt('quiz'); }
+function updateQuizButton(){ const btn=$('#quizBtn'); if(!btn)return; const available=quizIsAvailable(); btn.classList.toggle('hidden',!available); if(!available)return; const best=quizBestFromAttempts(courseState(),currentEp.episode); btn.textContent=best>0?`${tt('quiz')} · ${tt('best')} ${best}/${QUIZ_COUNT}`:tt('quiz'); }
 function normalizedQuizGerman(s){
   return String(s||'').trim().toLocaleLowerCase('de-DE').replace(/\s+/g,' ');
 }
@@ -953,6 +1095,7 @@ function buildQuiz(){
     ]);
     questions.push({
       entry_id:correct.entry_id,
+      start:+correct.start||0,
       german:correct.german,
       grammar:quizGrammarLabel(correct),
       correct:correct.english,
@@ -968,24 +1111,51 @@ function closeQuiz(){
   document.body.classList.remove('quiz-open');
 }
 function renderQuiz(){ if(!quizState)return; const body=$('#quizBody'); if(quizState.finished){renderQuizResult();return} const q=quizState.questions[quizState.index], selected=quizState.answers[quizState.index], pct=Math.round((quizState.index/QUIZ_COUNT)*100); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${tt('quizTitle')}</h2><div class="quiz-meta"><span>${tt('question',{n:quizState.index+1,t:QUIZ_COUNT})}</span><span>${tt('pass',{p:QUIZ_PASS,t:QUIZ_COUNT})}</span></div><div class="quiz-progress"><span style="width:${pct}%"></span></div><div class="quiz-word">${esc(q.german)}${q.grammar?` <span class="quiz-grammar">(${esc(q.grammar)})</span>`:''}</div><p class="quiz-prompt">${tt('quizPrompt')}</p><div class="quiz-options">${q.options.map((o,i)=>`<button type="button" class="quiz-option ${selected===i?'selected':''} ${selected!=null?'locked':''}" data-qoption="${i}" ${selected!=null?'disabled':''}><span class="quiz-letter">${String.fromCharCode(65+i)}</span><span>${esc(o.label)}</span></button>`).join('')}</div>${selected!=null?(q.options[selected]?.correct?`<div class="quiz-instant-feedback correct">${tt('correct')}</div>`:`<div class="quiz-instant-feedback wrong"><span>${tt('correctAnswer')}</span> <strong>${esc(q.correct)}</strong></div>`):`<div class="quiz-instant-feedback placeholder" aria-hidden="true">&nbsp;</div>`}<div class="quiz-actions"><button id="quizPrev" class="quiz-secondary" type="button" ${quizState.index===0?'disabled':''}>${tt('back')}</button><button id="quizNext" class="quiz-primary" type="button" ${selected==null?'disabled':''}>${quizState.index===QUIZ_COUNT-1?tt('finish'):tt('next')}</button></div>`; $$('[data-qoption]').forEach(btn=>btn.onclick=()=>{if(quizState.answers[quizState.index]!=null)return; const i=+btn.dataset.qoption,opt=q.options[i]; quizState.answers[quizState.index]=i; playQuizFeedback(!!opt.correct); renderQuiz();}); $('#quizPrev').onclick=()=>{if(quizState.index>0){quizState.index--;renderQuiz()}}; $('#quizNext').onclick=()=>{if(quizState.answers[quizState.index]==null)return; if(quizState.index<QUIZ_COUNT-1){quizState.index++;renderQuiz();}else{finishQuiz();}}; }
+function collectQuizReview(){
+  if(!quizState?.questions)return [];
+  const wrong=[];
+  quizState.questions.forEach((q,i)=>{
+    const answer=q.options[quizState.answers[i]];
+    if(!answer?.correct)wrong.push({entry_id:q.entry_id,german:q.german,yours:answer?.label||'—',correct:q.correct,start:+q.start||+entryIndex[q.entry_id]?.start||0});
+  });
+  return wrong;
+}
+function saveQuizAttempt(score,review){
+  const S=courseState(),id=String(currentEp.episode);
+  S.quizHistory=S.quizHistory||{};
+  const next={id:`${Date.now()}-${Math.random().toString(36).slice(2,7)}`,score:+score||0,at:Date.now(),legacy:false,review:clone(review||[])};
+  const current=Array.isArray(S.quizHistory[id])?S.quizHistory[id]:[];
+  S.quizHistory[id]=[next,...current].slice(0,3);
+  syncQuizBestFromHistory(S,id);
+  save();
+}
 function finishQuiz(){
   if(!quizState)return;
   let score=0;
-  quizState.questions.forEach((q,i)=>{
-    const a=q.options[quizState.answers[i]];
-    if(a?.correct)score++;
-  });
-  quizState.score=score;
-  quizState.finished=true;
-  const S=courseState();
-  S.quizBest=S.quizBest||{};
-  const old=+(S.quizBest[currentEp.episode]||0);
-  if(score>old)S.quizBest[currentEp.episode]=score;
-  save();updateQuizButton();updateCourseQuizPoints();
+  quizState.questions.forEach((q,i)=>{const a=q.options[quizState.answers[i]];if(a?.correct)score++});
+  quizState.score=score;quizState.finished=true;quizState.episode=currentEp.episode;quizState.review=collectQuizReview();
+  saveQuizAttempt(score,quizState.review);
+  updateQuizButton();updateCourseQuizPoints();
   renderQuizResult();
   if(score>=QUIZ_PASS)setTimeout(playQuizPassSound,120);
 }
-function renderQuizResult(){ const body=$('#quizBody'), score=quizState.score||0, passed=score>=QUIZ_PASS, wrong=[]; quizState.questions.forEach((q,i)=>{const answer=q.options[quizState.answers[i]]; if(!answer?.correct)wrong.push({german:q.german,yours:answer?.label||'—',correct:q.correct})}); body.innerHTML=`<div class="quiz-kicker">${esc(episodeDisplayLabel(currentEp))}</div><h2 id="quizTitle">${passed?tt('passed'):tt('reviewRecommended')}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${passed?tt('greatTarget'):tt('listenAgainThen')}</span></div>${wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)}</span></div>`).join('')}</section>`:`<div class="quiz-perfect">${tt('allCorrect')}</div>`}<div class="quiz-result-actions"><button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`; $('#quizRetake').onclick=()=>{const q=buildQuiz(); if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; renderQuiz()}}; $('#quizListenAgain').onclick=()=>{closeQuiz(); audio.currentTime=0; sync(true); setPlaybackIntent(true); safePlay('quiz-listen-again');}; $('#quizDone').onclick=closeQuiz; }
+async function practiceQuizAnswer(episodeId,entryId,start){
+  closeQuiz();
+  const x=entryIndex[entryId],seek=Number.isFinite(+start)?+start:(+x?.start||0);
+  await openEpisode(+episodeId,seek,true,null,entryId||null);
+}
+function renderQuizResult(){
+  const body=$('#quizBody'),score=+quizState?.score||0,passed=score>=QUIZ_PASS;
+  const episodeId=+quizState?.episode||currentEp?.episode||1,ep=epMap[episodeId]||currentEp;
+  const wrong=Array.isArray(quizState?.review)?quizState.review:collectQuizReview();
+  const legacy=!!quizState?.legacy;
+  body.innerHTML=`<div class="quiz-kicker">${esc(ep?episodeDisplayLabel(ep):'')}</div><h2 id="quizTitle">${esc(quizState?.history?qh('quizResult'):(passed?tt('passed'):tt('reviewRecommended')))}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${legacy?qh('detailsUnavailable'):(passed?tt('greatTarget'):tt('listenAgainThen'))}</span></div>${!legacy&&wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3><p class="quiz-practice-hint">${esc(qh('listenPractice'))}</p>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)} <button type="button" class="quiz-time-link" data-qtime-entry="${esc(x.entry_id||'')}" data-qtime-start="${+x.start||0}" data-qtime-episode="${episodeId}">▶ ${fmt(+x.start||0)}</button></span></div>`).join('')}</section>`:(!legacy?`<div class="quiz-perfect">${tt('allCorrect')}</div>`:'')}<div class="quiz-result-actions">${quizState?.history?`<button id="quizBackHistory" class="quiz-secondary" type="button">${esc(qh('backToHistory'))}</button>`:''}<button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`;
+  $$('.quiz-time-link').forEach(b=>b.onclick=()=>practiceQuizAnswer(+b.dataset.qtimeEpisode,b.dataset.qtimeEntry,+b.dataset.qtimeStart));
+  if($('#quizBackHistory'))$('#quizBackHistory').onclick=()=>{closeQuiz();openQuizHistory(currentCourseId,currentCourseId==='b1'?quizHistorySection:null)};
+  $('#quizRetake').onclick=async()=>{if(quizState?.history){closeQuiz();await openEpisode(episodeId,null,false);openQuiz();return}const q=buildQuiz();if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false};renderQuiz()}};
+  $('#quizListenAgain').onclick=async()=>{closeQuiz();if(currentEp?.episode===episodeId){audio.currentTime=0;sync(true);setPlaybackIntent(true);safePlay('quiz-listen-again');}else await openEpisode(episodeId,0,true)};
+  $('#quizDone').onclick=closeQuiz;
+}
 
 async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,keepCourseView=false){
   if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
@@ -1056,6 +1226,7 @@ $('#brandHome').onclick=renderAppHome;
 $('[data-nav="home"]').onclick=renderAppHome;
 $('#navCourse').onclick=()=>openCourse(currentCourseId);
 $('#navDifficult').onclick=openDifficult;
+if($('#navQuizHistory'))$('#navQuizHistory').onclick=()=>openQuizHistory(currentCourseId);
 if($('#navCore'))$('#navCore').onclick=()=>openCourse('b1','core');
 if($('#navAdvanced'))$('#navAdvanced').onclick=()=>openCourse('b1','advanced');
 $$('.course-side').forEach(b=>b.onclick=()=>openCourse(b.dataset.course));
@@ -1063,6 +1234,12 @@ $$('.course-side').forEach(b=>b.onclick=()=>openCourse(b.dataset.course));
 $('#continueBtn').onclick=()=>{const S=courseState(),ep=+S.lastEpisode||1;openEpisode(ep,+S.positions[ep]||0)};
 $('#openLibraryBtn').onclick=$('#quickLibrary').onclick=()=>scrollToEpisodeBrowser();
 $('#bookmarksBtn').onclick=()=>renderCourseBookmarkPanel(true);
+if($('#courseQuizPointsCard')){
+  $('#courseQuizPointsCard').onclick=()=>openQuizHistory(currentCourseId);
+  $('#courseQuizPointsCard').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openQuizHistory(currentCourseId)}};
+}
+if($('#quizHistoryAll'))$('#quizHistoryAll').onclick=()=>{quizHistoryFilter='all';renderQuizHistory()};
+if($('#quizHistoryAttempted'))$('#quizHistoryAttempted').onclick=()=>{quizHistoryFilter='attempted';renderQuizHistory()};
 $('#searchInput').oninput=search;
 $('#resetProgress').onclick=()=>{if(confirm(ux('resetConfirm',{n:D.episodes.length}))){const S=courseState();S.positions={};S.maxPositions={};S.completed={};S.lastEpisode=1;save();renderEpisodeGrid();updateHeaderProgress();openCourse(currentCourseId);msg(ux('progressReset'))}};
 $$('[data-library-filter]').forEach(b=>b.onclick=()=>{libraryFilter=b.dataset.libraryFilter;$$('[data-library-filter]').forEach(x=>x.classList.toggle('active',x===b));renderEpisodeGrid()});
@@ -1154,9 +1331,12 @@ async function route(){
   const h=(location.hash||'#home').slice(1);
   if(h==='home'){renderAppHome();return}
   let m;
+  if((m=h.match(/^course-b1-(core|advanced)$/))){await openCourse('b1',m[1]);return}
   if((m=h.match(/^course-(.+)$/))){await openCourse(m[1]);return}
   if((m=h.match(/^library-(.+)$/))){await openCourse(m[1]);return}
   if((m=h.match(/^difficult-(.+)$/))){if(await activateCourse(m[1]))await openDifficult();return}
+  if((m=h.match(/^quiz-history-b1-(core|advanced)$/))){await openQuizHistory('b1',m[1]);return}
+  if((m=h.match(/^quiz-history-(.+)$/))){await openQuizHistory(m[1]);return}
   if((m=h.match(/^episode-([^-]+)-(\d+)$/))){if(await activateCourse(m[1]))await openEpisode(+m[2]);return}
   renderAppHome()
 }
@@ -1172,6 +1352,7 @@ $('#quizSoundToggle').onchange=e=>{AS.quizSound=e.target.checked;save();updateSe
 if($('#checkUpdateBtn'))$('#checkUpdateBtn').onclick=checkForAppUpdate;
 if($('#updateNowBtn'))$('#updateNowBtn').onclick=applyWaitingUpdate;
 if($('#updateLaterBtn'))$('#updateLaterBtn').onclick=()=>hideUpdateNotice(true);
+setupFeedbackForm();
 async function preloadReadyCoursesForHome(){
   const ready=COURSE_LIST.filter(c=>c.status==='ready').map(c=>c.id);
   const preferred=COURSE_META[AS.lastCourse]?.status==='ready'?AS.lastCourse:null;

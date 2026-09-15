@@ -9,7 +9,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="logo-32-v2.png">
 <link rel="apple-touch-icon" href="logo-pwa-192-v4.png">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=20260915-settings1">
+<link rel="stylesheet" href="styles.css?v=20260915-navfolders1">
 <title>German Vocabulary Audiobook</title>
 </head>
 <body>
@@ -41,7 +41,7 @@
         <button id="navCore" class="side-link sub-link section-side-link"><span>1</span> B1 Core</button>
         <button id="navAdvanced" class="side-link sub-link section-side-link advanced-link"><span>+</span> B1+ Advanced</button>
         <button id="navDifficult" class="side-link sub-link" data-nav="difficult"><span>★</span> Difficult Words <em id="sideBookmarkCount">0</em></button>
-        <div class="side-quiz-points" title="Best quiz scores across this course"><span>◆</span><span id="sideQuizLabel">Quiz Points</span><em id="sideQuizPoints">0 / 0</em></div>
+        <button id="navQuizHistory" class="side-quiz-points" data-nav="quiz-history" type="button" title="Open quiz history"><span>◆</span><span id="sideQuizLabel">Quiz Points</span><em id="sideQuizPoints">0 / 0</em></button>
       </div>
 
       <div id="sideLabelCourses" class="side-label">COURSES</div>
@@ -142,7 +142,7 @@
             <div><strong id="courseWords">2,871</strong><span id="courseWordsLabel">words</span></div>
             <div><strong id="courseEpisodes">36</strong><span id="courseEpisodesLabel">episodes</span></div>
             <div><strong id="courseProgressText">0%</strong><span id="courseCompletedLabel">completed</span></div>
-            <div><strong id="courseQuizPoints">0 / 0</strong><span id="courseQuizPointsLabel">quiz points</span></div>
+            <div id="courseQuizPointsCard" class="course-quiz-stat" role="button" tabindex="0" title="Open quiz history"><strong id="courseQuizPoints">0 / 0</strong><span id="courseQuizPointsLabel">quiz points</span><small class="course-quiz-stat-open">›</small></div>
           </div>
         </section>
 
@@ -180,6 +180,27 @@
           <div><h3 id="quickCardTitle">Continue learning</h3><p id="continueSummary">Your listening position is saved automatically.</p></div>
           <button id="quickLibrary" class="mini-primary">Go to episodes</button>
         </section>
+      </main>
+    </section>
+
+    <section id="quizHistoryView" class="view hidden">
+      <main class="page-main">
+        <div class="page-title-row quiz-history-title-row">
+          <div>
+            <p class="eyebrow" id="quizHistoryEyebrow">QUIZ HISTORY</p>
+            <h1 id="quizHistoryTitle">Quiz History</h1>
+            <p id="quizHistorySubtitle">Your last 3 quiz attempts for each episode.</p>
+          </div>
+        </div>
+        <div class="quiz-history-toolbar">
+          <div class="filter-chips quiz-history-main-filters" aria-label="Quiz history filter">
+            <button id="quizHistoryAll" class="chip active" type="button">All episodes</button>
+            <button id="quizHistoryAttempted" class="chip" type="button">Attempted only</button>
+          </div>
+          <div id="quizHistorySections" class="filter-chips quiz-history-section-filters hidden" aria-label="B1 section filter"></div>
+        </div>
+        <p id="quizHistoryLocalNote" class="quiz-history-local-note">Quiz history is stored on this device.</p>
+        <div id="quizHistoryList" class="quiz-history-list"></div>
       </main>
     </section>
 
@@ -306,11 +327,16 @@
           <span class="settings-details-chevron" aria-hidden="true">⌄</span>
         </summary>
         <div class="feedback-panel">
-          <p id="feedbackIntro">Write anything you want in the box below and press Submit. You do not need to open a separate Google Forms link.</p>
-          <div class="feedback-frame-shell">
-            <iframe id="feedbackFrame" title="German Audiobook Feedback" src="https://docs.google.com/forms/d/e/1FAIpQLScEKZKveuF1hHjbw02KzIdpuKbmfOtMWAHPFngRqmOtT5FV2Q/viewform?embedded=true" loading="lazy" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
-          </div>
-          <p id="feedbackDirect" class="settings-helper-note">Your response is submitted directly to the German Audiobook Feedback form.</p>
+          <p id="feedbackIntro">Write anything you want to tell us.</p>
+          <form id="feedbackForm" class="feedback-form" action="https://docs.google.com/forms/d/e/1FAIpQLScEKZKveuF1hHjbw02KzIdpuKbmfOtMWAHPFngRqmOtT5FV2Q/formResponse" method="POST" target="feedbackSubmitFrame" novalidate>
+            <textarea id="feedbackText" name="entry.928501120" rows="6" maxlength="3000" required placeholder="Write your feedback here..." aria-label="Feedback"></textarea>
+            <div class="feedback-form-footer">
+              <span id="feedbackStatus" class="feedback-status" role="status" aria-live="polite"></span>
+              <button id="feedbackSubmitBtn" class="feedback-submit-btn" type="submit">Send feedback</button>
+            </div>
+          </form>
+          <iframe id="feedbackSubmitFrame" name="feedbackSubmitFrame" class="feedback-submit-frame" title="Feedback submission" aria-hidden="true" tabindex="-1"></iframe>
+          <p id="feedbackDirect" class="settings-helper-note">No Google Forms page will open.</p>
         </div>
       </details>
     </div>
@@ -331,7 +357,7 @@
 
 <script src="site-config.js?v=20260915-playback1"></script>
 <script src="courses.js?v=20260915-playback1"></script>
-<script src="app.js?v=20260915-settings1"></script>
+<script src="app.js?v=20260915-navfolders1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
