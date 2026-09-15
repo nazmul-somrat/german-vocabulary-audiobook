@@ -39,7 +39,7 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.6';
+const APP_VERSION='1.0.7';
 const APP_UPDATED='15 September 2026';
 let swRegistration=null;
 let swReloading=false;
@@ -655,7 +655,8 @@ function setLibraryLayout(layout){
 function toggleLibrarySection(id){
   if(currentCourseId==='b1'){
     if(librarySectionFilter===id){
-      libraryOpenSections=new Set([id]);
+      if(libraryOpenSections.has(id))libraryOpenSections.delete(id);
+      else libraryOpenSections.add(id);
       setSectionNav(id);
       renderEpisodeGrid();
       return;
@@ -706,6 +707,7 @@ function renderDifficultPanel(){
 }
 async function openDifficult(){
   if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
+  setSectionNav(null);
   renderDifficultPanel();showView('#difficultView');location.hash=`difficult-${currentCourseId}`;updateHeaderProgress();
 }
 function toggleBookmark(id,rerender=false){
@@ -1227,8 +1229,14 @@ $('[data-nav="home"]').onclick=renderAppHome;
 $('#navCourse').onclick=()=>openCourse(currentCourseId);
 $('#navDifficult').onclick=openDifficult;
 if($('#navQuizHistory'))$('#navQuizHistory').onclick=()=>openQuizHistory(currentCourseId);
-if($('#navCore'))$('#navCore').onclick=()=>openCourse('b1','core');
-if($('#navAdvanced'))$('#navAdvanced').onclick=()=>openCourse('b1','advanced');
+if($('#navCore'))$('#navCore').onclick=()=>{
+  const inCore=currentCourseId==='b1'&&librarySectionFilter==='core'&&!$('#courseHomeView').classList.contains('hidden');
+  if(inCore)toggleLibrarySection('core'); else openCourse('b1','core');
+};
+if($('#navAdvanced'))$('#navAdvanced').onclick=()=>{
+  const inAdvanced=currentCourseId==='b1'&&librarySectionFilter==='advanced'&&!$('#courseHomeView').classList.contains('hidden');
+  if(inAdvanced)toggleLibrarySection('advanced'); else openCourse('b1','advanced');
+};
 $$('.course-side').forEach(b=>b.onclick=()=>openCourse(b.dataset.course));
 
 $('#continueBtn').onclick=()=>{const S=courseState(),ep=+S.lastEpisode||1;openEpisode(ep,+S.positions[ep]||0)};
