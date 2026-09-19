@@ -39,8 +39,9 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.7';
-const APP_UPDATED='15 September 2026';
+const APP_VERSION='1.0.8';
+const APP_UPDATED='19 September 2026';
+const COURSE_DATA_CACHE_VERSION='20260919-a2final2';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -137,6 +138,27 @@ let playerHasStarted=false;
 const loaded={};
 const loading={};
 
+
+function migrateCourseContent(id,data){
+  if(id!=='a2'||!data)return;
+  const S=cs(id),nextVersion=String(data.version||'').trim();
+  if(!nextVersion||S.contentVersion===nextVersion)return;
+
+  // A2 was rebuilt from 24 / 1,214 to 30 / 1,529. Old episode positions and
+  // quiz history point to the old timeline, so reset only timeline-dependent
+  // A2 state once. Valid word bookmarks survive because they are keyed by Entry_ID.
+  S.positions={};
+  S.maxPositions={};
+  S.completed={};
+  S.lastEpisode=1;
+  S.sectionLastEpisodes={};
+  S.quizBest={};
+  S.quizHistory={};
+  S.bookmarks=(S.bookmarks||[]).filter(id=>!!data.entry_index?.[id]);
+  S.contentVersion=nextVersion;
+  save();
+}
+
 async function loadCourseData(id){
   if(loaded[id])return loaded[id];
   if(loading[id])return loading[id];
@@ -145,10 +167,11 @@ async function loadCourseData(id){
   loading[id]=new Promise((resolve,reject)=>{
     window.GVA_COURSE_DATA=undefined;
     const s=document.createElement('script');
-    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v=20260915-playback1';
+    s.src=meta.dataScript+(meta.dataScript.includes('?')?'&':'?')+'v='+COURSE_DATA_CACHE_VERSION;
     s.onload=()=>{
       const data=window.GVA_COURSE_DATA;
       if(!data){delete loading[id];return reject(new Error('Course data did not load'))}
+      migrateCourseContent(id,data);
       loaded[id]=data; window.GVA_COURSE_DATA=undefined; s.remove(); delete loading[id]; updateHeaderProgress(); resolve(data);
     };
     s.onerror=()=>{delete loading[id];reject(new Error(`Could not load ${meta.dataScript}`))};
@@ -1165,8 +1188,10 @@ function finishQuiz(){
 }
 async function practiceQuizAnswer(episodeId,entryId,start){
   closeQuiz();
-  const x=entryIndex[entryId],seek=Number.isFinite(+start)?+start:(+x?.start||0);
-  await openEpisode(+episodeId,seek,true,null,entryId||null);
+  const x=entryIndex[entryId];
+  const targetEpisode=+x?.episode||+episodeId;
+  const seek=Number.isFinite(+x?.start)?+x.start:(Number.isFinite(+start)?+start:0);
+  await openEpisode(targetEpisode,seek,true,null,entryId||null);
 }
 function renderQuizResult(){
   const body=$('#quizBody'),score=+quizState?.score||0,passed=score>=QUIZ_PASS;
