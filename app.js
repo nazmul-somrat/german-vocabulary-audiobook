@@ -44,9 +44,9 @@ const QUIZ_COUNT=QUIZ_VOCAB_COUNT+QUIZ_GRAMMAR_COUNT;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.21';
+const APP_VERSION='1.0.22';
 const APP_UPDATED='20 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260920-expandall1';
+const COURSE_DATA_CACHE_VERSION='20260920-mobilecontinue1';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -926,11 +926,19 @@ async function openCourse(id='b1',sectionToOpen=null,navigationMode='push'){
   const browserTitle=$('#episodeBrowserTitle'); if(browserTitle)browserTitle.textContent=episodeBrowserTitle(); $('#bookmarkCount').textContent=S.bookmarks.length; $('#sideBookmarkCount').textContent=S.bookmarks.length;
   let le=+S.lastEpisode||1,pos=+S.positions[le]||0,lastEp=epMap[le]||D.episodes[0],lastLabel=episodeDisplayLabel(lastEp);
   const hasCourseProgress=words>0;
-  $('#continueBtn').textContent=pos>5
+  const desktopContinue=pos>5
     ?`${tt('continueWord')} ${lastLabel} · ${fmt(pos)}`
     :hasCourseProgress
       ?`${tt('continueWord')} ${lastLabel}`
       :`${tt('startWord')} ${lastLabel}`;
+
+  const mobileEpisode=String(epDisplay(lastEp)).padStart(2,'0');
+  const mobileAction=hasCourseProgress?tt('continueWord'):tt('startWord');
+  const mobileContinue=pos>5
+    ?`${mobileAction} · ${tt('episodeLabel')} ${mobileEpisode} · ${fmt(pos)}`
+    :`${mobileAction} · ${tt('episodeLabel')} ${mobileEpisode}`;
+
+  $('#continueBtn').innerHTML=`<span class="continue-desktop">${esc(desktopContinue)}</span><span class="continue-mobile">${esc(mobileContinue)}</span>`;
   $('#continueSummary').textContent=pos>5?tt('lastPosition',{label:lastLabel,time:fmt(pos)}):tt('savedAutomatically');
   librarySectionFilter=id==='b1'&&hasB1Sections()&&['core','advanced'].includes(sectionToOpen)?sectionToOpen:null;
   libraryOpenSections=new Set(librarySectionFilter?[librarySectionFilter]:[]);
