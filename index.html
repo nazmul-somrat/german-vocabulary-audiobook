@@ -543,6 +543,200 @@ html[data-theme="dark"] .player-search-row button{border-color:#475569}
 }
 </style>
 
+
+<style id="search-focus-v1019">
+/* Search results: give the top of every vocabulary card a safe landing position. */
+.vocab-card{
+  scroll-margin-top:12px;
+}
+
+/* Focus mode replaces the old pseudo-lyrics/event view. */
+#lyricsView.focus-view{
+  display:none!important;
+  width:100%;
+  max-width:920px;
+  margin:18px auto 34px;
+  padding:0 14px 30px;
+  box-sizing:border-box;
+}
+#lyricsView.focus-view.visible{
+  display:block!important;
+}
+.focus-card{
+  border:1px solid var(--border,#d9e2ee);
+  border-radius:22px;
+  background:var(--card,#fff);
+  padding:24px 28px;
+  box-shadow:0 8px 24px rgba(15,23,42,.06);
+}
+.focus-meta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+  font-size:12px;
+  color:var(--muted,#64748b);
+}
+.focus-meta>span:not(.focus-sync-state){
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(148,163,184,.12);
+}
+.focus-sync-state{
+  margin-left:auto;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.focus-field{
+  position:relative;
+  margin:0;
+  padding:14px 16px;
+  border-radius:14px;
+  transition:background-color .15s ease,box-shadow .15s ease;
+}
+.focus-field+.focus-field{margin-top:5px}
+.focus-field.focus-active{
+  background:rgba(59,130,246,.09);
+  box-shadow:inset 4px 0 0 #3b82f6;
+}
+.focus-label{
+  display:block;
+  margin-bottom:6px;
+  font-size:11px;
+  line-height:1.2;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted,#64748b);
+}
+.focus-headword strong{
+  display:block;
+  font-size:clamp(30px,3.3vw,44px);
+  line-height:1.08;
+  letter-spacing:-.025em;
+}
+.focus-meaning{
+  display:block;
+  font-size:21px;
+  line-height:1.35;
+}
+.focus-grammar{
+  color:#6d28d9;
+  font-weight:650;
+  font-size:18px;
+}
+.focus-examples{
+  margin-top:10px;
+  border-top:1px solid var(--border,#e2e8f0);
+  padding-top:8px;
+}
+.focus-example+.focus-example{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px dashed var(--border,#e2e8f0);
+}
+.focus-example-de{
+  display:block;
+  font-size:clamp(22px,2.4vw,31px);
+  line-height:1.28;
+}
+.focus-example-en{
+  display:block;
+  font-size:17px;
+  line-height:1.45;
+  color:#7c5b12;
+}
+.focus-bookmark{
+  display:block!important;
+  margin:14px auto 0!important;
+}
+html[data-theme="dark"] .focus-card{
+  background:var(--card,#101827);
+  border-color:#334155;
+  box-shadow:none;
+}
+html[data-theme="dark"] .focus-field.focus-active{
+  background:rgba(96,165,250,.13);
+}
+html[data-theme="dark"] .focus-example-en{color:#f4d58a}
+html[data-theme="dark"] .focus-grammar{color:#c4b5fd}
+
+/* Mobile Search mode: keep only a compact search header sticky while the keyboard
+   is open, so the matched German headword stays directly underneath it. */
+@media (max-width:640px){
+  #persistentPlayerHost.search-active-host{
+    position:sticky!important;
+    top:0!important;
+    z-index:120!important;
+    background:var(--bg,#f5f7fb)!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  #persistentPlayerHost.search-active-host #persistentPlayerFull{
+    padding:5px 8px 6px!important;
+    margin:0!important;
+    background:var(--bg,#f5f7fb)!important;
+  }
+  #persistentPlayerHost.search-active-host .episode-nav,
+  #persistentPlayerHost.search-active-host .transport,
+  #persistentPlayerHost.search-active-host #progress,
+  #persistentPlayerHost.search-active-host #playerNote{
+    display:none!important;
+  }
+  #persistentPlayerHost.search-active-host #playerModebar{
+    margin:0!important;
+    padding:0!important;
+  }
+  #persistentPlayerHost.search-active-host .player-search-row{
+    margin:0!important;
+  }
+
+  #lyricsView.focus-view{
+    margin:8px auto 18px;
+    padding:0 8px 18px;
+  }
+  .focus-card{
+    border-radius:16px;
+    padding:14px 12px;
+  }
+  .focus-meta{
+    margin-bottom:8px;
+    gap:5px;
+    font-size:10px;
+  }
+  .focus-sync-state{
+    width:100%;
+    margin-left:0;
+    margin-top:2px;
+  }
+  .focus-field{
+    padding:10px 11px;
+    border-radius:11px;
+  }
+  .focus-label{
+    margin-bottom:5px;
+    font-size:9px;
+  }
+  .focus-headword strong{
+    font-size:30px;
+  }
+  .focus-meaning{
+    font-size:18px;
+  }
+  .focus-grammar{
+    font-size:16px;
+  }
+  .focus-example-de{
+    font-size:22px;
+  }
+  .focus-example-en{
+    font-size:16px;
+  }
+}
+</style>
+
 </head>
 <body>
 <header id="appHeader" class="topbar">
@@ -638,7 +832,7 @@ html[data-theme="dark"] .player-search-row button{border-color:#475569}
           <div class="mode-row-primary">
             <button data-mode="study" class="mode transcript-mode">Transcript</button>
             <button data-mode="german" class="mode german-mode"><span class="mode-desktop-label">German-only</span><span class="mode-mobile-label">DE only</span></button>
-            <button data-mode="lyrics" class="mode">Lyrics</button>
+            <button data-mode="lyrics" class="mode">Focus</button>
           </div>
           <div class="mode-row-secondary">
             <label class="option-toggle compact-toggle" title="In Transcript mode, hide future English until its audio begins">
@@ -781,11 +975,9 @@ html[data-theme="dark"] .player-search-row button{border-color:#475569}
       <main class="episode-main">
         <section id="episodeIntro" class="episode-intro"></section>
         <div id="normalView"></div>
-        <section id="lyricsView" class="lyrics-view">
-          <div id="lyricPrev" class="lyric prev"></div>
-          <div id="lyricCurrent" class="lyric current"></div>
-          <button id="lyricsStar" class="lyrics-star">☆ Bookmark word</button>
-          <div id="lyricNext" class="lyric next"></div>
+        <section id="lyricsView" class="lyrics-view focus-view" aria-label="Focused vocabulary entry">
+          <article id="focusCard" class="focus-card"></article>
+          <button id="lyricsStar" class="lyrics-star focus-bookmark">☆ Bookmark word</button>
         </section>
       </main>
     </section>
@@ -909,7 +1101,7 @@ html[data-theme="dark"] .player-search-row button{border-color:#475569}
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.18</strong>
+          <strong id="appVersionText">Version 1.0.19</strong>
           <span id="appUpdatedText">Updated 20 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
@@ -921,7 +1113,7 @@ html[data-theme="dark"] .player-search-row button{border-color:#475569}
 
 <script src="site-config.js?v=20260915-playback1"></script>
 <script src="courses.js?v=20260920-quizmix1"></script>
-<script src="app.js?v=20260920-finalcorr1"></script>
+<script src="app.js?v=20260920-searchfocus2"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
