@@ -838,6 +838,70 @@ html[data-theme="dark"] .player-search-row button:hover{
 }
 </style>
 
+
+<style id="mobile-continue-row-v1022">
+.continue-mobile{display:none}
+
+@media (max-width:640px){
+  .course-hero .hero-actions{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:8px!important;
+    align-items:stretch!important;
+    width:100%!important;
+  }
+
+  .course-hero #continueBtn,
+  .course-hero #openLibraryBtn{
+    min-height:48px!important;
+    height:48px!important;
+    margin:0!important;
+    border-radius:12px!important;
+  }
+
+  .course-hero #continueBtn{
+    min-width:0!important;
+    width:100%!important;
+    padding:0 12px!important;
+    overflow:hidden!important;
+    white-space:nowrap!important;
+    text-overflow:ellipsis!important;
+  }
+
+  .course-hero #openLibraryBtn{
+    width:auto!important;
+    min-width:96px!important;
+    padding:0 14px!important;
+    white-space:nowrap!important;
+  }
+
+  .course-hero #continueBtn .continue-desktop{display:none!important}
+  .course-hero #continueBtn .continue-mobile{
+    display:block!important;
+    min-width:0!important;
+    overflow:hidden!important;
+    white-space:nowrap!important;
+    text-overflow:ellipsis!important;
+  }
+}
+
+@media (max-width:380px){
+  .course-hero .hero-actions{
+    grid-template-columns:minmax(0,1fr) 82px!important;
+    gap:6px!important;
+  }
+  .course-hero #continueBtn{
+    padding:0 9px!important;
+    font-size:13px!important;
+  }
+  .course-hero #openLibraryBtn{
+    min-width:82px!important;
+    padding:0 8px!important;
+    font-size:13px!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header id="appHeader" class="topbar">
@@ -1202,7 +1266,7 @@ html[data-theme="dark"] .player-search-row button:hover{
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.21</strong>
+          <strong id="appVersionText">Version 1.0.22</strong>
           <span id="appUpdatedText">Updated 20 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
@@ -1214,7 +1278,7 @@ html[data-theme="dark"] .player-search-row button:hover{
 
 <script src="site-config.js?v=20260915-playback1"></script>
 <script src="courses.js?v=20260920-quizmix1"></script>
-<script src="app.js?v=20260920-expandall1"></script>
+<script src="app.js?v=20260920-mobilecontinue1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
