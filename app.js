@@ -8,7 +8,7 @@ const views=['#appHomeView','#courseHomeView','#quizHistoryView','#difficultView
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
 const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{},quizHistory:{},quizHistoryVersion:1};
-const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:4,courses:{}};
+const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',lastPlayed:null,libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:4,courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function loadAppState(){
@@ -41,9 +41,9 @@ const QUIZ_COUNT=QUIZ_VOCAB_COUNT+QUIZ_GRAMMAR_COUNT;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.11';
+const APP_VERSION='1.0.12';
 const APP_UPDATED='20 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260920-historyplayer1';
+const COURSE_DATA_CACHE_VERSION='20260920-continue1';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -54,6 +54,20 @@ function isInstalledApp(){
 }
 
 function save(){localStorage.setItem('gvaAppState',JSON.stringify(AS))}
+function rememberLastPlayed(position=audio?.currentTime||0){
+  if(!currentEp||!playerCourseId)return;
+  AS.lastPlayed={
+    courseId:playerCourseId,
+    episode:+currentEp.episode,
+    position:Math.max(0,+position||0),
+    duration:Math.max(0,+currentEp.duration||+audio?.duration||0),
+    updatedAt:Date.now()
+  };
+}
+function clearLastPlayedForCourse(id){
+  if(AS.lastPlayed?.courseId===id)AS.lastPlayed=null;
+}
+
 function cs(id){
   if(!AS.courses[id])AS.courses[id]=clone(COURSE_DEFAULT);
   const s=AS.courses[id];
@@ -84,9 +98,9 @@ let restoringHistory=false;
 let lastActive=-1, segmentStop=null, manualEnglish=new Set(), manualRecall=new Set();
 
 const UI_TEXT={
-  en:{home:"Home",current:"CURRENT COURSE",courses:"COURSES",quizPoints:"Quiz Points",uiLanguage:"UI Language",brand:"German Vocabulary Audiobook",brandSub:"Audio + synchronized transcript",homeEyebrow:"VOCABULARY AUDIOBOOK COLLECTION",homeTitle:"Learn German vocabulary by listening, reading and recalling.",homeSubtitle:"One player for multiple vocabulary courses. Your progress and bookmarked words stay separate for each course.",coursesHeading:"Courses",courseProgress:"Course progress",words:"words",episodes:"episodes",completed:"completed",quizPointsLower:"quiz points",continueLearning:"Continue learning",goToEpisodes:"Go to episodes",personalReview:"PERSONAL REVIEW",difficultWords:"Bookmarked Words",difficultSubtitle:"Words you bookmarked with ★ while listening.",resetProgress:"Reset progress",allCourses:"All courses",noCourseData:"No course data",progress:"progress",openCourse:"Open course",comingSoon:"Coming soon",progressLoads:"Progress loads with course",structurePrepared:"Course structure prepared",passedWord:"passed",continueWord:"Continue",startWord:"Start",savedAutomatically:"Your listening position is saved automatically.",lastPosition:"Last position: {label} at {time}.",notStarted:"Not started",inProgress:"In progress",finished:"Finished",episodeLabel:"Episode",b1core:"B1 Core",b1adv:"B1+ Advanced",themeDark:"☾ Dark",themeLight:"☀ Light",afterStop:"Stop after episode",afterNext:"Play next episode",afterRepeat:"Repeat same episode",quiz:"Quiz",best:"Best",quizTitle:"Episode Quiz",question:"Question {n} of {t}",pass:"Pass: {p}/{t}",quizPrompt:"Choose the correct English meaning. The sound tells you whether your choice was right or wrong.",quizTypeVocabulary:"Vocabulary",quizTypeGrammar:"Grammar",quizPromptVocabulary:"Choose the correct English meaning.",quizPromptArticle:"Choose the correct German article.",quizPromptVerbPresent:"Choose the correct er/sie/es present-tense form.",quizPromptVerbPast:"Choose the correct Präteritum form.",quizPromptVerbPerfect:"Choose the correct Perfekt form.",quizNoArticle:"no article",quizUnavailable:"This episode does not have enough suitable vocabulary and grammar items for the 10 + 5 quiz.",correct:"✓ Correct",correctAnswer:"Correct answer:",back:"Back",next:"Next",finish:"Finish",passed:"Passed",reviewRecommended:"Review recommended",greatTarget:"Great — you reached the 12/15 target.",listenAgainThen:"Listen to this episode again, then retake the quiz.",reviewMistakes:"Review your mistakes ({n})",yourAnswer:"Your answer:",correctShort:"Correct:",allCorrect:"All 15 answers were correct.",listenAgain:"Listen Again",retakeQuiz:"Retake Quiz",close:"Close",designedBy:"Designed & developed by Nazmul Somrat",top:"↑ Top",difficultWordBtn:"☆ Bookmark word",playThisEpisode:"▶ Play this episode",resumeThisEpisode:"▶ Resume this episode at {time}",otherEpisodePlaying:"Another episode is still playing. Use Play this episode to switch."},
-  bn:{home:"হোম",current:"বর্তমান কোর্স",courses:"কোর্সসমূহ",quizPoints:"কুইজ পয়েন্ট",uiLanguage:"ভাষা",brand:"জার্মান ভোকাবুলারি অডিওবুক",brandSub:"অডিও + সিঙ্ক্রোনাইজড ট্রান্সক্রিপ্ট",homeEyebrow:"ভোকাবুলারি অডিওবুক সংগ্রহ",homeTitle:"শুনে, পড়ে এবং মনে রেখে জার্মান শব্দভাণ্ডার শিখুন।",homeSubtitle:"একই প্লেয়ারে একাধিক শব্দভাণ্ডার কোর্স। প্রতিটি কোর্সের প্রগ্রেস ও বুকমার্ক করা শব্দ আলাদাভাবে সংরক্ষিত থাকে।",coursesHeading:"কোর্সসমূহ",courseProgress:"কোর্স প্রগ্রেস",words:"শব্দ",episodes:"এপিসোড",completed:"সম্পন্ন",quizPointsLower:"কুইজ পয়েন্ট",continueLearning:"শেখা চালিয়ে যান",goToEpisodes:"এপিসোডে যান",personalReview:"ব্যক্তিগত রিভিউ",difficultWords:"বুকমার্ক করা শব্দ",difficultSubtitle:"শোনার সময় ★ দিয়ে বুকমার্ক করা শব্দ।",resetProgress:"প্রগ্রেস রিসেট",allCourses:"সব কোর্স",noCourseData:"কোর্স ডেটা নেই",progress:"প্রগ্রেস",openCourse:"কোর্স খুলুন",comingSoon:"শীঘ্রই আসছে",progressLoads:"কোর্স খুললে প্রগ্রেস দেখা যাবে",structurePrepared:"কোর্সের কাঠামো প্রস্তুত",passedWord:"পাস",continueWord:"চালিয়ে যান",startWord:"শুরু",savedAutomatically:"আপনার শোনার অবস্থান স্বয়ংক্রিয়ভাবে সেভ হয়।",lastPosition:"সর্বশেষ অবস্থান: {label} এ {time}।",notStarted:"শুরু হয়নি",inProgress:"চলছে",finished:"শেষ",episodeLabel:"এপিসোড",b1core:"B1 কোর",b1adv:"B1+ অ্যাডভান্সড",themeDark:"☾ ডার্ক",themeLight:"☀ লাইট",afterStop:"এপিসোড শেষে থামুন",afterNext:"এপিসোড শেষে পরের এপিসোড চালান",afterRepeat:"এপিসোড শেষে একই এপিসোড পুনরায় চালান",quiz:"কুইজ",best:"সেরা",quizTitle:"এপিসোড কুইজ",question:"প্রশ্ন {n} / {t}",pass:"পাস: {p}/{t}",quizPrompt:"সঠিক ইংরেজি অর্থটি বেছে নিন। সাউন্ড বলে দেবে আপনার উত্তর সঠিক না ভুল।",quizTypeVocabulary:"শব্দার্থ",quizTypeGrammar:"ব্যাকরণ",quizPromptVocabulary:"সঠিক ইংরেজি অর্থটি বেছে নিন।",quizPromptArticle:"সঠিক জার্মান আর্টিকেলটি বেছে নিন।",quizPromptVerbPresent:"সঠিক er/sie/es বর্তমান কালের রূপটি বেছে নিন।",quizPromptVerbPast:"সঠিক Präteritum রূপটি বেছে নিন।",quizPromptVerbPerfect:"সঠিক Perfekt রূপটি বেছে নিন।",quizNoArticle:"কোনো আর্টিকেল নেই",quizUnavailable:"এই এপিসোডে ১০টি শব্দার্থ + ৫টি ব্যাকরণ প্রশ্ন তৈরির জন্য যথেষ্ট উপযুক্ত শব্দ নেই।",correct:"✓ সঠিক",correctAnswer:"সঠিক উত্তর:",back:"পেছনে",next:"পরবর্তী",finish:"শেষ করুন",passed:"পাস",reviewRecommended:"পুনরায় রিভিউ করুন",greatTarget:"দারুণ — আপনি 12/15 লক্ষ্য পূরণ করেছেন।",listenAgainThen:"এই এপিসোডটি আবার শুনুন, তারপর কুইজটি আবার দিন।",reviewMistakes:"আপনার ভুলগুলো দেখুন ({n})",yourAnswer:"আপনার উত্তর:",correctShort:"সঠিক:",allCorrect:"সব 15টি উত্তরই সঠিক হয়েছে।",listenAgain:"আবার শুনুন",retakeQuiz:"আবার কুইজ দিন",close:"বন্ধ",designedBy:"ডিজাইন ও ডেভেলপ করেছেন Nazmul Somrat",top:"↑ টপ",difficultWordBtn:"☆ শব্দ বুকমার্ক করুন",playThisEpisode:"▶ এই এপিসোড চালান",resumeThisEpisode:"▶ {time} থেকে এই এপিসোড চালান",otherEpisodePlaying:"অন্য একটি এপিসোড এখনও চলছে। পরিবর্তন করতে এই এপিসোড চালান চাপুন।"},
-  de:{home:"Start",current:"AKTUELLER KURS",courses:"KURSE",quizPoints:"Quizpunkte",uiLanguage:"Sprache",brand:"Deutsches Vokabel-Hörbuch",brandSub:"Audio + synchronisiertes Transkript",homeEyebrow:"VOKABEL-HÖRBUCH-SAMMLUNG",homeTitle:"Lerne deutsche Vokabeln durch Hören, Lesen und Wiederholen.",homeSubtitle:"Ein Player für mehrere Vokabelkurse. Dein Fortschritt und deine gespeicherten Wörter werden für jeden Kurs getrennt gespeichert.",coursesHeading:"Kurse",courseProgress:"Kursfortschritt",words:"Wörter",episodes:"Episoden",completed:"abgeschlossen",quizPointsLower:"Quizpunkte",continueLearning:"Weiterlernen",goToEpisodes:"Zu den Episoden",personalReview:"PERSÖNLICHE WIEDERHOLUNG",difficultWords:"Gespeicherte Wörter",difficultSubtitle:"Wörter, die du beim Hören mit ★ gespeichert hast.",resetProgress:"Fortschritt zurücksetzen",allCourses:"Alle Kurse",noCourseData:"Keine Kursdaten",progress:"Fortschritt",openCourse:"Kurs öffnen",comingSoon:"Demnächst",progressLoads:"Fortschritt wird mit dem Kurs geladen",structurePrepared:"Kursstruktur vorbereitet",passedWord:"bestanden",continueWord:"Weiter",startWord:"Start",savedAutomatically:"Deine Hörposition wird automatisch gespeichert.",lastPosition:"Letzte Position: {label} bei {time}.",notStarted:"Nicht begonnen",inProgress:"In Bearbeitung",finished:"Fertig",episodeLabel:"Episode",b1core:"B1 Grundkurs",b1adv:"B1+ Aufbau",themeDark:"☾ Dunkel",themeLight:"☀ Hell",afterStop:"Nach der Episode stoppen",afterNext:"Nächste Episode abspielen",afterRepeat:"Dieselbe Episode wiederholen",quiz:"Quiz",best:"Bestwert",quizTitle:"Episoden-Quiz",question:"Frage {n} von {t}",pass:"Bestehen: {p}/{t}",quizPrompt:"Wähle die richtige englische Bedeutung. Der Ton zeigt dir, ob deine Antwort richtig oder falsch war.",quizTypeVocabulary:"Vokabeln",quizTypeGrammar:"Grammatik",quizPromptVocabulary:"Wähle die richtige englische Bedeutung.",quizPromptArticle:"Wähle den richtigen deutschen Artikel.",quizPromptVerbPresent:"Wähle die richtige Präsensform für er/sie/es.",quizPromptVerbPast:"Wähle die richtige Präteritumform.",quizPromptVerbPerfect:"Wähle die richtige Perfektform.",quizNoArticle:"kein Artikel",quizUnavailable:"Für 10 Vokabel- und 5 Grammatikfragen gibt es in dieser Episode nicht genügend geeignete Einträge.",correct:"✓ Richtig",correctAnswer:"Richtige Antwort:",back:"Zurück",next:"Weiter",finish:"Beenden",passed:"Bestanden",reviewRecommended:"Wiederholung empfohlen",greatTarget:"Super — du hast das Ziel 12/15 erreicht.",listenAgainThen:"Höre diese Episode noch einmal und mache danach das Quiz erneut.",reviewMistakes:"Überprüfe deine Fehler ({n})",yourAnswer:"Deine Antwort:",correctShort:"Richtig:",allCorrect:"Alle 15 Antworten waren richtig.",listenAgain:"Noch einmal hören",retakeQuiz:"Quiz wiederholen",close:"Schließen",designedBy:"Entwickelt von Nazmul Somrat",top:"↑ Nach oben",difficultWordBtn:"☆ Wort speichern",playThisEpisode:"▶ Diese Episode abspielen",resumeThisEpisode:"▶ Diese Episode bei {time} fortsetzen",otherEpisodePlaying:"Eine andere Episode läuft weiter. Mit „Diese Episode abspielen“ wechselst du."}
+  en:{home:"Home",current:"CURRENT COURSE",courses:"COURSES",quizPoints:"Quiz Points",uiLanguage:"UI Language",brand:"German Vocabulary Audiobook",brandSub:"Audio + synchronized transcript",homeEyebrow:"VOCABULARY AUDIOBOOK COLLECTION",homeTitle:"Learn German vocabulary by listening, reading and recalling.",homeSubtitle:"One player for multiple vocabulary courses. Your progress and bookmarked words stay separate for each course.",coursesHeading:"Courses",courseProgress:"Course progress",words:"words",episodes:"episodes",completed:"completed",quizPointsLower:"quiz points",continueLearning:"Continue learning",goToEpisodes:"Go to episodes",personalReview:"PERSONAL REVIEW",difficultWords:"Bookmarked Words",difficultSubtitle:"Words you bookmarked with ★ while listening.",resetProgress:"Reset progress",allCourses:"All courses",noCourseData:"No course data",progress:"progress",openCourse:"Open course",comingSoon:"Coming soon",progressLoads:"Progress loads with course",structurePrepared:"Course structure prepared",passedWord:"passed",continueWord:"Continue",startWord:"Start",savedAutomatically:"Your listening position is saved automatically.",lastPosition:"Last position: {label} at {time}.",notStarted:"Not started",inProgress:"In progress",finished:"Finished",episodeLabel:"Episode",b1core:"B1 Core",b1adv:"B1+ Advanced",themeDark:"☾ Dark",themeLight:"☀ Light",afterStop:"Stop after episode",afterNext:"Play next episode",afterRepeat:"Repeat same episode",quiz:"Quiz",best:"Best",quizTitle:"Episode Quiz",question:"Question {n} of {t}",pass:"Pass: {p}/{t}",quizPrompt:"Choose the correct English meaning. The sound tells you whether your choice was right or wrong.",quizTypeVocabulary:"Vocabulary",quizTypeGrammar:"Grammar",quizPromptVocabulary:"Choose the correct English meaning.",quizPromptArticle:"Choose the correct German article.",quizPromptVerbPresent:"Choose the correct er/sie/es present-tense form.",quizPromptVerbPast:"Choose the correct Präteritum form.",quizPromptVerbPerfect:"Choose the correct Perfekt form.",quizNoArticle:"no article",quizUnavailable:"This episode does not have enough suitable vocabulary and grammar items for the 10 + 5 quiz.",correct:"✓ Correct",correctAnswer:"Correct answer:",back:"Back",next:"Next",finish:"Finish",passed:"Passed",reviewRecommended:"Review recommended",greatTarget:"Great — you reached the 12/15 target.",listenAgainThen:"Listen to this episode again, then retake the quiz.",reviewMistakes:"Review your mistakes ({n})",yourAnswer:"Your answer:",correctShort:"Correct:",allCorrect:"All 15 answers were correct.",listenAgain:"Listen Again",retakeQuiz:"Retake Quiz",close:"Close",designedBy:"Designed & developed by Nazmul Somrat",top:"↑ Top",difficultWordBtn:"☆ Bookmark word",playThisEpisode:"▶ Play this episode",resumeThisEpisode:"▶ Resume this episode at {time}",otherEpisodePlaying:"Another episode is still playing. Use Play this episode to switch.",continueListening:"Continue Listening"},
+  bn:{home:"হোম",current:"বর্তমান কোর্স",courses:"কোর্সসমূহ",quizPoints:"কুইজ পয়েন্ট",uiLanguage:"ভাষা",brand:"জার্মান ভোকাবুলারি অডিওবুক",brandSub:"অডিও + সিঙ্ক্রোনাইজড ট্রান্সক্রিপ্ট",homeEyebrow:"ভোকাবুলারি অডিওবুক সংগ্রহ",homeTitle:"শুনে, পড়ে এবং মনে রেখে জার্মান শব্দভাণ্ডার শিখুন।",homeSubtitle:"একই প্লেয়ারে একাধিক শব্দভাণ্ডার কোর্স। প্রতিটি কোর্সের প্রগ্রেস ও বুকমার্ক করা শব্দ আলাদাভাবে সংরক্ষিত থাকে।",coursesHeading:"কোর্সসমূহ",courseProgress:"কোর্স প্রগ্রেস",words:"শব্দ",episodes:"এপিসোড",completed:"সম্পন্ন",quizPointsLower:"কুইজ পয়েন্ট",continueLearning:"শেখা চালিয়ে যান",goToEpisodes:"এপিসোডে যান",personalReview:"ব্যক্তিগত রিভিউ",difficultWords:"বুকমার্ক করা শব্দ",difficultSubtitle:"শোনার সময় ★ দিয়ে বুকমার্ক করা শব্দ।",resetProgress:"প্রগ্রেস রিসেট",allCourses:"সব কোর্স",noCourseData:"কোর্স ডেটা নেই",progress:"প্রগ্রেস",openCourse:"কোর্স খুলুন",comingSoon:"শীঘ্রই আসছে",progressLoads:"কোর্স খুললে প্রগ্রেস দেখা যাবে",structurePrepared:"কোর্সের কাঠামো প্রস্তুত",passedWord:"পাস",continueWord:"চালিয়ে যান",startWord:"শুরু",savedAutomatically:"আপনার শোনার অবস্থান স্বয়ংক্রিয়ভাবে সেভ হয়।",lastPosition:"সর্বশেষ অবস্থান: {label} এ {time}।",notStarted:"শুরু হয়নি",inProgress:"চলছে",finished:"শেষ",episodeLabel:"এপিসোড",b1core:"B1 কোর",b1adv:"B1+ অ্যাডভান্সড",themeDark:"☾ ডার্ক",themeLight:"☀ লাইট",afterStop:"এপিসোড শেষে থামুন",afterNext:"এপিসোড শেষে পরের এপিসোড চালান",afterRepeat:"এপিসোড শেষে একই এপিসোড পুনরায় চালান",quiz:"কুইজ",best:"সেরা",quizTitle:"এপিসোড কুইজ",question:"প্রশ্ন {n} / {t}",pass:"পাস: {p}/{t}",quizPrompt:"সঠিক ইংরেজি অর্থটি বেছে নিন। সাউন্ড বলে দেবে আপনার উত্তর সঠিক না ভুল।",quizTypeVocabulary:"শব্দার্থ",quizTypeGrammar:"ব্যাকরণ",quizPromptVocabulary:"সঠিক ইংরেজি অর্থটি বেছে নিন।",quizPromptArticle:"সঠিক জার্মান আর্টিকেলটি বেছে নিন।",quizPromptVerbPresent:"সঠিক er/sie/es বর্তমান কালের রূপটি বেছে নিন।",quizPromptVerbPast:"সঠিক Präteritum রূপটি বেছে নিন।",quizPromptVerbPerfect:"সঠিক Perfekt রূপটি বেছে নিন।",quizNoArticle:"কোনো আর্টিকেল নেই",quizUnavailable:"এই এপিসোডে ১০টি শব্দার্থ + ৫টি ব্যাকরণ প্রশ্ন তৈরির জন্য যথেষ্ট উপযুক্ত শব্দ নেই।",correct:"✓ সঠিক",correctAnswer:"সঠিক উত্তর:",back:"পেছনে",next:"পরবর্তী",finish:"শেষ করুন",passed:"পাস",reviewRecommended:"পুনরায় রিভিউ করুন",greatTarget:"দারুণ — আপনি 12/15 লক্ষ্য পূরণ করেছেন।",listenAgainThen:"এই এপিসোডটি আবার শুনুন, তারপর কুইজটি আবার দিন।",reviewMistakes:"আপনার ভুলগুলো দেখুন ({n})",yourAnswer:"আপনার উত্তর:",correctShort:"সঠিক:",allCorrect:"সব 15টি উত্তরই সঠিক হয়েছে।",listenAgain:"আবার শুনুন",retakeQuiz:"আবার কুইজ দিন",close:"বন্ধ",designedBy:"ডিজাইন ও ডেভেলপ করেছেন Nazmul Somrat",top:"↑ টপ",difficultWordBtn:"☆ শব্দ বুকমার্ক করুন",playThisEpisode:"▶ এই এপিসোড চালান",resumeThisEpisode:"▶ {time} থেকে এই এপিসোড চালান",otherEpisodePlaying:"অন্য একটি এপিসোড এখনও চলছে। পরিবর্তন করতে এই এপিসোড চালান চাপুন।",continueListening:"শোনা চালিয়ে যান"},
+  de:{home:"Start",current:"AKTUELLER KURS",courses:"KURSE",quizPoints:"Quizpunkte",uiLanguage:"Sprache",brand:"Deutsches Vokabel-Hörbuch",brandSub:"Audio + synchronisiertes Transkript",homeEyebrow:"VOKABEL-HÖRBUCH-SAMMLUNG",homeTitle:"Lerne deutsche Vokabeln durch Hören, Lesen und Wiederholen.",homeSubtitle:"Ein Player für mehrere Vokabelkurse. Dein Fortschritt und deine gespeicherten Wörter werden für jeden Kurs getrennt gespeichert.",coursesHeading:"Kurse",courseProgress:"Kursfortschritt",words:"Wörter",episodes:"Episoden",completed:"abgeschlossen",quizPointsLower:"Quizpunkte",continueLearning:"Weiterlernen",goToEpisodes:"Zu den Episoden",personalReview:"PERSÖNLICHE WIEDERHOLUNG",difficultWords:"Gespeicherte Wörter",difficultSubtitle:"Wörter, die du beim Hören mit ★ gespeichert hast.",resetProgress:"Fortschritt zurücksetzen",allCourses:"Alle Kurse",noCourseData:"Keine Kursdaten",progress:"Fortschritt",openCourse:"Kurs öffnen",comingSoon:"Demnächst",progressLoads:"Fortschritt wird mit dem Kurs geladen",structurePrepared:"Kursstruktur vorbereitet",passedWord:"bestanden",continueWord:"Weiter",startWord:"Start",savedAutomatically:"Deine Hörposition wird automatisch gespeichert.",lastPosition:"Letzte Position: {label} bei {time}.",notStarted:"Nicht begonnen",inProgress:"In Bearbeitung",finished:"Fertig",episodeLabel:"Episode",b1core:"B1 Grundkurs",b1adv:"B1+ Aufbau",themeDark:"☾ Dunkel",themeLight:"☀ Hell",afterStop:"Nach der Episode stoppen",afterNext:"Nächste Episode abspielen",afterRepeat:"Dieselbe Episode wiederholen",quiz:"Quiz",best:"Bestwert",quizTitle:"Episoden-Quiz",question:"Frage {n} von {t}",pass:"Bestehen: {p}/{t}",quizPrompt:"Wähle die richtige englische Bedeutung. Der Ton zeigt dir, ob deine Antwort richtig oder falsch war.",quizTypeVocabulary:"Vokabeln",quizTypeGrammar:"Grammatik",quizPromptVocabulary:"Wähle die richtige englische Bedeutung.",quizPromptArticle:"Wähle den richtigen deutschen Artikel.",quizPromptVerbPresent:"Wähle die richtige Präsensform für er/sie/es.",quizPromptVerbPast:"Wähle die richtige Präteritumform.",quizPromptVerbPerfect:"Wähle die richtige Perfektform.",quizNoArticle:"kein Artikel",quizUnavailable:"Für 10 Vokabel- und 5 Grammatikfragen gibt es in dieser Episode nicht genügend geeignete Einträge.",correct:"✓ Richtig",correctAnswer:"Richtige Antwort:",back:"Zurück",next:"Weiter",finish:"Beenden",passed:"Bestanden",reviewRecommended:"Wiederholung empfohlen",greatTarget:"Super — du hast das Ziel 12/15 erreicht.",listenAgainThen:"Höre diese Episode noch einmal und mache danach das Quiz erneut.",reviewMistakes:"Überprüfe deine Fehler ({n})",yourAnswer:"Deine Antwort:",correctShort:"Richtig:",allCorrect:"Alle 15 Antworten waren richtig.",listenAgain:"Noch einmal hören",retakeQuiz:"Quiz wiederholen",close:"Schließen",designedBy:"Entwickelt von Nazmul Somrat",top:"↑ Nach oben",difficultWordBtn:"☆ Wort speichern",playThisEpisode:"▶ Diese Episode abspielen",resumeThisEpisode:"▶ Diese Episode bei {time} fortsetzen",otherEpisodePlaying:"Eine andere Episode läuft weiter. Mit „Diese Episode abspielen“ wechselst du.",continueListening:"Weiterhören"}
 };
 const UI_MORE={
   en:{all:'All',grid:'Grid',list:'List',searchPlaceholder:'Search German or English…',bookmarkedWords:'Bookmarked Words',myBookmarks:'My bookmarked words ({n})',clearBookmarks:'Clear bookmarks',noBookmarks:'No bookmarked words yet.',bookmarkHelp:'Tap ☆ while studying to save words for review.',review:'Review',open:'Open',clearConfirm:'Clear all bookmarked words?',clearSectionConfirm:'Clear bookmarked words from this section?',bookmarkRemoved:'Bookmark removed',bookmarkSaved:'Word bookmarked',searchResults:'Search results ({n}{plus})',forQuery:'for “{q}”',noMatching:'No matching words.',word:'word',sectionEmpty:'No episodes in this section match the selected filter.',episodesEmpty:'No episodes match this filter.',learningBlock:'Learning block {n}',germanWordTwice:'German word · spoken twice',englishMeaning:'English meaning',grammarForms:'Grammar / plural / verb forms',germanExample:'German example {n} · spoken twice',englishTranslation:'English translation {n}',recallAfter:'◆ Recall after Block {n}',deEnRecall:'German → English · 4-second recall',enDeRecall:'English → German · 4-second recall',answer:'Answer',jumpedTo:'Jumped to {time}',reviewFinished:'Bookmark review finished.',reviewComplete:'Review complete',noNextEpisode:'No next episode in this section',audioCourse:'AUDIO COURSE',transcriptHint:'Tap a transcript line to seek. Tap ☆ to bookmark a word.',gatewayMissing:'Secure audio gateway is not configured yet.',bookmarkReviewStop:'Bookmark review: this entry will stop automatically.',resetConfirm:'Reset listening progress for all {n} episodes? Bookmarks will be kept.',progressReset:'Progress reset',study:'Study',germanOnly:'German-only',lyrics:'Lyrics',revealEnglish:'Reveal English with audio',autoFollow:'Auto-follow',current:'Current',playing:'Playing',easy:'easy',medium:'medium',hard:'hard',noun:'noun',verb:'verb',other:'other',adjective:'adjective',adverb:'adverb',pronoun:'pronoun',preposition:'preposition',conjunction:'conjunction',article:'article'},
@@ -571,12 +585,133 @@ function combinedProgress(){
   }
   return {done,total,pct:total?Math.round(100*done/total):0};
 }
+function getContinueListeningCandidate(){
+  const lp=AS.lastPlayed;
+  if(!lp||!COURSE_META[lp.courseId]||COURSE_META[lp.courseId].status!=='ready'||!(+lp.episode>0))return null;
+
+  const data=loaded[lp.courseId];
+  const state=cs(lp.courseId);
+  let episode=+lp.episode;
+  let position=Math.max(0,+state.positions[episode]||+lp.position||0);
+  let duration=Math.max(0,+lp.duration||0);
+
+  if(data){
+    const idx=data.episodes.findIndex(e=>e.episode===episode);
+    const ep=idx>=0?data.episodes[idx]:null;
+    if(!ep)return null;
+    duration=+ep.duration||duration;
+
+    const complete=!!state.completed[episode] || (duration>0 && position>=duration-1);
+    if(complete){
+      const next=data.episodes[idx+1];
+      if(!next)return null;
+      episode=next.episode;
+      position=Math.max(0,+state.positions[episode]||0);
+      duration=+next.duration||0;
+    }
+  }
+
+  return {courseId:lp.courseId,episode,position,duration};
+}
+function renderHomeContinueBar(){
+  const bar=$('#homeContinueBar'),desktop=$('#homeContinueDesktop'),mobile=$('#homeContinueMobile');
+  if(!bar||!desktop||!mobile)return false;
+
+  const candidate=getContinueListeningCandidate();
+  const onHome=!$('#appHomeView').classList.contains('hidden');
+  const canShow=onHome && audio.paused && !playbackRequested && !!candidate;
+
+  bar.classList.toggle('hidden',!canShow);
+  if(!canShow)return false;
+
+  const title=courseTitle(candidate.courseId);
+  const short=COURSE_META[candidate.courseId]?.short||candidate.courseId.toUpperCase();
+  const ep=String(candidate.episode).padStart(2,'0');
+  const pos=fmt(candidate.position);
+  const dur=fmt(candidate.duration);
+
+  desktop.textContent=`${tt('continueListening')} · ${title} · ${tt('episodeLabel')} ${ep} · ${pos} / ${dur}`;
+  mobile.textContent=`${tt('continueWord')} · ${short} · E${ep} · ${pos}/${dur}`;
+  bar.dataset.course=candidate.courseId;
+  bar.dataset.episode=String(candidate.episode);
+  bar.dataset.position=String(candidate.position);
+  return true;
+}
 function updatePersistentPlayerVisibility(){
-  const host=$('#persistentPlayerHost');
-  if(!host)return;
+  const host=$('#persistentPlayerHost'),full=$('#persistentPlayerFull');
+  if(!host||!full)return;
   const onEpisode=!$('#episodeView').classList.contains('hidden');
-  const shouldShow=onEpisode || (!audio.paused && !!currentEp);
-  host.classList.toggle('hidden',!shouldShow);
+  const showFull=onEpisode || (!!currentEp && (!audio.paused || playbackRequested));
+  const showCompact=!showFull && renderHomeContinueBar();
+
+  full.classList.toggle('hidden',!showFull);
+  host.classList.toggle('hidden',!(showFull||showCompact));
+
+  if(showFull){
+    const bar=$('#homeContinueBar');
+    if(bar)bar.classList.add('hidden');
+  }
+}
+async function continueListeningFromHome(){
+  const candidate=getContinueListeningCandidate();
+  if(!candidate)return;
+
+  const id=candidate.courseId;
+  const data=await loadCourseData(id);
+  const state=cs(id);
+  const map=Object.fromEntries(data.episodes.map(e=>[e.episode,e]));
+  const target=map[candidate.episode];
+  if(!target)return;
+
+  // Change the active course context, but remain on the Home screen.
+  D=data;
+  currentCourseId=id;
+  AS.lastCourse=id;
+  entryIndex=data.entry_index||{};
+  epMap=map;
+  updateCourseNavigation();
+
+  // Switch the global player to the saved episode without changing the page route.
+  if(currentEp&&playerCourseId){
+    const oldState=playerState();
+    oldState.positions[currentEp.episode]=audio.currentTime||0;
+    oldState.maxPositions[currentEp.episode]=Math.max(+oldState.maxPositions[currentEp.episode]||0,audio.currentTime||0);
+  }
+
+  playerCourseId=id;
+  playerData=data;
+  playerEntryIndex=entryIndex;
+  playerEpMap=epMap;
+  currentEp=target;
+  viewEp=null;
+  playerHasStarted=true;
+  state.lastEpisode=target.episode;
+  save();
+
+  populateSelect();
+  updateEpisodeNavButtons();
+  updateEndBehaviorControl();
+  updateMediaSessionMetadata();
+
+  const meta=COURSE_META[id];
+  const src=`${meta.audioBase}${target.audio}`;
+  pendingSeek=Math.max(0,+candidate.position||0);
+  setPlaybackIntent(true);
+  resumeWhenReady=true;
+  updatePersistentPlayerVisibility();
+
+  if(audio.getAttribute('src')!==src){
+    audio.src=src;
+    audio.load();
+    safePlay('home-continue-listening');
+  }else{
+    audio.currentTime=pendingSeek||0;
+    pendingSeek=null;
+    sync(true);
+    safePlay('home-continue-existing');
+  }
+
+  updateHeaderProgress();
 }
 
 function updateHeaderProgress(){
@@ -712,7 +847,7 @@ function renderAppHome(){
   showView('#appHomeView');routeHash('home',arguments[0]||'push');
   $('#courseGrid').innerHTML=COURSE_LIST.map(c=>{ let progressHtml='',action=''; if(c.status==='ready'&&loaded[c.id]){ const st=cs(c.id),data=loaded[c.id],words=progressWords(data,st),p=Math.round(100*words/data.total_words),q=quizSummaryFor(c.id,data); progressHtml=`<div class="course-card-meta"><span>${words} / ${data.total_words} ${tt('words')}</span><span>${p}%</span></div><div class="thinbar"><i style="width:${p}%"></i></div><div class="course-quiz-meta">${tt('quiz')} ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} ${tt('passedWord')}</div>`; action=`<span class="coming-tag">${tt('openCourse')}</span>`; }else if(c.status==='ready'){ const q=quizSummaryFor(c.id,null); progressHtml=`<div class="course-card-meta"><span>${tt('progressLoads')}</span><span></span></div><div class="thinbar"><i style="width:0"></i></div><div class="course-quiz-meta">${tt('quiz')} ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} ${tt('passedWord')}</div>`; action=`<span class="coming-tag">${tt('openCourse')}</span>`; }else{ progressHtml=`<div class="course-card-meta"><span>${tt('structurePrepared')}</span><span></span></div>`; action=`<span class="coming-tag">${tt('comingSoon')}</span>`; } return `<article class="course-card ${c.status==='ready'?'ready':''} ${c.id==='technical'?'tech':''}" data-course="${c.id}"><div class="course-card-head"><div class="course-card-badge">${esc(c.short)}</div>${action}</div><h3>${esc(courseTitle(c.id))}</h3><p>${esc(courseDescription(c.id))}</p><div class="course-card-footer">${progressHtml}</div></article>` }).join('');
   $$('.course-card[data-course]').forEach(card=>card.onclick=()=>openCourse(card.dataset.course));
-  updateHeaderProgress();updateStaticLanguage();
+  updateHeaderProgress();updateStaticLanguage();updatePersistentPlayerVisibility();
 }
 async function openCourse(id='b1',sectionToOpen=null,navigationMode='push'){
   if(!(await activateCourse(id)))return;
@@ -948,7 +1083,7 @@ function sync(force=false){
       lastActive=i;setTimeout(checkBackCurrent,220)
     }
   }
-  if(Date.now()-saveTick>1800){S.positions[currentEp.episode]=t;S.maxPositions[currentEp.episode]=Math.max(+S.maxPositions[currentEp.episode]||0,t);S.lastEpisode=currentEp.episode;save();saveTick=Date.now();updateHeaderProgress()}
+  if(Date.now()-saveTick>1800){S.positions[currentEp.episode]=t;S.maxPositions[currentEp.episode]=Math.max(+S.maxPositions[currentEp.episode]||0,t);S.lastEpisode=currentEp.episode;if(AS.lastPlayed?.courseId===playerCourseId&&+AS.lastPlayed?.episode===+currentEp.episode)rememberLastPlayed(t);save();saveTick=Date.now();updateHeaderProgress()}
   updateStars()
 }
 function scrollToCurrentWord(smooth=true){
@@ -1080,6 +1215,7 @@ function handleEpisodeEnded(){
   S.completed[currentEp.episode]=true;
   S.positions[currentEp.episode]=currentEp.duration;
   S.maxPositions[currentEp.episode]=currentEp.duration;
+  if(AS.lastPlayed?.courseId===playerCourseId&&+AS.lastPlayed?.episode===+currentEp.episode)rememberLastPlayed(currentEp.duration);
   save();updateHeaderProgress();updatePersistentPlayerVisibility();
   const mode=['repeat','next'].includes(AS.endBehavior)?AS.endBehavior:'stop';
   if(mode==='repeat'){
@@ -1538,6 +1674,7 @@ function populateSelect(sectionId=activeEpisodeSection){
 }
 
 $('#menuBtn').onclick=openSidebar;backdrop.onclick=closeSidebar;
+if($('#homeContinueBar'))$('#homeContinueBar').onclick=continueListeningFromHome;
 $('#brandHome').onclick=renderAppHome;
 $('[data-nav="home"]').onclick=renderAppHome;
 $('#navCourse').onclick=()=>openCourse(currentCourseId);
@@ -1563,7 +1700,7 @@ if($('#courseQuizPointsCard')){
 if($('#quizHistoryAll'))$('#quizHistoryAll').onclick=()=>{quizHistoryFilter='all';renderQuizHistory()};
 if($('#quizHistoryAttempted'))$('#quizHistoryAttempted').onclick=()=>{quizHistoryFilter='attempted';renderQuizHistory()};
 $('#searchInput').oninput=search;
-$('#resetProgress').onclick=()=>{if(confirm(ux('resetConfirm',{n:D.episodes.length}))){const S=courseState();S.positions={};S.maxPositions={};S.completed={};S.lastEpisode=1;save();renderEpisodeGrid();updateHeaderProgress();openCourse(currentCourseId);msg(ux('progressReset'))}};
+$('#resetProgress').onclick=()=>{if(confirm(ux('resetConfirm',{n:D.episodes.length}))){const resetId=currentCourseId,S=courseState();S.positions={};S.maxPositions={};S.completed={};S.lastEpisode=1;clearLastPlayedForCourse(resetId);save();renderEpisodeGrid();updateHeaderProgress();updatePersistentPlayerVisibility();openCourse(currentCourseId);msg(ux('progressReset'))}};
 $$('[data-library-filter]').forEach(b=>b.onclick=()=>{libraryFilter=b.dataset.libraryFilter;$$('[data-library-filter]').forEach(x=>x.classList.toggle('active',x===b));renderEpisodeGrid()});
 if($('#gridViewBtn'))$('#gridViewBtn').onclick=()=>setLibraryLayout('grid');
 if($('#listViewBtn'))$('#listViewBtn').onclick=()=>setLibraryLayout('list');
@@ -1616,7 +1753,7 @@ audio.onloadedmetadata=()=>{
 audio.ontimeupdate=()=>{sync();updateMediaSessionPosition()};
 audio.onplay=()=>{
   playbackRequested=true;resumeWhenReady=false;clearPlaybackRecovery();recoveryAttempts=0;
-  $('#playBtn').textContent='❚❚';playerHasStarted=true;updatePersistentPlayerVisibility();
+  $('#playBtn').textContent='❚❚';playerHasStarted=true;rememberLastPlayed(audio.currentTime||0);save();updatePersistentPlayerVisibility();
   if('mediaSession' in navigator)try{navigator.mediaSession.playbackState='playing'}catch{}
   if(isViewingPlayerEpisode())setSectionNav(currentEp.section||null);
   if(playerCourseId===currentCourseId&&!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
@@ -1624,7 +1761,7 @@ audio.onplay=()=>{
 audio.onpause=()=>{
   $('#playBtn').textContent='▶';
   if('mediaSession' in navigator)try{navigator.mediaSession.playbackState='paused'}catch{}
-  if(currentEp){playerState().positions[currentEp.episode]=audio.currentTime;save()}
+  if(currentEp){playerState().positions[currentEp.episode]=audio.currentTime;if(AS.lastPlayed?.courseId===playerCourseId&&+AS.lastPlayed?.episode===+currentEp.episode)rememberLastPlayed(audio.currentTime);save()}
   updatePersistentPlayerVisibility();
   if(playerCourseId===currentCourseId&&!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
 };
@@ -1698,8 +1835,9 @@ if($('#updateLaterBtn'))$('#updateLaterBtn').onclick=()=>hideUpdateNotice(true);
 setupFeedbackForm();
 async function preloadReadyCoursesForHome(){
   const ready=COURSE_LIST.filter(c=>c.status==='ready').map(c=>c.id);
+  const lastPlayedCourse=COURSE_META[AS.lastPlayed?.courseId]?.status==='ready'?AS.lastPlayed.courseId:null;
   const preferred=COURSE_META[AS.lastCourse]?.status==='ready'?AS.lastCourse:null;
-  const order=[preferred,...ready].filter((id,i,a)=>id&&a.indexOf(id)===i);
+  const order=[lastPlayedCourse,preferred,...ready].filter((id,i,a)=>id&&a.indexOf(id)===i);
   for(const id of order){
     try{
       const data=await loadCourseData(id);
