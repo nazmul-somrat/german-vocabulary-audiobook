@@ -11,7 +11,7 @@ window.GVA_COURSES = [
   {
     id: "a1",
     short: "A1",
-    title: "A1 Vocabulary Audiobook",
+    title: "A1 Vocabulary",
     description: "Practical beginner German for everyday life with synchronized audio, transcript and active recall.",
     status: "ready",
     totalWords: 778,
@@ -22,7 +22,7 @@ window.GVA_COURSES = [
   {
     id: "a2",
     short: "A2",
-    title: "A2 Vocabulary Audiobook",
+    title: "A2 Vocabulary",
     description: "Practical A2 German vocabulary with synchronized audio, transcript and active recall.",
     status: "ready",
     totalWords: 1529,
@@ -33,10 +33,10 @@ window.GVA_COURSES = [
   {
     id: "b1",
     short: "B1",
-    title: "B1 Vocabulary Audiobook",
-    description: "B1 Core plus B1+ Advanced vocabulary with synchronized audio, transcript and active recall.",
+    title: "B1 Vocabulary",
+    description: "A single mixed B1 vocabulary course with synchronized audio, transcript and active recall.",
     status: "ready",
-    totalWords: 4069,
+    totalWords: 2609,
     episodes: 51,
     dataScript: "courses/b1/data.js",
     audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
@@ -44,7 +44,7 @@ window.GVA_COURSES = [
   {
     id: "technical",
     short: "TECH",
-    title: "Technical Vocabulary Audiobook",
+    title: "Technical Vocabulary",
     description: "Engineering, software, AI, data science, manufacturing and workplace technical German.",
     status: "ready",
     totalWords: 1824,

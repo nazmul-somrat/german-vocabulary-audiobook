@@ -11,6 +11,76 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css?v=20260915-navfolders1">
 <title>German Vocabulary Audiobook</title>
+
+<style>
+.home-continue-bar{
+  width:100%;
+  min-height:46px;
+  margin:10px 0;
+  padding:0 14px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:1px solid #cfd9e8;
+  border-radius:12px;
+  background:#fff;
+  color:#10203a;
+  font:inherit;
+  font-size:14px;
+  font-weight:700;
+  text-align:left;
+  cursor:pointer;
+  overflow:hidden;
+}
+.home-continue-bar:hover{border-color:#8eb6ff;background:#f8fbff}
+.home-continue-bar:focus-visible{outline:3px solid rgba(59,130,246,.28);outline-offset:2px}
+.home-continue-icon{
+  flex:0 0 auto;
+  width:27px;
+  height:27px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#3b82f6;
+  color:#fff;
+  font-size:11px;
+  padding-left:1px;
+}
+.home-continue-desktop,.home-continue-mobile{
+  min-width:0;
+  flex:1 1 auto;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.home-continue-mobile{display:none}
+.home-continue-chevron{flex:0 0 auto;font-size:23px;line-height:1;color:#3b82f6}
+html[data-theme="dark"] .home-continue-bar{
+  background:#101827;
+  border-color:#334155;
+  color:#f8fafc;
+}
+html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color:#4f7fca}
+@media (max-width:640px){
+  .home-continue-bar{
+    min-height:42px;
+    margin:7px 0;
+    padding:0 10px;
+    gap:7px;
+    border-radius:10px;
+    font-size:12px;
+  }
+  .home-continue-desktop{display:none}
+  .home-continue-mobile{display:block}
+  .home-continue-icon{width:24px;height:24px;font-size:10px}
+  .home-continue-chevron{font-size:20px}
+}
+@media (max-width:360px){
+  .home-continue-bar{font-size:11px;padding:0 8px;gap:5px}
+  .home-continue-chevron{display:none}
+}
+</style>
+
 </head>
 <body>
 <header id="appHeader" class="topbar">
@@ -70,7 +140,13 @@
   <div class="content-shell">
 
     <section id="persistentPlayerHost" class="persistent-player-host hidden">
-      <div class="player persistent-player">
+      <button id="homeContinueBar" class="home-continue-bar hidden" type="button" aria-label="Continue listening">
+        <span class="home-continue-icon" aria-hidden="true">▶</span>
+        <span id="homeContinueDesktop" class="home-continue-desktop"></span>
+        <span id="homeContinueMobile" class="home-continue-mobile"></span>
+        <span class="home-continue-chevron" aria-hidden="true">›</span>
+      </button>
+      <div id="persistentPlayerFull" class="player persistent-player">
         <div class="episode-nav">
           <button id="prevEpisode" class="navbtn">‹</button>
           <select id="episodeSelect"></select>
@@ -97,7 +173,7 @@
         </div>
         <input id="progress" class="progress" type="range" min="0" value="0" step="0.05">
         <div class="modebar">
-          <button data-mode="study" class="mode active">Study</button>
+          <button data-mode="study" class="mode">Study</button>
           <button data-mode="german" class="mode">German-only</button>
           <button data-mode="lyrics" class="mode">Lyrics</button>
           <label class="option-toggle" title="In Study mode, hide future English until its audio begins"><input id="revealEnglishToggle" type="checkbox"> <span id="revealEnglishText">Reveal English with audio</span></label>
@@ -127,7 +203,7 @@
         <section class="hero course-hero">
           <div>
             <p class="eyebrow" id="courseEyebrow">B1 AUDIO COURSE</p>
-            <h1 id="courseTitle">B1 Vocabulary Audiobook</h1>
+            <h1 id="courseTitle">B1 Vocabulary</h1>
             <p id="courseDescription"></p>
             <div class="course-progress-inline">
               <div class="course-progress-copy"><span id="courseProgressLabel">Course progress</span><strong id="courseProgressInline">0 / 0 words · 0%</strong></div>
@@ -345,8 +421,8 @@
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.8</strong>
-          <span id="appUpdatedText">Updated 19 September 2026</span>
+          <strong id="appVersionText">Version 1.0.13</strong>
+          <span id="appUpdatedText">Updated 20 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
       </div>
@@ -356,8 +432,8 @@
 </div>
 
 <script src="site-config.js?v=20260915-playback1"></script>
-<script src="courses.js?v=20260919-a2final2"></script>
-<script src="app.js?v=20260919-a2final2"></script>
+<script src="courses.js?v=20260920-quizmix1"></script>
+<script src="app.js?v=20260920-transcriptnav1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
