@@ -41,9 +41,9 @@ const QUIZ_COUNT=QUIZ_VOCAB_COUNT+QUIZ_GRAMMAR_COUNT;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.12';
+const APP_VERSION='1.0.13';
 const APP_UPDATED='20 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260920-continue1';
+const COURSE_DATA_CACHE_VERSION='20260920-transcriptnav1';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -651,6 +651,14 @@ function updatePersistentPlayerVisibility(){
     const bar=$('#homeContinueBar');
     if(bar)bar.classList.add('hidden');
   }
+
+  // Keep transcript-mode highlighting truthful as navigation changes.
+  if(typeof applyMode==='function'){
+    $$('.mode[data-mode]').forEach(b=>{
+      const selected=(playerCourseId?cs(playerCourseId).mode:courseState().mode)||'study';
+      b.classList.toggle('active',transcriptModeIsOpen()&&b.dataset.mode===selected);
+    });
+  }
 }
 async function continueListeningFromHome(){
   const candidate=getContinueListeningCandidate();
@@ -1062,12 +1070,66 @@ function applyEnglishVisibility(t=0){
     el.classList.toggle('hidden-en',hide);el.classList.toggle('user-revealed',man&&!hide)
   })
 }
+function transcriptModeIsOpen(){
+  return !$('#episodeView').classList.contains('hidden') && isViewingPlayerEpisode();
+}
 function applyMode(){
   const S=courseState(),normal=$('#normalView'),lyrics=$('#lyricsView'),m=S.mode||'study';
-  $$('.mode[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
-  const effectiveMode=isViewingPlayerEpisode()?m:(m==='lyrics'?'study':m);
-  normal.classList.toggle('normal-hidden',effectiveMode==='lyrics');lyrics.classList.toggle('visible',effectiveMode==='lyrics');
-  $('#revealEnglishToggle').checked=!!S.revealEnglishOnAudio;const t=viewEpisodeTime();applyEnglishVisibility(t);updateRecall(t);checkBackCurrent();sync(true)
+  const transcriptOpen=transcriptModeIsOpen();
+
+  // The three mode buttons describe the transcript that is currently visible.
+  // Therefore none is highlighted while Home / Course / another episode is shown.
+  $$('.mode[data-mode]').forEach(b=>b.classList.toggle('active',transcriptOpen&&b.dataset.mode===m));
+
+  const effectiveMode=transcriptOpen?m:(m==='lyrics'?'study':m);
+  normal.classList.toggle('normal-hidden',effectiveMode==='lyrics');
+  lyrics.classList.toggle('visible',transcriptOpen&&effectiveMode==='lyrics');
+
+  $('#revealEnglishToggle').checked=!!S.revealEnglishOnAudio;
+  const t=viewEpisodeTime();
+  applyEnglishVisibility(t);
+  updateRecall(t);
+  checkBackCurrent();
+  sync(true)
+}
+async function openPlayerTranscript(mode){
+  if(!currentEp||!playerCourseId)return;
+
+  const playingCourse=playerCourseId;
+  const playingEpisode=+currentEp.episode;
+
+  // Store the transcript mode on the course that is actually playing.
+  const ps=cs(playingCourse);
+  ps.mode=mode;
+  save();
+
+  // If the user is browsing Home, another course, or another episode,
+  // move the visible page back to the playing episode. Audio is not changed.
+  if(currentCourseId!==playingCourse || !D || !epMap[playingEpisode]){
+    if(!(await activateCourse(playingCourse)))return;
+  }
+
+  await openEpisode(
+    playingEpisode,
+    null,
+    false,
+    null,
+    null,
+    false,
+    'push',
+    false
+  );
+
+  // openEpisode/renderTranscript uses the active course state.
+  courseState().mode=mode;
+  save();
+  applyMode();
+
+  // Bring the current transcript position into view for Study/German-only.
+  // Lyrics already centers the current event itself.
+  if(mode!=='lyrics'){
+    setTimeout(()=>scrollToCurrentWord(false),80);
+  }
 }
 function sync(force=false){
   if(!currentEp)return;const S=playerState(),t=audio.currentTime||0;
@@ -1718,7 +1780,7 @@ $('#fwd10').onclick=()=>audio.currentTime=Math.min(currentEp.duration,audio.curr
 $('#playBtn').onclick=()=>audio.paused?(setPlaybackIntent(true),safePlay('player-button')):pauseByUser();
 $('#progress').oninput=e=>{audio.currentTime=+e.target.value;sync(true)};
 $('#followToggle').onchange=()=>sync(true);
-$$('.mode[data-mode]').forEach(b=>b.onclick=()=>{courseState().mode=b.dataset.mode;save();applyMode()});
+$$('.mode[data-mode]').forEach(b=>b.onclick=()=>openPlayerTranscript(b.dataset.mode));
 $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.target.checked;save();applyEnglishVisibility(audio.currentTime||0);msg(e.target.checked?(lang()==='bn'?'ইংরেজি তার অডিওর সাথে দেখাবে':lang()==='de'?'Englisch erscheint mit dem Audio':'English will appear with its audio'):(lang()==='bn'?'স্টাডি মোডে ইংরেজি সবসময় দেখা যাবে':lang()==='de'?'Englisch ist im Lernmodus immer sichtbar':'English always visible in Study mode'))};
 const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5,'1.75×':1.75,'2×':2};
 $('#speedSelect').onchange=e=>{playerState().speed=speeds[e.target.value]||1;audio.playbackRate=playerState().speed;save();updateMediaSessionPosition(true)};
