@@ -81,6 +81,301 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
 }
 </style>
 
+
+<style id="interface-final-v1015">
+/* ---------- Text-size scale ---------- */
+html[data-text-size="75"]{font-size:12px}
+html[data-text-size="90"]{font-size:14.4px}
+html[data-text-size="100"]{font-size:16px}
+html[data-text-size="110"]{font-size:17.6px}
+html[data-text-size="125"]{font-size:20px}
+html[data-text-size="150"]{font-size:24px}
+html[data-text-size="175"]{font-size:28px}
+
+/* Keep essential controls usable as text grows. */
+button,select,input{font-size:inherit}
+.percent-text-controls{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.percent-text-controls .top-mini{min-width:0;padding:.55rem .35rem}
+.percent-text-controls .top-mini.active{font-weight:800}
+
+/* ---------- Home hero ---------- */
+.app-hero{
+  padding:1.7rem 2rem!important;
+  min-height:0!important;
+  border-radius:1.25rem!important;
+}
+.app-hero .eyebrow{
+  margin:0 0 .45rem!important;
+  font-size:.72rem!important;
+  letter-spacing:.14em!important;
+  opacity:.72;
+}
+.app-hero h1{
+  margin:0!important;
+  max-width:980px;
+  font-size:clamp(2rem,3.3vw,3rem)!important;
+  line-height:1.08!important;
+  letter-spacing:-.035em!important;
+}
+.app-hero #homeSubtitle{
+  margin:.7rem 0 0!important;
+  font-size:1rem!important;
+  line-height:1.5!important;
+  max-width:760px;
+}
+
+/* ---------- Large course level blocks ---------- */
+.course-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:1rem!important;
+}
+.course-card.level-card{
+  position:relative;
+  min-height:12.5rem;
+  padding:1.45rem 1.55rem!important;
+  border:1px solid transparent!important;
+  border-radius:1.25rem!important;
+  box-shadow:0 8px 22px rgba(15,23,42,.06)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:space-between!important;
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.course-card.level-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 11px 26px rgba(15,23,42,.10)!important;
+}
+.course-card.level-card:focus-visible{
+  outline:3px solid rgba(59,130,246,.32);
+  outline-offset:3px;
+}
+.level-card-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:1rem;
+}
+.level-card-top h3{
+  margin:0!important;
+  font-size:1.55rem!important;
+  line-height:1.15!important;
+  letter-spacing:-.02em;
+}
+.level-card-arrow{
+  flex:0 0 auto;
+  font-size:2.35rem;
+  line-height:.8;
+  font-weight:600;
+  opacity:.82;
+}
+.level-card-progress{margin-top:1.35rem}
+.level-card .course-card-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:1rem;
+  align-items:center;
+  font-size:.88rem;
+  margin-bottom:.55rem;
+}
+.level-card .course-card-meta strong{font-size:.94rem}
+.level-card .thinbar{
+  height:.48rem!important;
+  border-radius:999px!important;
+  overflow:hidden;
+  background:rgba(255,255,255,.62)!important;
+}
+.level-card .thinbar i{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:currentColor!important;
+  opacity:.72;
+}
+.level-card-bottom{
+  margin-top:1.15rem;
+  padding-top:.85rem;
+  border-top:1px solid rgba(15,23,42,.10);
+  display:flex;
+  justify-content:space-between;
+  gap:.75rem;
+  flex-wrap:wrap;
+  font-size:.78rem;
+  opacity:.82;
+}
+.course-a1{background:#dff1f2!important;color:#163348!important}
+.course-a2{background:#bfe5e2!important;color:#123f45!important}
+.course-b1{background:#e1efb7!important;color:#2d421d!important}
+.course-technical{background:#e6dcfa!important;color:#3d2d66!important}
+
+/* Dark mode uses dedicated deep colors rather than inverted pastels. */
+html[data-theme="dark"] .course-card.level-card{box-shadow:none!important}
+html[data-theme="dark"] .course-a1{background:#17313a!important;color:#e8fbff!important;border-color:#2a515e!important}
+html[data-theme="dark"] .course-a2{background:#153a3a!important;color:#e8fffd!important;border-color:#2a5f5d!important}
+html[data-theme="dark"] .course-b1{background:#2b371d!important;color:#f3ffd9!important;border-color:#526638!important}
+html[data-theme="dark"] .course-technical{background:#30264a!important;color:#f5edff!important;border-color:#55437c!important}
+html[data-theme="dark"] .level-card .thinbar{background:rgba(255,255,255,.16)!important}
+html[data-theme="dark"] .level-card-bottom{border-top-color:rgba(255,255,255,.13)}
+
+/* ---------- Player mode controls ---------- */
+.mode-mobile-label,.mobile-toggle-label{display:none}
+.icon-mode{font-size:1.35rem!important;line-height:1}
+.compact-toggle{white-space:nowrap}
+.episode-library-btn{white-space:nowrap}
+
+/* ---------- Episode transcript search ---------- */
+.episode-search-bar{
+  position:sticky;
+  top:calc(var(--header-h,0px) + 8px);
+  z-index:12;
+  display:flex;
+  align-items:center;
+  gap:.45rem;
+  padding:.55rem .65rem;
+  margin:.45rem 0 .8rem;
+  border:1px solid #ced8e6;
+  border-radius:.9rem;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(8px);
+}
+.episode-search-bar.hidden{display:none!important}
+.episode-search-icon{font-size:1.1rem;opacity:.65}
+.episode-search-bar input{
+  flex:1 1 auto;
+  min-width:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  padding:.45rem .2rem;
+}
+.episode-search-count{
+  flex:0 0 auto;
+  font-size:.75rem;
+  opacity:.7;
+  white-space:nowrap;
+}
+.episode-search-bar button{
+  flex:0 0 auto;
+  width:2.15rem;
+  height:2.15rem;
+  border:1px solid #ced8e6;
+  border-radius:.65rem;
+  background:transparent;
+  cursor:pointer;
+}
+.vocab-card.search-hit{
+  outline:2px solid rgba(59,130,246,.22);
+  outline-offset:2px;
+}
+.vocab-card.search-current{
+  outline:3px solid rgba(59,130,246,.72);
+  outline-offset:3px;
+}
+html[data-theme="dark"] .episode-search-bar{
+  background:rgba(15,23,42,.96);
+  border-color:#334155;
+}
+html[data-theme="dark"] .episode-search-bar button{border-color:#475569;color:#f8fafc}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1100px){
+  .course-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:640px){
+  .page-main{padding-top:.7rem!important}
+  .app-hero{
+    padding:1.15rem 1rem!important;
+    border-radius:1rem!important;
+  }
+  .app-hero .eyebrow{font-size:.64rem!important;margin-bottom:.38rem!important}
+  .app-hero h1{
+    font-size:clamp(1.75rem,8.5vw,2.2rem)!important;
+    line-height:1.08!important;
+  }
+  .app-hero #homeSubtitle{
+    margin-top:.5rem!important;
+    font-size:.9rem!important;
+  }
+
+  .course-grid{grid-template-columns:1fr!important;gap:.75rem!important}
+  .course-card.level-card{
+    min-height:10rem;
+    padding:1.1rem 1.15rem!important;
+    border-radius:1rem!important;
+  }
+  .level-card-top h3{font-size:1.3rem!important}
+  .level-card-arrow{font-size:2rem}
+  .level-card-progress{margin-top:1rem}
+  .level-card-bottom{margin-top:.85rem;padding-top:.7rem;font-size:.72rem}
+
+  /* Two compact rows only:
+     row 1 = Transcript / DE only / Lyrics / Search
+     row 2 = Reveal EN / Follow / Quiz
+  */
+  .persistent-player .modebar{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:.42rem!important;
+    align-items:center!important;
+    margin-top:.45rem!important;
+  }
+  .persistent-player .modebar .mode{
+    min-width:0!important;
+    min-height:2.5rem!important;
+    padding:.42rem .28rem!important;
+    font-size:.78rem!important;
+    white-space:nowrap!important;
+  }
+  .persistent-player .modebar .transcript-mode{grid-column:1}
+  .persistent-player .modebar .german-mode{grid-column:2}
+  .persistent-player .modebar [data-mode="lyrics"]{grid-column:3}
+  .persistent-player .modebar #transcriptSearchBtn{grid-column:4}
+  .persistent-player .modebar .option-toggle{
+    grid-column:1 / span 2;
+    min-height:2.35rem;
+    padding:.35rem .45rem!important;
+    justify-content:center;
+    border-radius:.7rem!important;
+  }
+  .persistent-player .modebar > label:not(.option-toggle){
+    grid-column:3;
+    min-height:2.35rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:.3rem;
+    padding:.35rem .25rem;
+    white-space:nowrap;
+  }
+  .persistent-player .modebar #quizBtn{grid-column:4;min-height:2.35rem!important}
+  .persistent-player .modebar #episodeLibrary{display:none!important}
+
+  .mode-desktop-label,.desktop-toggle-label{display:none!important}
+  .mode-mobile-label,.mobile-toggle-label{display:inline!important}
+
+  .episode-search-bar{
+    position:sticky;
+    top:.35rem;
+    margin:.25rem .15rem .55rem;
+    padding:.4rem .45rem;
+    gap:.3rem;
+    border-radius:.75rem;
+  }
+  .episode-search-count{max-width:5.2rem;overflow:hidden;text-overflow:ellipsis}
+  .episode-search-bar button{width:2rem;height:2rem}
+
+  .percent-text-controls{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}
+@media (max-width:370px){
+  .persistent-player .modebar .mode{font-size:.72rem!important}
+  .persistent-player .modebar{gap:.32rem!important}
+  .level-card-bottom{display:block}
+  .level-card-bottom span{display:block;margin-top:.2rem}
+}
+</style>
+
 </head>
 <body>
 <header id="appHeader" class="topbar">
@@ -173,13 +468,22 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
         </div>
         <input id="progress" class="progress" type="range" min="0" value="0" step="0.05">
         <div class="modebar">
-          <button data-mode="study" class="mode">Study</button>
-          <button data-mode="german" class="mode">German-only</button>
+          <button data-mode="study" class="mode transcript-mode">Transcript</button>
+          <button data-mode="german" class="mode german-mode"><span class="mode-desktop-label">German-only</span><span class="mode-mobile-label">DE only</span></button>
           <button data-mode="lyrics" class="mode">Lyrics</button>
-          <label class="option-toggle" title="In Study mode, hide future English until its audio begins"><input id="revealEnglishToggle" type="checkbox"> <span id="revealEnglishText">Reveal English with audio</span></label>
-          <label><input id="followToggle" type="checkbox" checked> <span id="autoFollowText">Auto-follow</span></label>
+          <button id="transcriptSearchBtn" class="mode icon-mode hidden" type="button" aria-label="Search episode" title="Search episode">⌕</button>
+          <label class="option-toggle compact-toggle" title="In Transcript mode, hide future English until its audio begins">
+            <input id="revealEnglishToggle" type="checkbox">
+            <span id="revealEnglishText" class="desktop-toggle-label">Reveal English with audio</span>
+            <span id="revealEnglishTextMobile" class="mobile-toggle-label">Reveal EN</span>
+          </label>
+          <label class="compact-toggle">
+            <input id="followToggle" type="checkbox" checked>
+            <span id="autoFollowText" class="desktop-toggle-label">Auto-follow</span>
+            <span id="autoFollowTextMobile" class="mobile-toggle-label">Follow</span>
+          </label>
           <button id="quizBtn" class="mode quiz-launch hidden" type="button">Quiz</button>
-          <button id="episodeLibrary" class="mode">Episodes</button>
+          <button id="episodeLibrary" class="mode episode-library-btn">Episodes</button>
         </div>
         <div id="playerNote" class="player-note"></div>
       </div>
@@ -292,6 +596,14 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
     <section id="episodeView" class="view hidden">
       <main class="episode-main">
         <section id="episodeIntro" class="episode-intro"></section>
+        <section id="episodeSearchBar" class="episode-search-bar hidden" aria-label="Search current episode">
+          <span class="episode-search-icon" aria-hidden="true">⌕</span>
+          <input id="episodeSearchInput" type="search" autocomplete="off" placeholder="Search this episode…">
+          <span id="episodeSearchCount" class="episode-search-count" aria-live="polite"></span>
+          <button id="episodeSearchPrev" type="button" aria-label="Previous match">‹</button>
+          <button id="episodeSearchNext" type="button" aria-label="Next match">›</button>
+          <button id="episodeSearchClose" type="button" aria-label="Close search">×</button>
+        </section>
         <div id="normalView"></div>
         <section id="lyricsView" class="lyrics-view">
           <div id="lyricPrev" class="lyric prev"></div>
@@ -351,10 +663,14 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
 
     <div class="settings-group">
       <div class="settings-row-head"><strong id="settingsFontLabel">Font size</strong><span id="settingsFontHint">Interface text size</span></div>
-      <div class="settings-segment text-controls" aria-label="Text size">
-        <button id="textSmaller" class="top-mini" title="Smaller text">A−</button>
-        <button id="textNormal" class="top-mini" title="Normal text">A</button>
-        <button id="textLarger" class="top-mini" title="Larger text">A+</button>
+      <div class="settings-segment text-controls percent-text-controls" aria-label="Text size">
+        <button class="top-mini" data-text-size="75" type="button">75%</button>
+        <button class="top-mini" data-text-size="90" type="button">90%</button>
+        <button class="top-mini" data-text-size="100" type="button">100%</button>
+        <button class="top-mini" data-text-size="110" type="button">110%</button>
+        <button class="top-mini" data-text-size="125" type="button">125%</button>
+        <button class="top-mini" data-text-size="150" type="button">150%</button>
+        <button class="top-mini" data-text-size="175" type="button">175%</button>
       </div>
     </div>
 
@@ -421,7 +737,7 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.13</strong>
+          <strong id="appVersionText">Version 1.0.15</strong>
           <span id="appUpdatedText">Updated 20 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
@@ -433,7 +749,7 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
 
 <script src="site-config.js?v=20260915-playback1"></script>
 <script src="courses.js?v=20260920-quizmix1"></script>
-<script src="app.js?v=20260920-transcriptnav1"></script>
+<script src="app.js?v=20260920-interfacefinal1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
