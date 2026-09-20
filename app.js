@@ -44,9 +44,9 @@ const QUIZ_COUNT=QUIZ_VOCAB_COUNT+QUIZ_GRAMMAR_COUNT;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.20';
+const APP_VERSION='1.0.21';
 const APP_UPDATED='20 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260920-darksearch1';
+const COURSE_DATA_CACHE_VERSION='20260920-expandall1';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -516,6 +516,20 @@ function statusKey(ep){const S=courseState();if(S.completed[ep.episode])return'f
 function statusLabel(ep){ let k=statusKey(ep); return k==='finished'?[`✓ ${tt('finished')}`,'done']:k==='in-progress'?[`◐ ${tt('inProgress')}`,'progressing']:[`○ ${tt('notStarted')}`,'']; }
 
 function epDisplay(ep){return ep?.display_episode||ep?.episode||1}
+const COURSE_SECTION_ALL='__course__';
+function librarySections(){
+  if(Array.isArray(D?.sections)&&D.sections.length)return D.sections;
+  if(['a2','b1'].includes(currentCourseId)&&D?.episodes?.length){
+    return [{
+      id:COURSE_SECTION_ALL,
+      title:courseLabel(currentCourseId),
+      total_words:D.total_words,
+      episodes:D.episodes.length,
+      virtual:true
+    }];
+  }
+  return [];
+}
 function sectionMeta(id){return D?.sections?.find(s=>s.id===id)||null}
 function episodeDisplayLabel(ep){return episodeDisplayLabelFor(currentCourseId,ep)}
 function episodeBrowserTitle(){ if(currentCourseId==='a1')return courseLabel('a1'); if(currentCourseId==='a2')return courseLabel('a2'); if(currentCourseId==='technical')return courseLabel('technical'); if(currentCourseId==='b1')return hasB1Sections()?`${tt('b1core')} & ${tt('b1adv')}`:courseLabel('b1'); return courseTitle(currentCourseId)||tt('episodes'); }
@@ -525,7 +539,10 @@ function sectionDisplayKicker(sec){
   if(currentCourseId==='b1')return sec.id==='advanced'?'B1+':'B1';
   return COURSE_META[currentCourseId]?.short||'';
 }
-function sectionEpisodes(id){return D?.episodes?.filter(ep=>ep.section===id)||[]}
+function sectionEpisodes(id){
+  if(id===COURSE_SECTION_ALL)return D?.episodes||[];
+  return D?.episodes?.filter(ep=>ep.section===id)||[];
+}
 function sectionProgress(id){
   const eps=sectionEpisodes(id);let done=0,total=0;
   for(const ep of eps){done+=completedWords(ep);total+=ep.word_count}
@@ -552,7 +569,8 @@ function scrollElementBelowPlayer(el,smooth=true){
   window.scrollTo({top:Math.max(0,y),behavior:smooth?'smooth':'auto'});
 }
 function activeEpisodeCardForSection(sectionId){
-  if(!currentEp||!playerHasStarted||currentEp.section!==sectionId)return null;
+  if(!currentEp||!playerHasStarted)return null;
+  if(sectionId!==COURSE_SECTION_ALL&&currentEp.section!==sectionId)return null;
   return document.querySelector(`.episode-card[data-ep="${currentEp.episode}"]`);
 }
 function scrollSectionToActiveEpisode(sectionId,smooth=true){
@@ -906,7 +924,14 @@ async function openCourse(id='b1',sectionToOpen=null,navigationMode='push'){
   const meta=COURSE_META[id],S=courseState(),words=progressWords(),p=Math.round(100*words/D.total_words);
   $('#courseEyebrow').textContent=`${meta.short} ${ux('audioCourse')}`; $('#courseTitle').textContent=courseTitle(id); $('#courseDescription').textContent=courseDescription(id); $('#courseWords').textContent=D.total_words.toLocaleString(); $('#courseEpisodes').textContent=D.episodes.length; $('#courseProgressText').textContent=`${p}%`; $('#courseProgressInline').textContent=`${words} / ${D.total_words} ${tt('words')} · ${p}%`; $('#courseProgressFill').style.width=`${p}%`; updateCourseQuizPoints();
   const browserTitle=$('#episodeBrowserTitle'); if(browserTitle)browserTitle.textContent=episodeBrowserTitle(); $('#bookmarkCount').textContent=S.bookmarks.length; $('#sideBookmarkCount').textContent=S.bookmarks.length;
-  let le=+S.lastEpisode||1,pos=+S.positions[le]||0,lastEp=epMap[le]||D.episodes[0],lastLabel=episodeDisplayLabel(lastEp); $('#continueBtn').textContent=pos>5?`${tt('continueWord')} ${lastLabel} · ${fmt(pos)}`:`${tt('startWord')} ${lastLabel}`; $('#continueSummary').textContent=pos>5?tt('lastPosition',{label:lastLabel,time:fmt(pos)}):tt('savedAutomatically');
+  let le=+S.lastEpisode||1,pos=+S.positions[le]||0,lastEp=epMap[le]||D.episodes[0],lastLabel=episodeDisplayLabel(lastEp);
+  const hasCourseProgress=words>0;
+  $('#continueBtn').textContent=pos>5
+    ?`${tt('continueWord')} ${lastLabel} · ${fmt(pos)}`
+    :hasCourseProgress
+      ?`${tt('continueWord')} ${lastLabel}`
+      :`${tt('startWord')} ${lastLabel}`;
+  $('#continueSummary').textContent=pos>5?tt('lastPosition',{label:lastLabel,time:fmt(pos)}):tt('savedAutomatically');
   librarySectionFilter=id==='b1'&&hasB1Sections()&&['core','advanced'].includes(sectionToOpen)?sectionToOpen:null;
   libraryOpenSections=new Set(librarySectionFilter?[librarySectionFilter]:[]);
   if(librarySectionFilter)setActiveEpisodeSection(librarySectionFilter); else setActiveEpisodeSection(null);
@@ -937,7 +962,7 @@ function setLibraryLayout(layout){
   AS.libraryLayout=layout==='list'?'list':'grid';save();applyLibraryLayout();
 }
 function toggleLibrarySection(id){
-  if(currentCourseId==='b1'){
+  if(currentCourseId==='b1'&&hasB1Sections()){
     if(librarySectionFilter===id){
       if(libraryOpenSections.has(id))libraryOpenSections.delete(id);
       else libraryOpenSections.add(id);
@@ -959,7 +984,53 @@ function toggleLibrarySection(id){
     setTimeout(()=>scrollSectionToActiveEpisode(id,true),90);
   }
 }
-function renderEpisodeGrid(){ if(!D||!$('#episodeGrid'))return; const filtered=D.episodes.filter(ep=>libraryFilter==='all'||statusKey(ep)===libraryFilter); let html=''; if(D.sections?.length){ const sectionsToRender=currentCourseId==='b1'&&librarySectionFilter?D.sections.filter(sec=>sec.id===librarySectionFilter):D.sections; for(const sec of sectionsToRender){ const eps=filtered.filter(ep=>ep.section===sec.id); const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id); html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}"><button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}"><div><span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span><h2>${esc(sectionDisplayTitle(sec))}</h2><p>${sec.episodes} ${tt('episodes')} · ${sec.total_words.toLocaleString()} ${tt('words')}</p></div><div class="library-section-head-right"><strong>${p.pct}%</strong><span class="section-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6.5 9.25 12 14.75l5.5-5.5"/></svg></span></div></button><div class="library-section-body ${isOpen?'':'hidden'}"><div class="episode-grid-inner">${eps.length?eps.map(episodeCardHtml).join(''):`<div class="empty-state">${ux('sectionEmpty')}</div>`}</div></div></section>`; } } else html=filtered.map(episodeCardHtml).join(''); $('#episodeGrid').innerHTML=html||`<div class="empty-state">${ux('episodesEmpty')}</div>`; applyLibraryLayout(); $$('[data-section-toggle]').forEach(x=>x.onclick=()=>toggleLibrarySection(x.dataset.sectionToggle)); $$('.episode-card').forEach(x=>x.onclick=()=>openEpisode(+x.dataset.ep,null,true)); }
+function renderEpisodeGrid(){
+  if(!D||!$('#episodeGrid'))return;
+  const filtered=D.episodes.filter(ep=>libraryFilter==='all'||statusKey(ep)===libraryFilter);
+  const sections=librarySections();
+  let html='';
+
+  if(sections.length){
+    const sectionsToRender=currentCourseId==='b1'&&hasB1Sections()&&librarySectionFilter
+      ?sections.filter(sec=>sec.id===librarySectionFilter)
+      :sections;
+
+    for(const sec of sectionsToRender){
+      const eps=sec.id===COURSE_SECTION_ALL
+        ?filtered
+        :filtered.filter(ep=>ep.section===sec.id);
+      const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id);
+
+      html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}">
+        <button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}">
+          <div>
+            <span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span>
+            <h2>${esc(sectionDisplayTitle(sec))}</h2>
+            <p>${sec.episodes} ${tt('episodes')} · ${sec.total_words.toLocaleString()} ${tt('words')}</p>
+          </div>
+          <div class="library-section-head-right">
+            <strong>${p.pct}%</strong>
+            <span class="section-chevron" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false"><path d="M6.5 9.25 12 14.75l5.5-5.5"/></svg>
+            </span>
+          </div>
+        </button>
+        <div class="library-section-body ${isOpen?'':'hidden'}">
+          <div class="episode-grid-inner">
+            ${eps.length?eps.map(episodeCardHtml).join(''):`<div class="empty-state">${ux('sectionEmpty')}</div>`}
+          </div>
+        </div>
+      </section>`;
+    }
+  }else{
+    html=filtered.map(episodeCardHtml).join('');
+  }
+
+  $('#episodeGrid').innerHTML=html||`<div class="empty-state">${ux('episodesEmpty')}</div>`;
+  applyLibraryLayout();
+  $$('[data-section-toggle]').forEach(x=>x.onclick=()=>toggleLibrarySection(x.dataset.sectionToggle));
+  $$('.episode-card').forEach(x=>x.onclick=()=>openEpisode(+x.dataset.ep,null,true));
+}
 function bookmarkSectionForEntry(id){
   const x=entryIndex[id];
   return x?epMap[x.episode]?.section||null:null;
