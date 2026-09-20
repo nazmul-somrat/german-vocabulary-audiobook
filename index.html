@@ -737,6 +737,107 @@ html[data-theme="dark"] .focus-grammar{color:#c4b5fd}
 }
 </style>
 
+
+<style id="dark-search-expand-v1020">
+/* ---------- Premium expandable-section chevron ---------- */
+.section-chevron{
+  display:inline-grid!important;
+  place-items:center!important;
+  width:36px!important;
+  height:36px!important;
+  color:currentColor!important;
+  opacity:.82;
+  transition:transform .18s ease,opacity .18s ease!important;
+}
+.section-chevron svg{
+  width:22px!important;
+  height:22px!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:2.5!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+}
+.library-section.is-open .section-chevron{
+  transform:rotate(180deg)!important;
+  opacity:1;
+}
+
+/* ---------- Dark-mode transcript/player controls ---------- */
+html[data-theme="dark"] #playerModebar .mode-row-primary .mode,
+html[data-theme="dark"] #playerModebar .mode-row-secondary .mode,
+html[data-theme="dark"] #playerModebar .mode-row-secondary .compact-toggle{
+  background:#111a28!important;
+  border:1px solid #33445b!important;
+  color:#d8e2ef!important;
+  box-shadow:none!important;
+}
+
+html[data-theme="dark"] #playerModebar .mode-row-primary .mode:hover,
+html[data-theme="dark"] #playerModebar .mode-row-secondary .mode:hover,
+html[data-theme="dark"] #playerModebar .mode-row-secondary .compact-toggle:hover{
+  background:#162337!important;
+  border-color:#47617e!important;
+}
+
+html[data-theme="dark"] #playerModebar .mode-row-primary .mode.active{
+  background:#193657!important;
+  border-color:#5b9df0!important;
+  color:#f4f8ff!important;
+  box-shadow:inset 0 0 0 1px rgba(96,165,250,.16)!important;
+  font-weight:700!important;
+}
+
+html[data-theme="dark"] #playerModebar .mode-row-secondary .compact-toggle:has(input:checked){
+  background:#172d48!important;
+  border-color:#4d82bd!important;
+  color:#edf6ff!important;
+}
+
+html[data-theme="dark"] #playerModebar .compact-toggle input{
+  accent-color:#3b82f6!important;
+}
+
+html[data-theme="dark"] #playerModebar .search-mode svg{
+  stroke:#dbeafe!important;
+}
+
+/* Full search bar in dark mode: same visual family, not a white field. */
+html[data-theme="dark"] .player-search-row{
+  background:#101a29!important;
+  border-color:#3a506b!important;
+  color:#e5edf7!important;
+}
+html[data-theme="dark"] .player-search-row input{
+  color:#f4f7fb!important;
+}
+html[data-theme="dark"] .player-search-row input::placeholder{
+  color:#8291a6!important;
+}
+html[data-theme="dark"] .player-search-row button{
+  background:#142033!important;
+  border-color:#3b506b!important;
+  color:#e5edf7!important;
+}
+html[data-theme="dark"] .player-search-row button:hover{
+  background:#1b2c44!important;
+  border-color:#527195!important;
+}
+
+/* Mobile search remains sticky while the transcript is manually scrolled. */
+@media (max-width:640px){
+  html[data-theme="dark"] #persistentPlayerHost.search-active-host,
+  html[data-theme="dark"] #persistentPlayerHost.search-active-host #persistentPlayerFull{
+    background:#090f18!important;
+  }
+
+  /* Do not let touch/scroll affordances imply that search will close. */
+  #normalView{
+    overscroll-behavior-y:contain;
+  }
+}
+</style>
+
 </head>
 <body>
 <header id="appHeader" class="topbar">
@@ -1101,7 +1202,7 @@ html[data-theme="dark"] .focus-grammar{color:#c4b5fd}
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.19</strong>
+          <strong id="appVersionText">Version 1.0.20</strong>
           <span id="appUpdatedText">Updated 20 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
@@ -1113,7 +1214,7 @@ html[data-theme="dark"] .focus-grammar{color:#c4b5fd}
 
 <script src="site-config.js?v=20260915-playback1"></script>
 <script src="courses.js?v=20260920-quizmix1"></script>
-<script src="app.js?v=20260920-searchfocus2"></script>
+<script src="app.js?v=20260920-darksearch1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

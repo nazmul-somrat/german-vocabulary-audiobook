@@ -44,9 +44,9 @@ const QUIZ_COUNT=QUIZ_VOCAB_COUNT+QUIZ_GRAMMAR_COUNT;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.19';
+const APP_VERSION='1.0.20';
 const APP_UPDATED='20 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260920-searchfocus2';
+const COURSE_DATA_CACHE_VERSION='20260920-darksearch1';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -959,7 +959,7 @@ function toggleLibrarySection(id){
     setTimeout(()=>scrollSectionToActiveEpisode(id,true),90);
   }
 }
-function renderEpisodeGrid(){ if(!D||!$('#episodeGrid'))return; const filtered=D.episodes.filter(ep=>libraryFilter==='all'||statusKey(ep)===libraryFilter); let html=''; if(D.sections?.length){ const sectionsToRender=currentCourseId==='b1'&&librarySectionFilter?D.sections.filter(sec=>sec.id===librarySectionFilter):D.sections; for(const sec of sectionsToRender){ const eps=filtered.filter(ep=>ep.section===sec.id); const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id); html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}"><button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}"><div><span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span><h2>${esc(sectionDisplayTitle(sec))}</h2><p>${sec.episodes} ${tt('episodes')} · ${sec.total_words.toLocaleString()} ${tt('words')}</p></div><div class="library-section-head-right"><strong>${p.pct}%</strong><span class="section-chevron" aria-hidden="true">⌄</span></div></button><div class="library-section-body ${isOpen?'':'hidden'}"><div class="episode-grid-inner">${eps.length?eps.map(episodeCardHtml).join(''):`<div class="empty-state">${ux('sectionEmpty')}</div>`}</div></div></section>`; } } else html=filtered.map(episodeCardHtml).join(''); $('#episodeGrid').innerHTML=html||`<div class="empty-state">${ux('episodesEmpty')}</div>`; applyLibraryLayout(); $$('[data-section-toggle]').forEach(x=>x.onclick=()=>toggleLibrarySection(x.dataset.sectionToggle)); $$('.episode-card').forEach(x=>x.onclick=()=>openEpisode(+x.dataset.ep,null,true)); }
+function renderEpisodeGrid(){ if(!D||!$('#episodeGrid'))return; const filtered=D.episodes.filter(ep=>libraryFilter==='all'||statusKey(ep)===libraryFilter); let html=''; if(D.sections?.length){ const sectionsToRender=currentCourseId==='b1'&&librarySectionFilter?D.sections.filter(sec=>sec.id===librarySectionFilter):D.sections; for(const sec of sectionsToRender){ const eps=filtered.filter(ep=>ep.section===sec.id); const p=sectionProgress(sec.id),isOpen=libraryOpenSections.has(sec.id); html+=`<section class="library-section ${sec.id==='advanced'?'advanced':''} ${isOpen?'is-open':''}" id="library-section-${sec.id}"><button type="button" class="library-section-head" data-section-toggle="${sec.id}" aria-expanded="${isOpen?'true':'false'}"><div><span class="section-kicker">${esc(sectionDisplayKicker(sec))}</span><h2>${esc(sectionDisplayTitle(sec))}</h2><p>${sec.episodes} ${tt('episodes')} · ${sec.total_words.toLocaleString()} ${tt('words')}</p></div><div class="library-section-head-right"><strong>${p.pct}%</strong><span class="section-chevron" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M6.5 9.25 12 14.75l5.5-5.5"/></svg></span></div></button><div class="library-section-body ${isOpen?'':'hidden'}"><div class="episode-grid-inner">${eps.length?eps.map(episodeCardHtml).join(''):`<div class="empty-state">${ux('sectionEmpty')}</div>`}</div></div></section>`; } } else html=filtered.map(episodeCardHtml).join(''); $('#episodeGrid').innerHTML=html||`<div class="empty-state">${ux('episodesEmpty')}</div>`; applyLibraryLayout(); $$('[data-section-toggle]').forEach(x=>x.onclick=()=>toggleLibrarySection(x.dataset.sectionToggle)); $$('.episode-card').forEach(x=>x.onclick=()=>openEpisode(+x.dataset.ep,null,true)); }
 function bookmarkSectionForEntry(id){
   const x=entryIndex[id];
   return x?epMap[x.episode]?.section||null:null;
@@ -2058,8 +2058,21 @@ if($('#episodeSearchInput'))$('#episodeSearchInput').addEventListener('keydown',
 // If Auto-follow was enabled before Search, it is restored automatically.
 document.addEventListener('pointerdown',e=>{
   if(!episodeSearchActive)return;
-  const row=$('#playerSearchRow'),btn=$('#transcriptSearchBtn');
+  const row=$('#playerSearchRow'),btn=$('#transcriptSearchBtn'),transcript=$('#normalView');
   if(row?.contains(e.target)||btn?.contains(e.target))return;
+
+  // The transcript is part of the Search workspace:
+  // touching or dragging here must NEVER close Search.
+  // On mobile it only dismisses the keyboard, leaving query/results intact.
+  if(transcript?.contains(e.target)){
+    if(window.matchMedia('(max-width:640px)').matches){
+      const input=$('#episodeSearchInput');
+      if(document.activeElement===input)input.blur();
+    }
+    return;
+  }
+
+  // Outside the search line and transcript, keep the previous convenient close behavior.
   closeEpisodeSearch();
 });
 if(window.visualViewport){
