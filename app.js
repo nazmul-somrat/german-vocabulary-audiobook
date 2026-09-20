@@ -8,7 +8,7 @@ const views=['#appHomeView','#courseHomeView','#quizHistoryView','#difficultView
 const audio=$('#audio'), toast=$('#toast'), sidebar=$('#sidebar'), backdrop=$('#sidebarBackdrop');
 
 const COURSE_DEFAULT={lastEpisode:1,sectionLastEpisodes:{},mode:'study',speed:1,positions:{},maxPositions:{},completed:{},bookmarks:[],revealEnglishOnAudio:false,quizBest:{},quizHistory:{},quizHistoryVersion:1};
-const APP_DEFAULT={theme:'light',textSize:'100',uiLanguage:'en',quizSound:true,lastCourse:'b1',lastPlayed:null,libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:4,courses:{}};
+const APP_DEFAULT={theme:'light',textSize:'normal',uiLanguage:'en',quizSound:true,lastCourse:'b1',lastPlayed:null,libraryLayout:'grid',endBehavior:'stop',endBehaviorUiVersion:4,courses:{}};
 
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function loadAppState(){
@@ -31,9 +31,9 @@ function loadAppState(){
   if(!['stop','next','repeat'].includes(s.endBehavior))s.endBehavior='stop';
   if(!['en','bn','de'].includes(s.uiLanguage))s.uiLanguage='en';
   if(typeof s.quizSound!=='boolean')s.quizSound=true;
-  const legacyTextSize={small:'90',normal:'100',large:'125'};
-  if(legacyTextSize[s.textSize])s.textSize=legacyTextSize[s.textSize];
-  if(!['75','90','100','110','125','150','175'].includes(String(s.textSize)))s.textSize='100';
+  const numericTextSize={'75':'small','90':'small','100':'normal','110':'normal','125':'large','150':'large','175':'large'};
+  if(numericTextSize[String(s.textSize)])s.textSize=numericTextSize[String(s.textSize)];
+  if(!['small','normal','large'].includes(String(s.textSize)))s.textSize='normal';
   return s;
 }
 let AS=loadAppState();
@@ -44,9 +44,9 @@ const QUIZ_COUNT=QUIZ_VOCAB_COUNT+QUIZ_GRAMMAR_COUNT;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.15';
+const APP_VERSION='1.0.16';
 const APP_UPDATED='20 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260920-interfacefinal1';
+const COURSE_DATA_CACHE_VERSION='20260920-mobilefix2';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -139,12 +139,12 @@ function updateStaticLanguage(){document.documentElement.lang=lang()==="bn"?"bn"
   $$('#libraryFilters .chip').forEach(b=>{const k=b.dataset.libraryFilter;b.textContent=k==='all'?ux('all'):k==='not-started'?tt('notStarted'):k==='in-progress'?tt('inProgress'):tt('finished')});
   if($('#gridViewBtn'))$('#gridViewBtn').textContent='▦ '+ux('grid'); if($('#listViewBtn'))$('#listViewBtn').textContent='☰ '+ux('list');
   if($('#bookmarksBtn'))$('#bookmarksBtn').innerHTML=`★ ${ux('bookmarkedWords')} <span id="bookmarkCount">${courseBookmarkIds().length}</span>`;
-  const study=$('.mode[data-mode="study"]');if(study)study.textContent=ux('study'); const german=$('.mode[data-mode="german"]');if(german)german.textContent=ux('germanOnly'); const lyr=$('.mode[data-mode="lyrics"]');if(lyr)lyr.textContent=ux('lyrics');
+  const study=$('.mode[data-mode="study"]');if(study)study.textContent=ux('study'); const german=$('.mode[data-mode="german"]');if(german){const desktop=german.querySelector('.mode-desktop-label'),mobile=german.querySelector('.mode-mobile-label');if(desktop)desktop.textContent=ux('germanOnly');if(mobile)mobile.textContent=lang()==='bn'?'শুধু DE':lang()==='de'?'Nur DE':'DE only'} const lyr=$('.mode[data-mode="lyrics"]');if(lyr)lyr.textContent=ux('lyrics');
   const reveal=$('#revealEnglishText');if(reveal)reveal.textContent=ux('revealEnglish');
   const revealMobile=$('#revealEnglishTextMobile');if(revealMobile)revealMobile.textContent=lang()==='bn'?'ইংরেজি দেখান':lang()==='de'?'EN anzeigen':'Reveal EN';
   const follow=$('#autoFollowText');if(follow)follow.textContent=ux('autoFollow');
   const followMobile=$('#autoFollowTextMobile');if(followMobile)followMobile.textContent=lang()==='bn'?'ফলো':lang()==='de'?'Folgen':'Follow';
-  const searchBtn=$('#transcriptSearchBtn');if(searchBtn){searchBtn.title=ux('searchEpisode');searchBtn.setAttribute('aria-label',ux('searchEpisode'))}
+  const searchBtn=$('#transcriptSearchBtn');if(searchBtn){searchBtn.title=ux('searchEpisode');searchBtn.setAttribute('aria-label',ux('searchEpisode'))} const searchLabel=$('#transcriptSearchLabel');if(searchLabel)searchLabel.textContent=lang()==='bn'?'খুঁজুন':lang()==='de'?'Suchen':'Search';
   const epSearch=$('#episodeSearchInput');if(epSearch)epSearch.placeholder=ux('searchThisEpisode');
   if($('#episodeLibrary'))$('#episodeLibrary').textContent=tt('episodes'); if($('#quizBtn'))updateQuizButton(); if($('#backCurrent'))$('#backCurrent').textContent=lang()==='bn'?'↩ বর্তমান শব্দে ফিরুন':lang()==='de'?'↩ Zum aktuellen Wort':'↩ Back to current word';
   updateLanguageButtons();}
@@ -227,10 +227,12 @@ async function activateCourse(id){
 
 function applyPreferences(){
   document.documentElement.dataset.theme=AS.theme||'light';
-  document.documentElement.dataset.textSize=String(AS.textSize||'100');
+  document.documentElement.dataset.textSize=AS.textSize||'normal';
   const themeBtn=$('#themeBtn');
   if(themeBtn)themeBtn.textContent=AS.theme==='dark'?tt('themeLight'):tt('themeDark');
-  $$('[data-text-size]').forEach(b=>b.classList.toggle('active',b.dataset.textSize===String(AS.textSize||'100')));
+  $$('.top-mini').forEach(b=>b.classList.remove('active'));
+  const map={small:'#textSmaller',normal:'#textNormal',large:'#textLarger'};
+  if(map[AS.textSize]&&$(map[AS.textSize]))$(map[AS.textSize]).classList.add('active');
   const meta=document.querySelector('meta[name="theme-color"]');
   if(meta)meta.content=AS.theme==='dark'?'#070c14':'#101827';
   const quizSound=$('#quizSoundToggle');
@@ -1930,11 +1932,9 @@ if(backTop){
 }
 
 $('#themeBtn').onclick=()=>{AS.theme=AS.theme==='dark'?'light':'dark';save();applyPreferences();updateStaticLanguage()};
-$$('[data-text-size]').forEach(btn=>btn.onclick=()=>{
-  AS.textSize=btn.dataset.textSize;
-  save();
-  applyPreferences();
-});
+$('#textSmaller').onclick=()=>{AS.textSize='small';save();applyPreferences()};
+$('#textNormal').onclick=()=>{AS.textSize='normal';save();applyPreferences()};
+$('#textLarger').onclick=()=>{AS.textSize='large';save();applyPreferences()};
 
 window.addEventListener('scroll',()=>{clearTimeout(scrollTimer);scrollTimer=setTimeout(checkBackCurrent,120)},{passive:true});
 window.addEventListener('resize',checkBackCurrent);
