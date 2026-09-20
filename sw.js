@@ -1,11 +1,11 @@
-const CACHE='german-vocab-audiobook-v1.0.10-quizmix1';
+const CACHE='german-vocab-audiobook-v1.0.11-historyplayer1';
 const CORE=[
   './',
   './index.html',
   './styles.css?v=20260915-navfolders1',
   './site-config.js?v=20260915-playback1',
   './courses.js?v=20260920-quizmix1',
-  './app.js?v=20260920-quizmix1',
+  './app.js?v=20260920-historyplayer1',
   './manifest.webmanifest',
   './logo-pwa-192-v4.png',
   './logo-pwa-512-v4.png',

@@ -41,9 +41,9 @@ const QUIZ_COUNT=QUIZ_VOCAB_COUNT+QUIZ_GRAMMAR_COUNT;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.10';
+const APP_VERSION='1.0.11';
 const APP_UPDATED='20 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260920-quizmix1';
+const COURSE_DATA_CACHE_VERSION='20260920-historyplayer1';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -78,13 +78,15 @@ function esc(x){return String(x??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function fmt(t){t=Math.max(0,Math.floor(+t||0));let h=Math.floor(t/3600),m=Math.floor(t%3600/60),s=t%60;return h?`${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
 function msg(x){toast.textContent=x;toast.classList.add('show');clearTimeout(msg.t);msg.t=setTimeout(()=>toast.classList.remove('show'),1300)}
 
-let currentCourseId=(COURSE_META[AS.lastCourse]?.status==='ready'?AS.lastCourse:'b1'), D=null, entryIndex={}, epMap={}, currentEp=null;
+let currentCourseId=(COURSE_META[AS.lastCourse]?.status==='ready'?AS.lastCourse:'b1'), D=null, entryIndex={}, epMap={}, currentEp=null, viewEp=null;
+let playerCourseId=null, playerData=null, playerEntryIndex={}, playerEpMap={};
+let restoringHistory=false;
 let lastActive=-1, segmentStop=null, manualEnglish=new Set(), manualRecall=new Set();
 
 const UI_TEXT={
-  en:{home:"Home",current:"CURRENT COURSE",courses:"COURSES",quizPoints:"Quiz Points",uiLanguage:"UI Language",brand:"German Vocabulary Audiobook",brandSub:"Audio + synchronized transcript",homeEyebrow:"VOCABULARY AUDIOBOOK COLLECTION",homeTitle:"Learn German vocabulary by listening, reading and recalling.",homeSubtitle:"One player for multiple vocabulary courses. Your progress and bookmarked words stay separate for each course.",coursesHeading:"Courses",courseProgress:"Course progress",words:"words",episodes:"episodes",completed:"completed",quizPointsLower:"quiz points",continueLearning:"Continue learning",goToEpisodes:"Go to episodes",personalReview:"PERSONAL REVIEW",difficultWords:"Bookmarked Words",difficultSubtitle:"Words you bookmarked with ★ while listening.",resetProgress:"Reset progress",allCourses:"All courses",noCourseData:"No course data",progress:"progress",openCourse:"Open course",comingSoon:"Coming soon",progressLoads:"Progress loads with course",structurePrepared:"Course structure prepared",passedWord:"passed",continueWord:"Continue",startWord:"Start",savedAutomatically:"Your listening position is saved automatically.",lastPosition:"Last position: {label} at {time}.",notStarted:"Not started",inProgress:"In progress",finished:"Finished",episodeLabel:"Episode",b1core:"B1 Core",b1adv:"B1+ Advanced",themeDark:"☾ Dark",themeLight:"☀ Light",afterStop:"Stop after episode",afterNext:"Play next episode",afterRepeat:"Repeat same episode",quiz:"Quiz",best:"Best",quizTitle:"Episode Quiz",question:"Question {n} of {t}",pass:"Pass: {p}/{t}",quizPrompt:"Choose the correct English meaning. The sound tells you whether your choice was right or wrong.",quizTypeVocabulary:"Vocabulary",quizTypeGrammar:"Grammar",quizPromptVocabulary:"Choose the correct English meaning.",quizPromptArticle:"Choose the correct German article.",quizPromptVerbPresent:"Choose the correct er/sie/es present-tense form.",quizPromptVerbPast:"Choose the correct Präteritum form.",quizPromptVerbPerfect:"Choose the correct Perfekt form.",quizNoArticle:"no article",quizUnavailable:"This episode does not have enough suitable vocabulary and grammar items for the 10 + 5 quiz.",correct:"✓ Correct",correctAnswer:"Correct answer:",back:"Back",next:"Next",finish:"Finish",passed:"Passed",reviewRecommended:"Review recommended",greatTarget:"Great — you reached the 12/15 target.",listenAgainThen:"Listen to this episode again, then retake the quiz.",reviewMistakes:"Review your mistakes ({n})",yourAnswer:"Your answer:",correctShort:"Correct:",allCorrect:"All 15 answers were correct.",listenAgain:"Listen Again",retakeQuiz:"Retake Quiz",close:"Close",designedBy:"Designed & developed by Nazmul Somrat",top:"↑ Top",difficultWordBtn:"☆ Bookmark word"},
-  bn:{home:"হোম",current:"বর্তমান কোর্স",courses:"কোর্সসমূহ",quizPoints:"কুইজ পয়েন্ট",uiLanguage:"ভাষা",brand:"জার্মান ভোকাবুলারি অডিওবুক",brandSub:"অডিও + সিঙ্ক্রোনাইজড ট্রান্সক্রিপ্ট",homeEyebrow:"ভোকাবুলারি অডিওবুক সংগ্রহ",homeTitle:"শুনে, পড়ে এবং মনে রেখে জার্মান শব্দভাণ্ডার শিখুন।",homeSubtitle:"একই প্লেয়ারে একাধিক শব্দভাণ্ডার কোর্স। প্রতিটি কোর্সের প্রগ্রেস ও বুকমার্ক করা শব্দ আলাদাভাবে সংরক্ষিত থাকে।",coursesHeading:"কোর্সসমূহ",courseProgress:"কোর্স প্রগ্রেস",words:"শব্দ",episodes:"এপিসোড",completed:"সম্পন্ন",quizPointsLower:"কুইজ পয়েন্ট",continueLearning:"শেখা চালিয়ে যান",goToEpisodes:"এপিসোডে যান",personalReview:"ব্যক্তিগত রিভিউ",difficultWords:"বুকমার্ক করা শব্দ",difficultSubtitle:"শোনার সময় ★ দিয়ে বুকমার্ক করা শব্দ।",resetProgress:"প্রগ্রেস রিসেট",allCourses:"সব কোর্স",noCourseData:"কোর্স ডেটা নেই",progress:"প্রগ্রেস",openCourse:"কোর্স খুলুন",comingSoon:"শীঘ্রই আসছে",progressLoads:"কোর্স খুললে প্রগ্রেস দেখা যাবে",structurePrepared:"কোর্সের কাঠামো প্রস্তুত",passedWord:"পাস",continueWord:"চালিয়ে যান",startWord:"শুরু",savedAutomatically:"আপনার শোনার অবস্থান স্বয়ংক্রিয়ভাবে সেভ হয়।",lastPosition:"সর্বশেষ অবস্থান: {label} এ {time}।",notStarted:"শুরু হয়নি",inProgress:"চলছে",finished:"শেষ",episodeLabel:"এপিসোড",b1core:"B1 কোর",b1adv:"B1+ অ্যাডভান্সড",themeDark:"☾ ডার্ক",themeLight:"☀ লাইট",afterStop:"এপিসোড শেষে থামুন",afterNext:"এপিসোড শেষে পরের এপিসোড চালান",afterRepeat:"এপিসোড শেষে একই এপিসোড পুনরায় চালান",quiz:"কুইজ",best:"সেরা",quizTitle:"এপিসোড কুইজ",question:"প্রশ্ন {n} / {t}",pass:"পাস: {p}/{t}",quizPrompt:"সঠিক ইংরেজি অর্থটি বেছে নিন। সাউন্ড বলে দেবে আপনার উত্তর সঠিক না ভুল।",quizTypeVocabulary:"শব্দার্থ",quizTypeGrammar:"ব্যাকরণ",quizPromptVocabulary:"সঠিক ইংরেজি অর্থটি বেছে নিন।",quizPromptArticle:"সঠিক জার্মান আর্টিকেলটি বেছে নিন।",quizPromptVerbPresent:"সঠিক er/sie/es বর্তমান কালের রূপটি বেছে নিন।",quizPromptVerbPast:"সঠিক Präteritum রূপটি বেছে নিন।",quizPromptVerbPerfect:"সঠিক Perfekt রূপটি বেছে নিন।",quizNoArticle:"কোনো আর্টিকেল নেই",quizUnavailable:"এই এপিসোডে ১০টি শব্দার্থ + ৫টি ব্যাকরণ প্রশ্ন তৈরির জন্য যথেষ্ট উপযুক্ত শব্দ নেই।",correct:"✓ সঠিক",correctAnswer:"সঠিক উত্তর:",back:"পেছনে",next:"পরবর্তী",finish:"শেষ করুন",passed:"পাস",reviewRecommended:"পুনরায় রিভিউ করুন",greatTarget:"দারুণ — আপনি 12/15 লক্ষ্য পূরণ করেছেন।",listenAgainThen:"এই এপিসোডটি আবার শুনুন, তারপর কুইজটি আবার দিন।",reviewMistakes:"আপনার ভুলগুলো দেখুন ({n})",yourAnswer:"আপনার উত্তর:",correctShort:"সঠিক:",allCorrect:"সব 15টি উত্তরই সঠিক হয়েছে।",listenAgain:"আবার শুনুন",retakeQuiz:"আবার কুইজ দিন",close:"বন্ধ",designedBy:"ডিজাইন ও ডেভেলপ করেছেন Nazmul Somrat",top:"↑ টপ",difficultWordBtn:"☆ শব্দ বুকমার্ক করুন"},
-  de:{home:"Start",current:"AKTUELLER KURS",courses:"KURSE",quizPoints:"Quizpunkte",uiLanguage:"Sprache",brand:"Deutsches Vokabel-Hörbuch",brandSub:"Audio + synchronisiertes Transkript",homeEyebrow:"VOKABEL-HÖRBUCH-SAMMLUNG",homeTitle:"Lerne deutsche Vokabeln durch Hören, Lesen und Wiederholen.",homeSubtitle:"Ein Player für mehrere Vokabelkurse. Dein Fortschritt und deine gespeicherten Wörter werden für jeden Kurs getrennt gespeichert.",coursesHeading:"Kurse",courseProgress:"Kursfortschritt",words:"Wörter",episodes:"Episoden",completed:"abgeschlossen",quizPointsLower:"Quizpunkte",continueLearning:"Weiterlernen",goToEpisodes:"Zu den Episoden",personalReview:"PERSÖNLICHE WIEDERHOLUNG",difficultWords:"Gespeicherte Wörter",difficultSubtitle:"Wörter, die du beim Hören mit ★ gespeichert hast.",resetProgress:"Fortschritt zurücksetzen",allCourses:"Alle Kurse",noCourseData:"Keine Kursdaten",progress:"Fortschritt",openCourse:"Kurs öffnen",comingSoon:"Demnächst",progressLoads:"Fortschritt wird mit dem Kurs geladen",structurePrepared:"Kursstruktur vorbereitet",passedWord:"bestanden",continueWord:"Weiter",startWord:"Start",savedAutomatically:"Deine Hörposition wird automatisch gespeichert.",lastPosition:"Letzte Position: {label} bei {time}.",notStarted:"Nicht begonnen",inProgress:"In Bearbeitung",finished:"Fertig",episodeLabel:"Episode",b1core:"B1 Grundkurs",b1adv:"B1+ Aufbau",themeDark:"☾ Dunkel",themeLight:"☀ Hell",afterStop:"Nach der Episode stoppen",afterNext:"Nächste Episode abspielen",afterRepeat:"Dieselbe Episode wiederholen",quiz:"Quiz",best:"Bestwert",quizTitle:"Episoden-Quiz",question:"Frage {n} von {t}",pass:"Bestehen: {p}/{t}",quizPrompt:"Wähle die richtige englische Bedeutung. Der Ton zeigt dir, ob deine Antwort richtig oder falsch war.",quizTypeVocabulary:"Vokabeln",quizTypeGrammar:"Grammatik",quizPromptVocabulary:"Wähle die richtige englische Bedeutung.",quizPromptArticle:"Wähle den richtigen deutschen Artikel.",quizPromptVerbPresent:"Wähle die richtige Präsensform für er/sie/es.",quizPromptVerbPast:"Wähle die richtige Präteritumform.",quizPromptVerbPerfect:"Wähle die richtige Perfektform.",quizNoArticle:"kein Artikel",quizUnavailable:"Für 10 Vokabel- und 5 Grammatikfragen gibt es in dieser Episode nicht genügend geeignete Einträge.",correct:"✓ Richtig",correctAnswer:"Richtige Antwort:",back:"Zurück",next:"Weiter",finish:"Beenden",passed:"Bestanden",reviewRecommended:"Wiederholung empfohlen",greatTarget:"Super — du hast das Ziel 12/15 erreicht.",listenAgainThen:"Höre diese Episode noch einmal und mache danach das Quiz erneut.",reviewMistakes:"Überprüfe deine Fehler ({n})",yourAnswer:"Deine Antwort:",correctShort:"Richtig:",allCorrect:"Alle 15 Antworten waren richtig.",listenAgain:"Noch einmal hören",retakeQuiz:"Quiz wiederholen",close:"Schließen",designedBy:"Entwickelt von Nazmul Somrat",top:"↑ Nach oben",difficultWordBtn:"☆ Wort speichern"}
+  en:{home:"Home",current:"CURRENT COURSE",courses:"COURSES",quizPoints:"Quiz Points",uiLanguage:"UI Language",brand:"German Vocabulary Audiobook",brandSub:"Audio + synchronized transcript",homeEyebrow:"VOCABULARY AUDIOBOOK COLLECTION",homeTitle:"Learn German vocabulary by listening, reading and recalling.",homeSubtitle:"One player for multiple vocabulary courses. Your progress and bookmarked words stay separate for each course.",coursesHeading:"Courses",courseProgress:"Course progress",words:"words",episodes:"episodes",completed:"completed",quizPointsLower:"quiz points",continueLearning:"Continue learning",goToEpisodes:"Go to episodes",personalReview:"PERSONAL REVIEW",difficultWords:"Bookmarked Words",difficultSubtitle:"Words you bookmarked with ★ while listening.",resetProgress:"Reset progress",allCourses:"All courses",noCourseData:"No course data",progress:"progress",openCourse:"Open course",comingSoon:"Coming soon",progressLoads:"Progress loads with course",structurePrepared:"Course structure prepared",passedWord:"passed",continueWord:"Continue",startWord:"Start",savedAutomatically:"Your listening position is saved automatically.",lastPosition:"Last position: {label} at {time}.",notStarted:"Not started",inProgress:"In progress",finished:"Finished",episodeLabel:"Episode",b1core:"B1 Core",b1adv:"B1+ Advanced",themeDark:"☾ Dark",themeLight:"☀ Light",afterStop:"Stop after episode",afterNext:"Play next episode",afterRepeat:"Repeat same episode",quiz:"Quiz",best:"Best",quizTitle:"Episode Quiz",question:"Question {n} of {t}",pass:"Pass: {p}/{t}",quizPrompt:"Choose the correct English meaning. The sound tells you whether your choice was right or wrong.",quizTypeVocabulary:"Vocabulary",quizTypeGrammar:"Grammar",quizPromptVocabulary:"Choose the correct English meaning.",quizPromptArticle:"Choose the correct German article.",quizPromptVerbPresent:"Choose the correct er/sie/es present-tense form.",quizPromptVerbPast:"Choose the correct Präteritum form.",quizPromptVerbPerfect:"Choose the correct Perfekt form.",quizNoArticle:"no article",quizUnavailable:"This episode does not have enough suitable vocabulary and grammar items for the 10 + 5 quiz.",correct:"✓ Correct",correctAnswer:"Correct answer:",back:"Back",next:"Next",finish:"Finish",passed:"Passed",reviewRecommended:"Review recommended",greatTarget:"Great — you reached the 12/15 target.",listenAgainThen:"Listen to this episode again, then retake the quiz.",reviewMistakes:"Review your mistakes ({n})",yourAnswer:"Your answer:",correctShort:"Correct:",allCorrect:"All 15 answers were correct.",listenAgain:"Listen Again",retakeQuiz:"Retake Quiz",close:"Close",designedBy:"Designed & developed by Nazmul Somrat",top:"↑ Top",difficultWordBtn:"☆ Bookmark word",playThisEpisode:"▶ Play this episode",resumeThisEpisode:"▶ Resume this episode at {time}",otherEpisodePlaying:"Another episode is still playing. Use Play this episode to switch."},
+  bn:{home:"হোম",current:"বর্তমান কোর্স",courses:"কোর্সসমূহ",quizPoints:"কুইজ পয়েন্ট",uiLanguage:"ভাষা",brand:"জার্মান ভোকাবুলারি অডিওবুক",brandSub:"অডিও + সিঙ্ক্রোনাইজড ট্রান্সক্রিপ্ট",homeEyebrow:"ভোকাবুলারি অডিওবুক সংগ্রহ",homeTitle:"শুনে, পড়ে এবং মনে রেখে জার্মান শব্দভাণ্ডার শিখুন।",homeSubtitle:"একই প্লেয়ারে একাধিক শব্দভাণ্ডার কোর্স। প্রতিটি কোর্সের প্রগ্রেস ও বুকমার্ক করা শব্দ আলাদাভাবে সংরক্ষিত থাকে।",coursesHeading:"কোর্সসমূহ",courseProgress:"কোর্স প্রগ্রেস",words:"শব্দ",episodes:"এপিসোড",completed:"সম্পন্ন",quizPointsLower:"কুইজ পয়েন্ট",continueLearning:"শেখা চালিয়ে যান",goToEpisodes:"এপিসোডে যান",personalReview:"ব্যক্তিগত রিভিউ",difficultWords:"বুকমার্ক করা শব্দ",difficultSubtitle:"শোনার সময় ★ দিয়ে বুকমার্ক করা শব্দ।",resetProgress:"প্রগ্রেস রিসেট",allCourses:"সব কোর্স",noCourseData:"কোর্স ডেটা নেই",progress:"প্রগ্রেস",openCourse:"কোর্স খুলুন",comingSoon:"শীঘ্রই আসছে",progressLoads:"কোর্স খুললে প্রগ্রেস দেখা যাবে",structurePrepared:"কোর্সের কাঠামো প্রস্তুত",passedWord:"পাস",continueWord:"চালিয়ে যান",startWord:"শুরু",savedAutomatically:"আপনার শোনার অবস্থান স্বয়ংক্রিয়ভাবে সেভ হয়।",lastPosition:"সর্বশেষ অবস্থান: {label} এ {time}।",notStarted:"শুরু হয়নি",inProgress:"চলছে",finished:"শেষ",episodeLabel:"এপিসোড",b1core:"B1 কোর",b1adv:"B1+ অ্যাডভান্সড",themeDark:"☾ ডার্ক",themeLight:"☀ লাইট",afterStop:"এপিসোড শেষে থামুন",afterNext:"এপিসোড শেষে পরের এপিসোড চালান",afterRepeat:"এপিসোড শেষে একই এপিসোড পুনরায় চালান",quiz:"কুইজ",best:"সেরা",quizTitle:"এপিসোড কুইজ",question:"প্রশ্ন {n} / {t}",pass:"পাস: {p}/{t}",quizPrompt:"সঠিক ইংরেজি অর্থটি বেছে নিন। সাউন্ড বলে দেবে আপনার উত্তর সঠিক না ভুল।",quizTypeVocabulary:"শব্দার্থ",quizTypeGrammar:"ব্যাকরণ",quizPromptVocabulary:"সঠিক ইংরেজি অর্থটি বেছে নিন।",quizPromptArticle:"সঠিক জার্মান আর্টিকেলটি বেছে নিন।",quizPromptVerbPresent:"সঠিক er/sie/es বর্তমান কালের রূপটি বেছে নিন।",quizPromptVerbPast:"সঠিক Präteritum রূপটি বেছে নিন।",quizPromptVerbPerfect:"সঠিক Perfekt রূপটি বেছে নিন।",quizNoArticle:"কোনো আর্টিকেল নেই",quizUnavailable:"এই এপিসোডে ১০টি শব্দার্থ + ৫টি ব্যাকরণ প্রশ্ন তৈরির জন্য যথেষ্ট উপযুক্ত শব্দ নেই।",correct:"✓ সঠিক",correctAnswer:"সঠিক উত্তর:",back:"পেছনে",next:"পরবর্তী",finish:"শেষ করুন",passed:"পাস",reviewRecommended:"পুনরায় রিভিউ করুন",greatTarget:"দারুণ — আপনি 12/15 লক্ষ্য পূরণ করেছেন।",listenAgainThen:"এই এপিসোডটি আবার শুনুন, তারপর কুইজটি আবার দিন।",reviewMistakes:"আপনার ভুলগুলো দেখুন ({n})",yourAnswer:"আপনার উত্তর:",correctShort:"সঠিক:",allCorrect:"সব 15টি উত্তরই সঠিক হয়েছে।",listenAgain:"আবার শুনুন",retakeQuiz:"আবার কুইজ দিন",close:"বন্ধ",designedBy:"ডিজাইন ও ডেভেলপ করেছেন Nazmul Somrat",top:"↑ টপ",difficultWordBtn:"☆ শব্দ বুকমার্ক করুন",playThisEpisode:"▶ এই এপিসোড চালান",resumeThisEpisode:"▶ {time} থেকে এই এপিসোড চালান",otherEpisodePlaying:"অন্য একটি এপিসোড এখনও চলছে। পরিবর্তন করতে এই এপিসোড চালান চাপুন।"},
+  de:{home:"Start",current:"AKTUELLER KURS",courses:"KURSE",quizPoints:"Quizpunkte",uiLanguage:"Sprache",brand:"Deutsches Vokabel-Hörbuch",brandSub:"Audio + synchronisiertes Transkript",homeEyebrow:"VOKABEL-HÖRBUCH-SAMMLUNG",homeTitle:"Lerne deutsche Vokabeln durch Hören, Lesen und Wiederholen.",homeSubtitle:"Ein Player für mehrere Vokabelkurse. Dein Fortschritt und deine gespeicherten Wörter werden für jeden Kurs getrennt gespeichert.",coursesHeading:"Kurse",courseProgress:"Kursfortschritt",words:"Wörter",episodes:"Episoden",completed:"abgeschlossen",quizPointsLower:"Quizpunkte",continueLearning:"Weiterlernen",goToEpisodes:"Zu den Episoden",personalReview:"PERSÖNLICHE WIEDERHOLUNG",difficultWords:"Gespeicherte Wörter",difficultSubtitle:"Wörter, die du beim Hören mit ★ gespeichert hast.",resetProgress:"Fortschritt zurücksetzen",allCourses:"Alle Kurse",noCourseData:"Keine Kursdaten",progress:"Fortschritt",openCourse:"Kurs öffnen",comingSoon:"Demnächst",progressLoads:"Fortschritt wird mit dem Kurs geladen",structurePrepared:"Kursstruktur vorbereitet",passedWord:"bestanden",continueWord:"Weiter",startWord:"Start",savedAutomatically:"Deine Hörposition wird automatisch gespeichert.",lastPosition:"Letzte Position: {label} bei {time}.",notStarted:"Nicht begonnen",inProgress:"In Bearbeitung",finished:"Fertig",episodeLabel:"Episode",b1core:"B1 Grundkurs",b1adv:"B1+ Aufbau",themeDark:"☾ Dunkel",themeLight:"☀ Hell",afterStop:"Nach der Episode stoppen",afterNext:"Nächste Episode abspielen",afterRepeat:"Dieselbe Episode wiederholen",quiz:"Quiz",best:"Bestwert",quizTitle:"Episoden-Quiz",question:"Frage {n} von {t}",pass:"Bestehen: {p}/{t}",quizPrompt:"Wähle die richtige englische Bedeutung. Der Ton zeigt dir, ob deine Antwort richtig oder falsch war.",quizTypeVocabulary:"Vokabeln",quizTypeGrammar:"Grammatik",quizPromptVocabulary:"Wähle die richtige englische Bedeutung.",quizPromptArticle:"Wähle den richtigen deutschen Artikel.",quizPromptVerbPresent:"Wähle die richtige Präsensform für er/sie/es.",quizPromptVerbPast:"Wähle die richtige Präteritumform.",quizPromptVerbPerfect:"Wähle die richtige Perfektform.",quizNoArticle:"kein Artikel",quizUnavailable:"Für 10 Vokabel- und 5 Grammatikfragen gibt es in dieser Episode nicht genügend geeignete Einträge.",correct:"✓ Richtig",correctAnswer:"Richtige Antwort:",back:"Zurück",next:"Weiter",finish:"Beenden",passed:"Bestanden",reviewRecommended:"Wiederholung empfohlen",greatTarget:"Super — du hast das Ziel 12/15 erreicht.",listenAgainThen:"Höre diese Episode noch einmal und mache danach das Quiz erneut.",reviewMistakes:"Überprüfe deine Fehler ({n})",yourAnswer:"Deine Antwort:",correctShort:"Richtig:",allCorrect:"Alle 15 Antworten waren richtig.",listenAgain:"Noch einmal hören",retakeQuiz:"Quiz wiederholen",close:"Schließen",designedBy:"Entwickelt von Nazmul Somrat",top:"↑ Nach oben",difficultWordBtn:"☆ Wort speichern",playThisEpisode:"▶ Diese Episode abspielen",resumeThisEpisode:"▶ Diese Episode bei {time} fortsetzen",otherEpisodePlaying:"Eine andere Episode läuft weiter. Mit „Diese Episode abspielen“ wechselst du."}
 };
 const UI_MORE={
   en:{all:'All',grid:'Grid',list:'List',searchPlaceholder:'Search German or English…',bookmarkedWords:'Bookmarked Words',myBookmarks:'My bookmarked words ({n})',clearBookmarks:'Clear bookmarks',noBookmarks:'No bookmarked words yet.',bookmarkHelp:'Tap ☆ while studying to save words for review.',review:'Review',open:'Open',clearConfirm:'Clear all bookmarked words?',clearSectionConfirm:'Clear bookmarked words from this section?',bookmarkRemoved:'Bookmark removed',bookmarkSaved:'Word bookmarked',searchResults:'Search results ({n}{plus})',forQuery:'for “{q}”',noMatching:'No matching words.',word:'word',sectionEmpty:'No episodes in this section match the selected filter.',episodesEmpty:'No episodes match this filter.',learningBlock:'Learning block {n}',germanWordTwice:'German word · spoken twice',englishMeaning:'English meaning',grammarForms:'Grammar / plural / verb forms',germanExample:'German example {n} · spoken twice',englishTranslation:'English translation {n}',recallAfter:'◆ Recall after Block {n}',deEnRecall:'German → English · 4-second recall',enDeRecall:'English → German · 4-second recall',answer:'Answer',jumpedTo:'Jumped to {time}',reviewFinished:'Bookmark review finished.',reviewComplete:'Review complete',noNextEpisode:'No next episode in this section',audioCourse:'AUDIO COURSE',transcriptHint:'Tap a transcript line to seek. Tap ☆ to bookmark a word.',gatewayMissing:'Secure audio gateway is not configured yet.',bookmarkReviewStop:'Bookmark review: this entry will stop automatically.',resetConfirm:'Reset listening progress for all {n} episodes? Bookmarks will be kept.',progressReset:'Progress reset',study:'Study',germanOnly:'German-only',lyrics:'Lyrics',revealEnglish:'Reveal English with audio',autoFollow:'Auto-follow',current:'Current',playing:'Playing',easy:'easy',medium:'medium',hard:'hard',noun:'noun',verb:'verb',other:'other',adjective:'adjective',adverb:'adverb',pronoun:'pronoun',preposition:'preposition',conjunction:'conjunction',article:'article'},
@@ -129,7 +131,7 @@ function setUILanguage(next){
   updateStaticLanguage();
   updateSettingsUI();
   if(D)updateCourseNavigation();
-  route();
+  route(true);
 }
 
 let pendingSeek=null,pendingFocusId=null,saveTick=0,libraryFilter='all',scrollTimer=null;
@@ -194,7 +196,7 @@ async function activateCourse(id){
     entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));
     if(id==='b1'&&Array.isArray(D.sections)&&D.sections.length){
       const last=epMap[+courseState().lastEpisode||0];
-      activeEpisodeSection=currentEp&&currentEp.section?currentEp.section:(last?.section||activeEpisodeSection||'core');
+      activeEpisodeSection=viewEp&&viewEp.section?viewEp.section:(last?.section||activeEpisodeSection||'core');
     }else activeEpisodeSection=null;
     populateSelect(activeEpisodeSection);updateCourseNavigation();updateHeaderProgress();updateEndBehaviorControl();updateStaticLanguage();return true;
   }catch(err){console.error(err);msg('Course data could not be loaded.');return false}
@@ -251,25 +253,65 @@ function setActiveEpisodeSection(sectionId=null){
     populateSelect();
     return;
   }
-  activeEpisodeSection=sectionId||currentEp?.section||epMap[+courseState().lastEpisode||0]?.section||'core';
+  activeEpisodeSection=sectionId||viewEp?.section||epMap[+courseState().lastEpisode||0]?.section||'core';
   populateSelect(activeEpisodeSection);
 }
+function playerEpisodes(){
+  return playerData?.episodes||[];
+}
 function updateEpisodeNavButtons(){
-  if(!currentEp||!D)return;
-  const list=episodesForSection(currentEp.section||activeEpisodeSection);
+  if(!currentEp||!playerData)return;
+  const list=playerEpisodes();
   const idx=list.findIndex(ep=>ep.episode===currentEp.episode);
   $('#prevEpisode').disabled=idx<=0;
   $('#nextEpisode').disabled=idx<0||idx>=list.length-1;
 }
 function adjacentEpisode(delta){
-  if(!currentEp)return null;
-  const list=episodesForSection(currentEp.section||activeEpisodeSection);
+  if(!currentEp||!playerData)return null;
+  const list=playerEpisodes();
   const idx=list.findIndex(ep=>ep.episode===currentEp.episode);
   return idx>=0?(list[idx+delta]||null):null;
 }
+async function switchPlayerEpisode(n,seek=null,autoplay=true){
+  if(!playerCourseId||!playerData)return false;
+  n=Math.max(1,Math.min(playerData.episodes.length,+n));
+  const target=playerEpMap[n];
+  if(!target)return false;
+
+  if(currentEp&&Number.isFinite(audio.currentTime)){
+    const oldState=playerState();
+    oldState.positions[currentEp.episode]=audio.currentTime;
+    oldState.maxPositions[currentEp.episode]=Math.max(+oldState.maxPositions[currentEp.episode]||0,audio.currentTime);
+  }
+
+  currentEp=target;
+  const S=playerState(),meta=COURSE_META[playerCourseId];
+  S.lastEpisode=n;save();
+  playerHasStarted=true;
+  manualEnglish=new Set();manualRecall=new Set();lastActive=-1;segmentStop=null;pendingFocusId=null;
+  populateSelect();updateEpisodeNavButtons();updateEndBehaviorControl();updateMediaSessionMetadata();updatePersistentPlayerVisibility();
+
+  let src=`${meta.audioBase}${currentEp.audio}`;
+  pendingSeek=seek!=null?+seek:(+S.positions[n]||0);
+  if(autoplay){setPlaybackIntent(true);resumeWhenReady=true}
+  if(audio.getAttribute('src')!==src){
+    audio.src=src;audio.load();
+    if(autoplay)safePlay('player-episode-switch');
+  }else{
+    audio.currentTime=pendingSeek||0;pendingSeek=null;sync(true);
+    if(autoplay)safePlay('player-episode-existing');
+  }
+
+  if(playerCourseId===currentCourseId&&!$('#episodeView').classList.contains('hidden')){
+    viewEp=target;
+    renderEpisodePage(viewEp);
+    routeHash(`episode-${currentCourseId}-${n}`,'push');
+  }
+  return true;
+}
 function moveEpisodeWithinSection(delta,seek=null){
   const target=adjacentEpisode(delta);
-  if(target){openEpisode(target.episode,seek,true);return true}
+  if(target){switchPlayerEpisode(target.episode,seek,true);return true}
   return false;
 }
 function updateEndBehaviorControl(){
@@ -351,7 +393,7 @@ function hideUpdateNotice(defer=false){
 }
 function saveProgressBeforeUpdate(){
   if(currentEp&&Number.isFinite(audio.currentTime)){
-    const S=courseState();S.positions[currentEp.episode]=audio.currentTime;S.maxPositions[currentEp.episode]=Math.max(+S.maxPositions[currentEp.episode]||0,audio.currentTime);save();
+    const S=playerState();S.positions[currentEp.episode]=audio.currentTime;S.maxPositions[currentEp.episode]=Math.max(+S.maxPositions[currentEp.episode]||0,audio.currentTime);save();
   }else save();
 }
 async function applyWaitingUpdate(){
@@ -413,6 +455,32 @@ function openSidebar(){sidebar.classList.add('open');backdrop.classList.add('sho
 function closeSidebar(){sidebar.classList.remove('open');backdrop.classList.remove('show')}
 
 function courseState(){return cs(currentCourseId)}
+function playerState(){return cs(playerCourseId||currentCourseId)}
+function routeHash(route,mode='push'){
+  if(mode==='none'||restoringHistory)return;
+  const hash=`#${route}`;
+  if(location.hash===hash)return;
+  const state={gva:true,route};
+  if(mode==='replace')history.replaceState(state,'',hash);
+  else history.pushState(state,'',hash);
+}
+function episodeDisplayLabelFor(courseId,ep){
+  const n=String(epDisplay(ep)).padStart(2,'0'),episodeWord=tt('episodeLabel');
+  if(courseId==='a1')return `${courseLabel('a1')} · ${episodeWord} ${n}`;
+  if(courseId==='a2')return `${courseLabel('a2')} · ${episodeWord} ${n}`;
+  if(courseId==='technical')return `${courseLabel('technical')} · ${episodeWord} ${n}`;
+  if(courseId==='b1'&&ep?.section==='advanced')return `${tt('b1adv')} · ${episodeWord} ${n}`;
+  if(courseId==='b1'&&ep?.section==='core')return `${tt('b1core')} · ${episodeWord} ${n}`;
+  if(courseId==='b1')return `${courseLabel('b1')} · ${episodeWord} ${n}`;
+  return `${episodeWord} ${n}`;
+}
+function isViewingPlayerEpisode(){
+  return !!(viewEp&&currentEp&&playerCourseId===currentCourseId&&viewEp.episode===currentEp.episode);
+}
+function viewEpisodeTime(){
+  if(!viewEp)return 0;
+  return isViewingPlayerEpisode()?(audio.currentTime||0):(+courseState().positions[viewEp.episode]||0);
+}
 function progressWords(data=D,state=courseState()){
   if(!data)return 0;let n=0;
   for(const ep of data.episodes){let max=state.completed[ep.episode]?ep.duration:(+state.maxPositions[ep.episode]||0);n+=ep.entries.filter(e=>e.end<=max).length}
@@ -425,7 +493,7 @@ function statusLabel(ep){ let k=statusKey(ep); return k==='finished'?[`✓ ${tt(
 
 function epDisplay(ep){return ep?.display_episode||ep?.episode||1}
 function sectionMeta(id){return D?.sections?.find(s=>s.id===id)||null}
-function episodeDisplayLabel(ep){ const n=String(epDisplay(ep)).padStart(2,'0'), episodeWord=tt('episodeLabel'); if(currentCourseId==='a1')return `${courseLabel('a1')} · ${episodeWord} ${n}`; if(currentCourseId==='a2')return `${courseLabel('a2')} · ${episodeWord} ${n}`; if(currentCourseId==='technical')return `${courseLabel('technical')} · ${episodeWord} ${n}`; if(currentCourseId==='b1'&&ep.section==='advanced')return `${tt('b1adv')} · ${episodeWord} ${n}`; if(currentCourseId==='b1'&&ep.section==='core')return `${tt('b1core')} · ${episodeWord} ${n}`; if(currentCourseId==='b1')return `${courseLabel('b1')} · ${episodeWord} ${n}`; return `${episodeWord} ${n}`; }
+function episodeDisplayLabel(ep){return episodeDisplayLabelFor(currentCourseId,ep)}
 function episodeBrowserTitle(){ if(currentCourseId==='a1')return courseLabel('a1'); if(currentCourseId==='a2')return courseLabel('a2'); if(currentCourseId==='technical')return courseLabel('technical'); if(currentCourseId==='b1')return hasB1Sections()?`${tt('b1core')} & ${tt('b1adv')}`:courseLabel('b1'); return courseTitle(currentCourseId)||tt('episodes'); }
 function sectionDisplayTitle(sec){ if(currentCourseId==='a1')return courseLabel('a1'); if(currentCourseId==='a2')return courseLabel('a2'); if(currentCourseId==='technical')return courseLabel('technical'); if(currentCourseId==='b1'&&sec.id==='core')return tt('b1core'); if(currentCourseId==='b1'&&sec.id==='advanced')return tt('b1adv'); return sec.title; }
 function sectionDisplayKicker(sec){
@@ -620,12 +688,12 @@ function renderQuizHistory(){
   setSectionNav(inB1Section?quizHistorySection:null);
   updateCourseQuizPoints();
 }
-async function openQuizHistory(courseId=currentCourseId,section=null){
+async function openQuizHistory(courseId=currentCourseId,section=null,navigationMode='push'){
   if(!(await activateCourse(courseId)))return;
   quizHistorySection=hasB1Sections()&&['core','advanced'].includes(section)?section:null;
   showView('#quizHistoryView');
   setSectionNav(quizHistorySection);
-  location.hash=quizHistorySection?`quiz-history-${currentCourseId}-${quizHistorySection}`:`quiz-history-${currentCourseId}`;
+  routeHash(quizHistorySection?`quiz-history-${currentCourseId}-${quizHistorySection}`:`quiz-history-${currentCourseId}`,navigationMode);
   renderQuizHistory();updateHeaderProgress();
 }
 
@@ -641,12 +709,12 @@ function updateCourseNavigation(){
 }
 
 function renderAppHome(){
-  showView('#appHomeView');location.hash='home';
+  showView('#appHomeView');routeHash('home',arguments[0]||'push');
   $('#courseGrid').innerHTML=COURSE_LIST.map(c=>{ let progressHtml='',action=''; if(c.status==='ready'&&loaded[c.id]){ const st=cs(c.id),data=loaded[c.id],words=progressWords(data,st),p=Math.round(100*words/data.total_words),q=quizSummaryFor(c.id,data); progressHtml=`<div class="course-card-meta"><span>${words} / ${data.total_words} ${tt('words')}</span><span>${p}%</span></div><div class="thinbar"><i style="width:${p}%"></i></div><div class="course-quiz-meta">${tt('quiz')} ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} ${tt('passedWord')}</div>`; action=`<span class="coming-tag">${tt('openCourse')}</span>`; }else if(c.status==='ready'){ const q=quizSummaryFor(c.id,null); progressHtml=`<div class="course-card-meta"><span>${tt('progressLoads')}</span><span></span></div><div class="thinbar"><i style="width:0"></i></div><div class="course-quiz-meta">${tt('quiz')} ${q.points} / ${q.max} · ${q.passed}/${q.totalEpisodes} ${tt('passedWord')}</div>`; action=`<span class="coming-tag">${tt('openCourse')}</span>`; }else{ progressHtml=`<div class="course-card-meta"><span>${tt('structurePrepared')}</span><span></span></div>`; action=`<span class="coming-tag">${tt('comingSoon')}</span>`; } return `<article class="course-card ${c.status==='ready'?'ready':''} ${c.id==='technical'?'tech':''}" data-course="${c.id}"><div class="course-card-head"><div class="course-card-badge">${esc(c.short)}</div>${action}</div><h3>${esc(courseTitle(c.id))}</h3><p>${esc(courseDescription(c.id))}</p><div class="course-card-footer">${progressHtml}</div></article>` }).join('');
   $$('.course-card[data-course]').forEach(card=>card.onclick=()=>openCourse(card.dataset.course));
   updateHeaderProgress();updateStaticLanguage();
 }
-async function openCourse(id='b1',sectionToOpen=null){
+async function openCourse(id='b1',sectionToOpen=null,navigationMode='push'){
   if(!(await activateCourse(id)))return;
   const meta=COURSE_META[id],S=courseState(),words=progressWords(),p=Math.round(100*words/D.total_words);
   $('#courseEyebrow').textContent=`${meta.short} ${ux('audioCourse')}`; $('#courseTitle').textContent=courseTitle(id); $('#courseDescription').textContent=courseDescription(id); $('#courseWords').textContent=D.total_words.toLocaleString(); $('#courseEpisodes').textContent=D.episodes.length; $('#courseProgressText').textContent=`${p}%`; $('#courseProgressInline').textContent=`${words} / ${D.total_words} ${tt('words')} · ${p}%`; $('#courseProgressFill').style.width=`${p}%`; updateCourseQuizPoints();
@@ -657,11 +725,11 @@ async function openCourse(id='b1',sectionToOpen=null){
   if(librarySectionFilter)setActiveEpisodeSection(librarySectionFilter); else setActiveEpisodeSection(null);
   renderEpisodeGrid(); $('#searchInput').value='';$('#searchPanel').classList.add('hidden');$('#bookmarksPanel').classList.add('hidden');$('#bookmarksBtn').classList.remove('active'); showView('#courseHomeView');
   setSectionNav(librarySectionFilter);
-  location.hash=librarySectionFilter?`course-${id}-${librarySectionFilter}`:`course-${id}`;
+  routeHash(librarySectionFilter?`course-${id}-${librarySectionFilter}`:`course-${id}`,navigationMode);
   updateHeaderProgress();refreshBookmarkCounts();renderCourseBookmarkPanel();updatePersistentPlayerVisibility();updateStaticLanguage();
 }
 
-function episodeCardHtml(ep){ let p=pct(ep),st=statusLabel(ep),cw=completedWords(ep); const isCurrent=!!(currentEp&&playerHasStarted&&currentEp.episode===ep.episode); const currentState=isCurrent?(audio.paused?[`● ${ux('current')}`,'current-now']:[`▶ ${ux('playing')}`,'playing-now']):st; return `<article class="episode-card ${ep.section==='advanced'?'advanced':''} ${isCurrent?'current-episode':''}" data-ep="${ep.episode}"><div class="ephead"><span class="epnum">${tt('episodeLabel')} ${String(epDisplay(ep)).padStart(2,'0')}</span><span class="status ${currentState[1]}">${currentState[0]}</span></div><div class="epmeta">${fmt(ep.duration)} · ${cw} / ${ep.word_count} ${tt('words')}</div><div class="epbar"><i style="width:${p}%"></i></div><div class="epwords">${esc(ep.first_word)} → ${esc(ep.last_word)}</div></article>` }
+function episodeCardHtml(ep){ let p=pct(ep),st=statusLabel(ep),cw=completedWords(ep); const isCurrent=!!(currentEp&&playerHasStarted&&playerCourseId===currentCourseId&&currentEp.episode===ep.episode); const currentState=isCurrent?(audio.paused?[`● ${ux('current')}`,'current-now']:[`▶ ${ux('playing')}`,'playing-now']):st; return `<article class="episode-card ${ep.section==='advanced'?'advanced':''} ${isCurrent?'current-episode':''}" data-ep="${ep.episode}"><div class="ephead"><span class="epnum">${tt('episodeLabel')} ${String(epDisplay(ep)).padStart(2,'0')}</span><span class="status ${currentState[1]}">${currentState[0]}</span></div><div class="epmeta">${fmt(ep.duration)} · ${cw} / ${ep.word_count} ${tt('words')}</div><div class="epbar"><i style="width:${p}%"></i></div><div class="epwords">${esc(ep.first_word)} → ${esc(ep.last_word)}</div></article>` }
 
 function applyLibraryLayout(){
   const layout=AS.libraryLayout==='list'?'list':'grid',grid=$('#episodeGrid');
@@ -756,10 +824,10 @@ function renderCourseBookmarkPanel(show=true){
 function renderDifficultPanel(){
   const p=$('#difficultFullPanel');p.innerHTML=bookmarksHtml();bindBookmarkPanel(p,false,null);
 }
-async function openDifficult(){
+async function openDifficult(navigationMode='push'){
   if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
   setSectionNav(null);
-  renderDifficultPanel();showView('#difficultView');location.hash=`difficult-${currentCourseId}`;updateHeaderProgress();
+  renderDifficultPanel();showView('#difficultView');routeHash(`difficult-${currentCourseId}`,navigationMode);updateHeaderProgress();
 }
 function toggleBookmark(id,rerender=false){
   const S=courseState(),i=S.bookmarks.indexOf(id);
@@ -767,6 +835,14 @@ function toggleBookmark(id,rerender=false){
   save();refreshBookmarkCounts();if(currentEp)updateStars();
   if(rerender){renderDifficultPanel();if(!$('#bookmarksPanel').classList.contains('hidden'))renderCourseBookmarkPanel(false)}
   msg(i>=0?ux('bookmarkRemoved'):ux('bookmarkSaved'))
+}
+function togglePlayerBookmark(){
+  const e=currentEntry();if(!e||!playerCourseId)return;
+  const S=playerState(),i=S.bookmarks.indexOf(e.entry_id);
+  if(i>=0)S.bookmarks.splice(i,1);else S.bookmarks.push(e.entry_id);
+  save();updateStars();
+  if(playerCourseId===currentCourseId)refreshBookmarkCounts();
+  msg(i>=0?ux('bookmarkRemoved'):ux('bookmarkSaved'));
 }
 function reviewBookmark(id){let x=entryIndex[id];openEpisode(x.episode,x.start,true,x.end,x.entry_id)}
 
@@ -792,20 +868,25 @@ function currentEntry(){
 }
 function updateWordProgress(){if(!currentEp)return;let e=currentEntry();$('#wordProgress').textContent=e?`${e.position} / ${currentEp.word_count} ${tt('words')}`:`0 / ${currentEp.word_count} ${tt('words')}`}
 function updateStars(){
-  if(!currentEp)return;const S=courseState();
-  $$('.bookmark-card').forEach(b=>{let on=S.bookmarks.includes(b.dataset.id);b.classList.toggle('marked',on);b.textContent=on?'★':'☆'});
-  let e=currentEntry(),marked=e&&S.bookmarks.includes(e.entry_id);
+  const viewState=courseState();
+  $$('.bookmark-card').forEach(b=>{let on=viewState.bookmarks.includes(b.dataset.id);b.classList.toggle('marked',on);b.textContent=on?'★':'☆'});
+  if(!currentEp)return;
+  const ps=playerState(),e=currentEntry(),marked=e&&ps.bookmarks.includes(e.entry_id);
   $('#currentBookmark').textContent=marked?'★':'☆';$('#currentBookmark').classList.toggle('marked',!!marked);
-  $('#lyricsStar').textContent=marked?`★ ${ux('bookmarkedWords')}`:tt('difficultWordBtn');$('#lyricsStar').classList.toggle('marked',!!marked)
+  if(isViewingPlayerEpisode()){
+    $('#lyricsStar').textContent=marked?`★ ${ux('bookmarkedWords')}`:tt('difficultWordBtn');
+    $('#lyricsStar').classList.toggle('marked',!!marked)
+  }
 }
 function line(ev,cls,label,text,en=false){
   if(!ev)return'';return `<div class="line ${cls}${en?' english':''}" data-event="${ev.id}" data-start="${ev.start}">
     <span class="smalllabel">${esc(label)}</span><span class="actual-text">${esc(text)}</span></div>`
 }
-function renderTranscript(){
+function renderTranscript(ep=viewEp||currentEp){
+  if(!ep)return;
   const S=courseState(),normal=$('#normalView'),lyrics=$('#lyricsView');
-  let byBlock={},evByEntry={};currentEp.entries.forEach(e=>(byBlock[e.block]??=[]).push(e));currentEp.events.forEach(e=>(evByEntry[e.entry_id]??=[]).push(e));let h='';
-  for(const rb of currentEp.recall_blocks){
+  let byBlock={},evByEntry={};ep.entries.forEach(e=>(byBlock[e.block]??=[]).push(e));ep.events.forEach(e=>(evByEntry[e.entry_id]??=[]).push(e));let h='';
+  for(const rb of ep.recall_blocks){
     h+=`<div class="block-title">${ux('learningBlock',{n:rb.block})}</div>`;
     for(const e of byBlock[rb.block]){
       let evs=evByEntry[e.entry_id]||[],deex=evs.filter(x=>x.kind==='de_example'),enex=evs.filter(x=>x.kind==='en_example');
@@ -829,6 +910,7 @@ function renderTranscript(){
   $$('.line[data-start]').forEach(el=>el.onclick=e=>{
     if(el.classList.contains('recall-answer')&&el.classList.contains('auto-hidden')){manualRecall.add(el.dataset.event);el.classList.add('revealed');e.stopPropagation();return}
     if(el.classList.contains('english')&&el.classList.contains('hidden-en')){manualEnglish.add(el.dataset.event);el.classList.add('user-revealed');applyEnglishVisibility(audio.currentTime||0);e.stopPropagation();return}
+    if(!isViewingPlayerEpisode()){msg(tt('otherEpisodePlaying'));return}
     audio.currentTime=+el.dataset.start;msg(ux('jumpedTo',{time:fmt(audio.currentTime)}))
   });
   applyMode()
@@ -848,19 +930,23 @@ function applyEnglishVisibility(t=0){
 function applyMode(){
   const S=courseState(),normal=$('#normalView'),lyrics=$('#lyricsView'),m=S.mode||'study';
   $$('.mode[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m));
-  normal.classList.toggle('normal-hidden',m==='lyrics');lyrics.classList.toggle('visible',m==='lyrics');
-  $('#revealEnglishToggle').checked=!!S.revealEnglishOnAudio;applyEnglishVisibility(audio.currentTime||0);updateRecall(audio.currentTime||0);checkBackCurrent();sync(true)
+  const effectiveMode=isViewingPlayerEpisode()?m:(m==='lyrics'?'study':m);
+  normal.classList.toggle('normal-hidden',effectiveMode==='lyrics');lyrics.classList.toggle('visible',effectiveMode==='lyrics');
+  $('#revealEnglishToggle').checked=!!S.revealEnglishOnAudio;const t=viewEpisodeTime();applyEnglishVisibility(t);updateRecall(t);checkBackCurrent();sync(true)
 }
 function sync(force=false){
-  if(!currentEp)return;const S=courseState(),t=audio.currentTime||0;
-  $('#progress').value=t;$('#timebox').textContent=`${fmt(t)} / ${fmt(currentEp.duration)}`;updateWordProgress();updateRecall(t);
+  if(!currentEp)return;const S=playerState(),t=audio.currentTime||0;
+  $('#progress').value=t;$('#timebox').textContent=`${fmt(t)} / ${fmt(currentEp.duration)}`;updateWordProgress();
   if(segmentStop&&t>=segmentStop){setPlaybackIntent(false);audio.pause();segmentStop=null;$('#playerNote').textContent=ux('reviewFinished');msg(ux('reviewComplete'))}
-  let i=activeIndex(t);
-  if(i!==lastActive||force){
-    $$('.line.active').forEach(x=>x.classList.remove('active'));let ev=currentEp.events[i],el=document.querySelector(`.line[data-event="${ev.id}"]`);if(el)el.classList.add('active');
-    renderLyrics(i);applyEnglishVisibility(t);
-    if($('#followToggle').checked&&S.mode!=='lyrics'&&el&&i!==lastActive)el.scrollIntoView({behavior:'smooth',block:'center'});
-    lastActive=i;setTimeout(checkBackCurrent,220)
+  if(isViewingPlayerEpisode()){
+    updateRecall(t);
+    let i=activeIndex(t);
+    if(i!==lastActive||force){
+      $$('.line.active').forEach(x=>x.classList.remove('active'));let ev=currentEp.events[i],el=document.querySelector(`.line[data-event="${ev.id}"]`);if(el)el.classList.add('active');
+      renderLyrics(i);applyEnglishVisibility(t);
+      if($('#followToggle').checked&&S.mode!=='lyrics'&&el&&i!==lastActive)el.scrollIntoView({behavior:'smooth',block:'center'});
+      lastActive=i;setTimeout(checkBackCurrent,220)
+    }
   }
   if(Date.now()-saveTick>1800){S.positions[currentEp.episode]=t;S.maxPositions[currentEp.episode]=Math.max(+S.maxPositions[currentEp.episode]||0,t);S.lastEpisode=currentEp.episode;save();saveTick=Date.now();updateHeaderProgress()}
   updateStars()
@@ -870,7 +956,7 @@ function scrollToCurrentWord(smooth=true){
   (lineEl||card)?.scrollIntoView({behavior:smooth?'smooth':'auto',block:'center'});$('#backCurrent').classList.add('hidden')
 }
 function checkBackCurrent(){
-  const S=courseState(),btn=$('#backCurrent');if(!currentEp||S.mode==='lyrics'||$('#episodeView').classList.contains('hidden')){btn.classList.add('hidden');return}
+  const S=courseState(),btn=$('#backCurrent');if(!currentEp||!isViewingPlayerEpisode()||S.mode==='lyrics'||$('#episodeView').classList.contains('hidden')){btn.classList.add('hidden');return}
   let ev=currentEp.events[activeIndex(audio.currentTime||0)],el=ev&&document.querySelector(`.line[data-event="${ev.id}"]`);if(!el){btn.classList.add('hidden');return}
   let r=el.getBoundingClientRect(),top=$('#appHeader').offsetHeight+$('.player').offsetHeight+8,visible=r.bottom>top&&r.top<window.innerHeight-60;btn.classList.toggle('hidden',visible)
 }
@@ -931,7 +1017,7 @@ function recoverAudioStream(reason='network'){
     return;
   }
   recoveryAttempts++;
-  const pos=Math.max(0,audio.currentTime||+courseState().positions[currentEp.episode]||0);
+  const pos=Math.max(0,audio.currentTime||+playerState().positions[currentEp.episode]||0);
   const src=audio.currentSrc||audio.getAttribute('src');
   if(!src)return;
   console.warn('[GVA playback] reconnecting',reason,'attempt',recoveryAttempts,'at',pos);
@@ -953,9 +1039,9 @@ function updateMediaSessionMetadata(){
   if(!('mediaSession' in navigator)||!currentEp)return;
   try{
     navigator.mediaSession.metadata=new MediaMetadata({
-      title:episodeDisplayLabel(currentEp),
+      title:episodeDisplayLabelFor(playerCourseId||currentCourseId,currentEp),
       artist:tt('brand'),
-      album:courseTitle(currentCourseId)||tt('brand'),
+      album:courseTitle(playerCourseId||currentCourseId)||tt('brand'),
       artwork:[
         {src:'logo-pwa-192-v4.png',sizes:'192x192',type:'image/png'}
       ]
@@ -990,7 +1076,7 @@ function setupMediaSession(){
 }
 function handleEpisodeEnded(){
   if(!currentEp)return;
-  const S=courseState();
+  const S=playerState();
   S.completed[currentEp.episode]=true;
   S.positions[currentEp.episode]=currentEp.duration;
   S.maxPositions[currentEp.episode]=currentEp.duration;
@@ -1007,7 +1093,7 @@ function handleEpisodeEnded(){
   if(mode==='next'){
     setPlaybackIntent(true);
     const target=adjacentEpisode(1);
-    if(target){msg(endModeText('next'));openEpisode(target.episode,0,true);return;}
+    if(target){msg(endModeText('next'));switchPlayerEpisode(target.episode,0,true);return;}
     setPlaybackIntent(false);
     msg(lang()==='bn'?'এপিসোড শেষ ✓ · সেকশনের শেষ':lang()==='de'?'Episode beendet ✓ · Abschnittsende':'Episode completed ✓ · End of section');
     return;
@@ -1266,11 +1352,21 @@ function buildQuiz(){
 
   return mixQuizQuestions(vocabQuestions,grammarQuestions);
 }
-function openQuiz(){ if(!quizIsAvailable())return; setPlaybackIntent(false); audio.pause(); const questions=buildQuiz(); if(!questions){msg(tt('quizUnavailable'));return} quizState={questions,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false}; $('#quizOverlay').classList.remove('hidden'); $('#quizBtn').classList.add('active'); document.body.classList.add('quiz-open'); renderQuiz(); }
-function closeQuiz(){
+function openQuiz(navigationMode='push'){
+  if(!quizIsAvailable())return;
+  const questions=buildQuiz();if(!questions){msg(tt('quizUnavailable'));return}
+  quizState={questions,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false};
+  $('#quizOverlay').classList.remove('hidden');$('#quizBtn').classList.add('active');document.body.classList.add('quiz-open');renderQuiz();
+  if(currentEp)routeHash(`quiz-${playerCourseId||currentCourseId}-${currentEp.episode}`,navigationMode);
+}
+function hideQuizOverlay(){
   $('#quizOverlay').classList.add('hidden');
   $('#quizBtn').classList.remove('active');
   document.body.classList.remove('quiz-open');
+}
+function closeQuiz(skipHistory=false){
+  hideQuizOverlay();
+  if(!skipHistory&&/^#quiz-/.test(location.hash))history.back();
 }
 function renderQuiz(){
   if(!quizState)return;
@@ -1313,7 +1409,8 @@ function finishQuiz(){
   if(score>=QUIZ_PASS)setTimeout(playQuizPassSound,120);
 }
 async function practiceQuizAnswer(episodeId,entryId,start){
-  closeQuiz();
+  closeQuiz(true);
+  if(currentEp)routeHash(`episode-${playerCourseId||currentCourseId}-${+episodeId||currentEp.episode}`,'replace');
   const x=entryIndex[entryId];
   const targetEpisode=+x?.episode||+episodeId;
   const seek=Number.isFinite(+x?.start)?+x.start:(Number.isFinite(+start)?+start:0);
@@ -1326,73 +1423,117 @@ function renderQuizResult(){
   const legacy=!!quizState?.legacy;
   body.innerHTML=`<div class="quiz-kicker">${esc(ep?episodeDisplayLabel(ep):'')}</div><h2 id="quizTitle">${esc(quizState?.history?qh('quizResult'):(passed?tt('passed'):tt('reviewRecommended')))}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${legacy?qh('detailsUnavailable'):(passed?tt('greatTarget'):tt('listenAgainThen'))}</span></div>${!legacy&&wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3><p class="quiz-practice-hint">${esc(qh('listenPractice'))}</p>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)} <button type="button" class="quiz-time-link" data-qtime-entry="${esc(x.entry_id||'')}" data-qtime-start="${+x.start||0}" data-qtime-episode="${episodeId}">▶ ${fmt(+x.start||0)}</button></span></div>`).join('')}</section>`:(!legacy?`<div class="quiz-perfect">${tt('allCorrect')}</div>`:'')}<div class="quiz-result-actions">${quizState?.history?`<button id="quizBackHistory" class="quiz-secondary" type="button">${esc(qh('backToHistory'))}</button>`:''}<button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`;
   $$('.quiz-time-link').forEach(b=>b.onclick=()=>practiceQuizAnswer(+b.dataset.qtimeEpisode,b.dataset.qtimeEntry,+b.dataset.qtimeStart));
-  if($('#quizBackHistory'))$('#quizBackHistory').onclick=()=>{closeQuiz();openQuizHistory(currentCourseId,hasB1Sections()?quizHistorySection:null)};
+  if($('#quizBackHistory'))$('#quizBackHistory').onclick=()=>{closeQuiz(true);openQuizHistory(currentCourseId,hasB1Sections()?quizHistorySection:null,'replace')};
   $('#quizRetake').onclick=async()=>{if(quizState?.history){closeQuiz();await openEpisode(episodeId,null,false);openQuiz();return}const q=buildQuiz();if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false};renderQuiz()}};
-  $('#quizListenAgain').onclick=async()=>{closeQuiz();if(currentEp?.episode===episodeId){audio.currentTime=0;sync(true);setPlaybackIntent(true);safePlay('quiz-listen-again');}else await openEpisode(episodeId,0,true)};
+  $('#quizListenAgain').onclick=async()=>{closeQuiz(true);routeHash(`episode-${playerCourseId||currentCourseId}-${episodeId}`,'replace');if(currentEp?.episode===episodeId){audio.currentTime=0;sync(true);setPlaybackIntent(true);safePlay('quiz-listen-again');}else await openEpisode(episodeId,0,true,null,null,false,'none',true)};
   $('#quizDone').onclick=closeQuiz;
 }
 
-async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,keepCourseView=false){
-  if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
-  n=Math.max(1,Math.min(D.episodes.length,+n));currentEp=epMap[n];const S=courseState(),meta=COURSE_META[currentCourseId];
-  if(!keepCourseView)showView('#episodeView');else showView('#courseHomeView');
-  setSectionNav(currentEp?.section||null);
-  S.lastEpisode=n;
-  if(currentEp?.section)S.sectionLastEpisodes[currentEp.section]=n;
-  save();manualEnglish=new Set();manualRecall=new Set();lastActive=-1;segmentStop=stop||null;pendingFocusId=focusId;
-  playerHasStarted=true;
-  setActiveEpisodeSection(currentEp?.section||null);
-  updatePersistentPlayerVisibility();
-  if($('#episodeSelect'))$('#episodeSelect').value=String(n);
-  updateEpisodeNavButtons();
-  updateEndBehaviorControl();
+function renderEpisodePage(ep){
+  if(!ep)return;
+  viewEp=ep;
+  setSectionNav(viewEp?.section||null);
+  setActiveEpisodeSection(viewEp?.section||null);
+  const isActive=isViewingPlayerEpisode();
+  const saved=+courseState().positions[viewEp.episode]||0;
+  const action=!isActive&&currentEp
+    ?`<div class="episode-preview-action"><button id="playViewedEpisode" class="primary" type="button">${esc(saved>5?tt('resumeThisEpisode',{time:fmt(saved)}):tt('playThisEpisode'))}</button><p>${esc(tt('otherEpisodePlaying'))}</p></div>`
+    :'';
+  $('#episodeIntro').innerHTML=`<h1>${esc(episodeDisplayLabel(viewEp))}</h1><p>${fmt(viewEp.duration)} · ${viewEp.word_count} ${tt('words')} · ${esc(viewEp.first_word)} → ${esc(viewEp.last_word)}</p><p>${ux('transcriptHint')}</p>${action}`;
+  renderTranscript(viewEp);
+  const playViewed=$('#playViewedEpisode');
+  if(playViewed)playViewed.onclick=()=>openEpisode(viewEp.episode,saved,true,null,null,false,'none',true);
   updateQuizButton();
-  updateMediaSessionMetadata();
-  $('#episodeIntro').innerHTML=`<h1>${esc(episodeDisplayLabel(currentEp))}</h1><p>${fmt(currentEp.duration)} · ${currentEp.word_count} ${tt('words')} · ${esc(currentEp.first_word)} → ${esc(currentEp.last_word)}</p><p>${ux('transcriptHint')}</p>`;
-  renderTranscript();
-  if(!meta.audioBase){
-    $('#playerNote').textContent=ux('gatewayMissing');
-    msg(ux('gatewayMissing'));
-    return;
+  updatePersistentPlayerVisibility();
+  checkBackCurrent();
+}
+
+async function openEpisode(n,seek=null,autoplay=false,stop=null,focusId=null,keepCourseView=false,navigationMode='push',switchAudio=true){
+  if(!D&&!(await activateCourse(AS.lastCourse||'b1')))return;
+  n=Math.max(1,Math.min(D.episodes.length,+n));
+  const target=epMap[n];
+  if(!target)return;
+
+  if(!keepCourseView)showView('#episodeView');else showView('#courseHomeView');
+  viewEp=target;
+  const viewState=courseState();
+  viewState.lastEpisode=n;
+  if(viewEp?.section)viewState.sectionLastEpisodes[viewEp.section]=n;
+  save();
+
+  manualEnglish=new Set();manualRecall=new Set();lastActive=-1;pendingFocusId=focusId;
+  renderEpisodePage(viewEp);
+
+  if(switchAudio||!currentEp){
+    if(currentEp&&playerCourseId){
+      const oldState=playerState();
+      oldState.positions[currentEp.episode]=audio.currentTime||0;
+      oldState.maxPositions[currentEp.episode]=Math.max(+oldState.maxPositions[currentEp.episode]||0,audio.currentTime||0);
+    }
+
+    playerCourseId=currentCourseId;
+    playerData=D;
+    playerEntryIndex=entryIndex;
+    playerEpMap=epMap;
+    currentEp=target;
+    const S=playerState(),meta=COURSE_META[playerCourseId];
+    S.lastEpisode=n;save();
+
+    segmentStop=stop||null;
+    playerHasStarted=true;
+    populateSelect();
+    updateEpisodeNavButtons();
+    updateEndBehaviorControl();
+    updateMediaSessionMetadata();
+    updatePersistentPlayerVisibility();
+
+    if(!meta.audioBase){
+      $('#playerNote').textContent=ux('gatewayMissing');
+      msg(ux('gatewayMissing'));
+      return;
+    }
+
+    let src=`${meta.audioBase}${currentEp.audio}`;
+    pendingSeek=seek!=null?+seek:(+S.positions[n]||0);
+    if(autoplay){setPlaybackIntent(true);resumeWhenReady=true}
+    else if(stop!=null)setPlaybackIntent(false);
+
+    $('#playerNote').textContent=stop!=null?ux('bookmarkReviewStop'):tt('savedAutomatically');
+    if(audio.getAttribute('src')!==src){
+      audio.src=src;audio.load();
+      if(autoplay)safePlay('episode-source-change');
+    }else{
+      audio.currentTime=pendingSeek||0;pendingSeek=null;sync(true);
+      if(pendingFocusId)setTimeout(scrollFocusEntry,80);
+      if(autoplay)safePlay('episode-existing-source');
+    }
+
+    // Rerender once currentEp has switched so the preview action disappears.
+    renderEpisodePage(viewEp);
   }
-  let src=`${meta.audioBase}${currentEp.audio}`;
-  pendingSeek=seek!=null?+seek:(+S.positions[n]||0);
-  if(autoplay){setPlaybackIntent(true);resumeWhenReady=true;}
-  else if(stop!=null)setPlaybackIntent(false);
-  $('#playerNote').textContent=stop!=null?ux('bookmarkReviewStop'):tt('savedAutomatically');
-  if(audio.getAttribute('src')!==src){
-    audio.src=src;
-    audio.load();
-    // Start play() during the user's click/change event. Browsers can reject a
-    // delayed play() from loadedmetadata as autoplay, even though the episode
-    // change itself came from a user gesture. The pending seek is applied in
-    // onloadedmetadata before normal playback can begin.
-    if(autoplay)safePlay('episode-source-change')
-  }else{
-    audio.currentTime=pendingSeek||0;pendingSeek=null;sync(true);
-    if(pendingFocusId)setTimeout(scrollFocusEntry,80);
-    if(autoplay)safePlay('episode-existing-source')
-  }
-  location.hash=keepCourseView?`course-${currentCourseId}`:`episode-${currentCourseId}-${n}`;
+
+  routeHash(keepCourseView?`course-${currentCourseId}`:`episode-${currentCourseId}-${n}`,navigationMode);
   updateHeaderProgress();
   if(keepCourseView){
     renderEpisodeGrid();
-    setTimeout(()=>scrollSectionToActiveEpisode(currentEp.section,true),110);
+    setTimeout(()=>scrollSectionToActiveEpisode(viewEp?.section,true),110);
   }
 }
 function scrollFocusEntry(){if(!pendingFocusId)return;let el=document.getElementById(`entry-${pendingFocusId}`);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});pendingFocusId=null}
 function populateSelect(sectionId=activeEpisodeSection){
-  const sel=$('#episodeSelect');sel.innerHTML='';if(!D)return;
-  const list=episodesForSection(sectionId);
+  const sel=$('#episodeSelect');sel.innerHTML='';
+  const data=playerData||D;
+  if(!data)return;
+  const courseId=playerCourseId||currentCourseId;
+  const list=data.episodes||[];
   for(const e of list){
     let o=document.createElement('option');
     o.value=e.episode;
-    o.textContent=`${episodeDisplayLabel(e)} · ${fmt(e.duration)} · ${e.word_count} ${tt('words')}`;
+    o.textContent=`${episodeDisplayLabelFor(courseId,e)} · ${fmt(e.duration)} · ${e.word_count} ${tt('words')}`;
     sel.appendChild(o);
   }
-  let remembered=currentEp&&list.some(e=>e.episode===currentEp.episode)
-    ?currentEp.episode
-    :(hasB1Sections()&&sectionId?lastEpisodeForSection(sectionId):(+courseState().lastEpisode||list[0]?.episode));
+  const state=playerCourseId?playerState():courseState();
+  const remembered=currentEp&&list.some(e=>e.episode===currentEp.episode)?currentEp.episode:(+state.lastEpisode||list[0]?.episode);
   if(list.some(e=>e.episode===+remembered))sel.value=String(remembered);
 }
 
@@ -1428,10 +1569,10 @@ if($('#gridViewBtn'))$('#gridViewBtn').onclick=()=>setLibraryLayout('grid');
 if($('#listViewBtn'))$('#listViewBtn').onclick=()=>setLibraryLayout('list');
 
 // Episode changes made from the player controls should continue immediately.
-$('#episodeSelect').onchange=e=>openEpisode(+e.target.value,null,true);
+$('#episodeSelect').onchange=e=>{const n=+e.target.value;if(playerCourseId===currentCourseId)openEpisode(n,null,true,null,null,false,'push',true);else switchPlayerEpisode(n,null,true)};
 $('#prevEpisode').onclick=()=>moveEpisodeWithinSection(-1);
 $('#nextEpisode').onclick=()=>moveEpisodeWithinSection(1);
-$('#episodeLibrary').onclick=()=>openCourse(currentCourseId,currentEp?.section||null);
+$('#episodeLibrary').onclick=()=>openCourse(playerCourseId||currentCourseId,currentEp?.section||null);
 $('#quizBtn').onclick=openQuiz;
 $('#quizClose').onclick=closeQuiz;
 $('#quizOverlay').onclick=e=>{if(e.target===$('#quizOverlay'))closeQuiz()};
@@ -1443,8 +1584,8 @@ $('#followToggle').onchange=()=>sync(true);
 $$('.mode[data-mode]').forEach(b=>b.onclick=()=>{courseState().mode=b.dataset.mode;save();applyMode()});
 $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.target.checked;save();applyEnglishVisibility(audio.currentTime||0);msg(e.target.checked?(lang()==='bn'?'ইংরেজি তার অডিওর সাথে দেখাবে':lang()==='de'?'Englisch erscheint mit dem Audio':'English will appear with its audio'):(lang()==='bn'?'স্টাডি মোডে ইংরেজি সবসময় দেখা যাবে':lang()==='de'?'Englisch ist im Lernmodus immer sichtbar':'English always visible in Study mode'))};
 const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5,'1.75×':1.75,'2×':2};
-$('#speedSelect').onchange=e=>{courseState().speed=speeds[e.target.value]||1;audio.playbackRate=courseState().speed;save();updateMediaSessionPosition(true)};
-$('#currentBookmark').onclick=$('#lyricsStar').onclick=()=>{let e=currentEntry();if(e)toggleBookmark(e.entry_id)};
+$('#speedSelect').onchange=e=>{playerState().speed=speeds[e.target.value]||1;audio.playbackRate=playerState().speed;save();updateMediaSessionPosition(true)};
+$('#currentBookmark').onclick=()=>togglePlayerBookmark();$('#lyricsStar').onclick=()=>{if(isViewingPlayerEpisode())togglePlayerBookmark()};
 if($('#endBehaviorControl'))$('#endBehaviorControl').onclick=cycleEndBehavior;
 $('#backCurrent').onclick=()=>scrollToCurrentWord(true);
 
@@ -1468,7 +1609,7 @@ window.addEventListener('resize',checkBackCurrent);
 window.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(!$('#quizOverlay').classList.contains('hidden'))closeQuiz();else if(!$('#settingsOverlay').classList.contains('hidden'))closeSettings()});
 
 audio.onloadedmetadata=()=>{
-  if(!currentEp)return;const S=courseState();$('#progress').max=currentEp.duration;audio.playbackRate=+S.speed||1;
+  if(!currentEp)return;const S=playerState();$('#progress').max=currentEp.duration;audio.playbackRate=+S.speed||1;
   let key=Object.entries(speeds).find(([k,v])=>v===+S.speed)?.[0]||'1×';$('#speedSelect').value=key;
   if(pendingSeek!=null){audio.currentTime=Math.min(pendingSeek,audio.duration-.1);pendingSeek=null}sync(true);updateMediaSessionPosition(true);if(resumeWhenReady&&playbackRequested&&audio.paused)safePlay('metadata-ready',false);if(pendingFocusId)setTimeout(scrollFocusEntry,150)
 };
@@ -1477,15 +1618,15 @@ audio.onplay=()=>{
   playbackRequested=true;resumeWhenReady=false;clearPlaybackRecovery();recoveryAttempts=0;
   $('#playBtn').textContent='❚❚';playerHasStarted=true;updatePersistentPlayerVisibility();
   if('mediaSession' in navigator)try{navigator.mediaSession.playbackState='playing'}catch{}
-  if(currentEp)setSectionNav(currentEp.section||null);
-  if(!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
+  if(isViewingPlayerEpisode())setSectionNav(currentEp.section||null);
+  if(playerCourseId===currentCourseId&&!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
 };
 audio.onpause=()=>{
   $('#playBtn').textContent='▶';
   if('mediaSession' in navigator)try{navigator.mediaSession.playbackState='paused'}catch{}
-  if(currentEp){courseState().positions[currentEp.episode]=audio.currentTime;save()}
+  if(currentEp){playerState().positions[currentEp.episode]=audio.currentTime;save()}
   updatePersistentPlayerVisibility();
-  if(!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
+  if(playerCourseId===currentCourseId&&!$('#courseHomeView').classList.contains('hidden'))renderEpisodeGrid();
 };
 audio.onended=handleEpisodeEnded;
 audio.onwaiting=()=>{if(playbackRequested)schedulePlaybackRecovery('waiting',12000)};
@@ -1507,19 +1648,40 @@ window.addEventListener('pageshow',()=>{if(currentEp){updateMediaSessionMetadata
 
 setupMediaSession();
 registerAppServiceWorker();
+window.addEventListener('popstate',()=>route(true));
 
-async function route(){
-  const h=(location.hash||'#home').slice(1);
-  if(h==='home'){renderAppHome();return}
-  let m;
-  if((m=h.match(/^course-b1-(core|advanced)$/))){await openCourse('b1',m[1]);return}
-  if((m=h.match(/^course-(.+)$/))){await openCourse(m[1]);return}
-  if((m=h.match(/^library-(.+)$/))){await openCourse(m[1]);return}
-  if((m=h.match(/^difficult-(.+)$/))){if(await activateCourse(m[1]))await openDifficult();return}
-  if((m=h.match(/^quiz-history-b1-(core|advanced)$/))){await openQuizHistory('b1',m[1]);return}
-  if((m=h.match(/^quiz-history-(.+)$/))){await openQuizHistory(m[1]);return}
-  if((m=h.match(/^episode-([^-]+)-(\d+)$/))){if(await activateCourse(m[1]))await openEpisode(+m[2]);return}
-  renderAppHome()
+async function route(fromHistory=false){
+  restoringHistory=!!fromHistory;
+  try{
+    const h=(location.hash||'#home').slice(1);
+    if(!/^quiz-/.test(h))hideQuizOverlay();
+    if(h==='home'){renderAppHome('none');return}
+    let m;
+    if((m=h.match(/^course-b1-(core|advanced)$/))){await openCourse('b1',m[1],'none');return}
+    if((m=h.match(/^course-(.+)$/))){await openCourse(m[1],null,'none');return}
+    if((m=h.match(/^library-(.+)$/))){await openCourse(m[1],null,'none');return}
+    if((m=h.match(/^difficult-(.+)$/))){if(await activateCourse(m[1]))await openDifficult('none');return}
+    if((m=h.match(/^quiz-history-b1-(core|advanced)$/))){await openQuizHistory('b1',m[1],'none');return}
+    if((m=h.match(/^quiz-history-(.+)$/))){await openQuizHistory(m[1],null,'none');return}
+    if((m=h.match(/^episode-([^-]+)-(\d+)$/))){
+      if(await activateCourse(m[1])){
+        const shouldLoadPlayer=!currentEp;
+        await openEpisode(+m[2],null,false,null,null,false,'none',shouldLoadPlayer);
+      }
+      return
+    }
+    if((m=h.match(/^quiz-([^-]+)-(\d+)$/))){
+      if(await activateCourse(m[1])){
+        const shouldLoadPlayer=!currentEp;
+        await openEpisode(+m[2],null,false,null,null,false,'none',shouldLoadPlayer);
+        if(currentEp&&playerCourseId===m[1]&&currentEp.episode===+m[2])openQuiz('none');
+      }
+      return
+    }
+    renderAppHome('none')
+  }finally{
+    restoringHistory=false;
+  }
 }
 
 applyPreferences();
@@ -1550,7 +1712,9 @@ async function preloadReadyCoursesForHome(){
   }
 }
 async function bootstrapApp(){
-  await route();
+  const initial=(location.hash||'#home').slice(1);
+  history.replaceState({gva:true,route:initial},'',`#${initial}`);
+  await route(true);
   preloadReadyCoursesForHome();
 }
 bootstrapApp();
