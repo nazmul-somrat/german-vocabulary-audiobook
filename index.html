@@ -326,6 +326,223 @@ html[data-theme="dark"] .episode-search-bar button{border-color:#475569;color:#f
 }
 </style>
 
+
+<style id="search-focus-v1017">
+/* Normal order: transcript modes, then Reveal EN / Auto-follow / Search / Quiz / Episodes. */
+#playerModebar .mode-row-primary{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+#playerModebar .mode-row-secondary{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+#playerModebar .search-mode{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+#playerModebar .search-mode svg,
+.player-search-icon svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+}
+
+/* When Search is opened, the two normal control rows collapse and the entire
+   modebar line becomes one focused search bar. */
+#playerModebar.search-active .mode-row-primary,
+#playerModebar.search-active .mode-row-secondary{
+  display:none!important;
+}
+.player-search-row{
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:5px 7px 5px 10px;
+  border:1px solid var(--border,#cfd9e8);
+  border-radius:13px;
+  background:var(--card,#fff);
+}
+.player-search-row.hidden{display:none!important}
+.player-search-icon{
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  opacity:.72;
+}
+.player-search-row input{
+  flex:1 1 auto;
+  min-width:0;
+  height:32px;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  padding:0 3px!important;
+  font-size:16px!important;
+  color:inherit;
+}
+.player-search-row .episode-search-count{
+  flex:0 0 auto;
+  max-width:180px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12px!important;
+  opacity:.72;
+}
+.player-search-row button{
+  flex:0 0 auto;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  padding:0!important;
+  border:1px solid var(--border,#cfd9e8);
+  border-radius:9px;
+  background:transparent;
+  color:inherit;
+  font-size:16px!important;
+  cursor:pointer;
+}
+html[data-theme="dark"] .player-search-row{
+  background:var(--card,#101827);
+  border-color:#334155;
+}
+html[data-theme="dark"] .player-search-row button{border-color:#475569}
+
+/* The old in-content search bar no longer exists. */
+.episode-search-bar{display:none!important}
+
+@media (max-width:640px){
+  #playerModebar .mode-row-primary{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+  #playerModebar .mode-row-secondary{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:6px!important;
+    margin-top:6px!important;
+  }
+  #playerModebar .mode-row-secondary:has(#quizBtn.hidden){
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  #playerModebar .mode-row-secondary .compact-toggle,
+  #playerModebar .mode-row-secondary .mode{
+    min-width:0!important;
+    min-height:42px!important;
+    height:42px!important;
+    padding:6px 5px!important;
+    margin:0!important;
+    border-radius:13px!important;
+    font-size:12px!important;
+    white-space:nowrap!important;
+  }
+  #playerModebar .mode-row-secondary .compact-toggle{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:5px!important;
+  }
+  #playerModebar .mode-row-secondary .compact-toggle input{
+    width:18px!important;
+    height:18px!important;
+    flex:0 0 auto;
+    margin:0!important;
+  }
+  #playerModebar .mode-row-secondary #episodeLibrary{display:none!important}
+  #playerModebar .search-mode svg{width:15px;height:15px}
+
+  #playerModebar.search-active .mode-row-primary,
+  #playerModebar.search-active .mode-row-secondary{
+    display:none!important;
+  }
+  .player-search-row{
+    min-height:42px;
+    padding:4px 5px 4px 8px;
+    gap:4px;
+    border-radius:11px;
+  }
+  .player-search-row input{
+    height:32px;
+    font-size:16px!important;
+  }
+  .player-search-row .episode-search-count{
+    max-width:44px;
+    font-size:11px!important;
+  }
+  .player-search-row button{
+    width:31px;
+    height:31px;
+    border-radius:8px;
+    font-size:15px!important;
+  }
+  .player-search-icon svg{width:16px;height:16px}
+}
+@media (max-width:370px){
+  #playerModebar .mode-row-secondary .compact-toggle,
+  #playerModebar .mode-row-secondary .mode{
+    font-size:11px!important;
+    padding:5px 3px!important;
+  }
+  #playerModebar .search-mode{gap:3px!important}
+}
+</style>
+
+
+<style id="final-corrections-v1018">
+/* Sidebar quiz score should not look selected/bold before the user opens it. */
+#navQuizHistory #sideQuizPoints{
+  font-style:normal!important;
+  font-weight:400!important;
+}
+#navQuizHistory.active #sideQuizPoints{
+  font-weight:700!important;
+}
+
+/* Mobile: remove the unused player-note row and tighten the player-to-transcript gap.
+   Important feedback still appears through the existing toast/UI messages. */
+@media (max-width:640px){
+  #persistentPlayerFull #playerNote{
+    display:none!important;
+    height:0!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+  #persistentPlayerFull .modebar{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+  }
+  #persistentPlayerFull{
+    padding-bottom:6px!important;
+    margin-bottom:0!important;
+  }
+  #persistentPlayerHost{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+  }
+  #episodeView{
+    padding-top:0!important;
+    margin-top:0!important;
+  }
+}
+</style>
+
 </head>
 <body>
 <header id="appHeader" class="topbar">
@@ -417,15 +634,11 @@ html[data-theme="dark"] .episode-search-bar button{border-color:#475569;color:#f
           <div class="playback-stats"><span id="timebox">00:00 / 00:00</span><strong id="wordProgress">0 / 0 words</strong></div>
         </div>
         <input id="progress" class="progress" type="range" min="0" value="0" step="0.05">
-        <div class="modebar">
+        <div id="playerModebar" class="modebar">
           <div class="mode-row-primary">
             <button data-mode="study" class="mode transcript-mode">Transcript</button>
             <button data-mode="german" class="mode german-mode"><span class="mode-desktop-label">German-only</span><span class="mode-mobile-label">DE only</span></button>
             <button data-mode="lyrics" class="mode">Lyrics</button>
-            <button id="transcriptSearchBtn" class="mode search-mode hidden" type="button" aria-label="Search episode" title="Search episode">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></svg>
-              <span id="transcriptSearchLabel">Search</span>
-            </button>
           </div>
           <div class="mode-row-secondary">
             <label class="option-toggle compact-toggle" title="In Transcript mode, hide future English until its audio begins">
@@ -438,8 +651,23 @@ html[data-theme="dark"] .episode-search-bar button{border-color:#475569;color:#f
               <span id="autoFollowText" class="desktop-toggle-label">Auto-follow</span>
               <span id="autoFollowTextMobile" class="mobile-toggle-label">Follow</span>
             </label>
+            <button id="transcriptSearchBtn" class="mode search-mode hidden" type="button" aria-label="Search episode" title="Search episode">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></svg>
+              <span id="transcriptSearchLabel">Search</span>
+            </button>
             <button id="quizBtn" class="mode quiz-launch hidden" type="button">Quiz</button>
             <button id="episodeLibrary" class="mode episode-library-btn">Episodes</button>
+          </div>
+
+          <div id="playerSearchRow" class="player-search-row hidden" role="search" aria-label="Search current episode">
+            <span class="player-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></svg>
+            </span>
+            <input id="episodeSearchInput" type="search" autocomplete="off" placeholder="Search this episode…">
+            <span id="episodeSearchCount" class="episode-search-count" aria-live="polite"></span>
+            <button id="episodeSearchPrev" type="button" aria-label="Previous match">‹</button>
+            <button id="episodeSearchNext" type="button" aria-label="Next match">›</button>
+            <button id="episodeSearchClose" type="button" aria-label="Close search">×</button>
           </div>
         </div>
         <div id="playerNote" class="player-note"></div>
@@ -552,14 +780,6 @@ html[data-theme="dark"] .episode-search-bar button{border-color:#475569;color:#f
     <section id="episodeView" class="view hidden">
       <main class="episode-main">
         <section id="episodeIntro" class="episode-intro"></section>
-        <section id="episodeSearchBar" class="episode-search-bar hidden" aria-label="Search current episode">
-          <span class="episode-search-icon" aria-hidden="true">⌕</span>
-          <input id="episodeSearchInput" type="search" autocomplete="off" placeholder="Search this episode…">
-          <span id="episodeSearchCount" class="episode-search-count" aria-live="polite"></span>
-          <button id="episodeSearchPrev" type="button" aria-label="Previous match">‹</button>
-          <button id="episodeSearchNext" type="button" aria-label="Next match">›</button>
-          <button id="episodeSearchClose" type="button" aria-label="Close search">×</button>
-        </section>
         <div id="normalView"></div>
         <section id="lyricsView" class="lyrics-view">
           <div id="lyricPrev" class="lyric prev"></div>
@@ -689,7 +909,7 @@ html[data-theme="dark"] .episode-search-bar button{border-color:#475569;color:#f
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.16</strong>
+          <strong id="appVersionText">Version 1.0.18</strong>
           <span id="appUpdatedText">Updated 20 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
@@ -701,7 +921,7 @@ html[data-theme="dark"] .episode-search-bar button{border-color:#475569;color:#f
 
 <script src="site-config.js?v=20260915-playback1"></script>
 <script src="courses.js?v=20260920-quizmix1"></script>
-<script src="app.js?v=20260920-mobilefix2"></script>
+<script src="app.js?v=20260920-finalcorr1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

@@ -44,9 +44,9 @@ const QUIZ_COUNT=QUIZ_VOCAB_COUNT+QUIZ_GRAMMAR_COUNT;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.16';
+const APP_VERSION='1.0.18';
 const APP_UPDATED='20 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260920-mobilefix2';
+const COURSE_DATA_CACHE_VERSION='20260920-finalcorr1';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -100,6 +100,7 @@ let playerCourseId=null, playerData=null, playerEntryIndex={}, playerEpMap={};
 let restoringHistory=false;
 let lastActive=-1, segmentStop=null, manualEnglish=new Set(), manualRecall=new Set();
 let episodeSearchMatches=[],episodeSearchIndex=-1;
+let episodeSearchActive=false,episodeSearchRestoreFollow=false;
 
 const UI_TEXT={
   en:{home:"Home",current:"CURRENT COURSE",courses:"COURSES",quizPoints:"Quiz Points",uiLanguage:"UI Language",brand:"German Vocabulary Audiobook",brandSub:"Audio + synchronized transcript",homeEyebrow:"GERMAN VOCABULARY AUDIOBOOK",homeTitle:"Listen. Read. Recall. Learn German.",homeSubtitle:"Choose your vocabulary level and continue at your own pace.",coursesHeading:"Courses",courseProgress:"Course progress",words:"words",episodes:"episodes",completed:"completed",quizPointsLower:"quiz points",continueLearning:"Continue learning",goToEpisodes:"Go to episodes",personalReview:"PERSONAL REVIEW",difficultWords:"Bookmarked Words",difficultSubtitle:"Words you bookmarked with ★ while listening.",resetProgress:"Reset progress",allCourses:"All courses",noCourseData:"No course data",progress:"progress",openCourse:"Open course",comingSoon:"Coming soon",progressLoads:"Progress loads with course",structurePrepared:"Course structure prepared",passedWord:"passed",continueWord:"Continue",startWord:"Start",savedAutomatically:"Your listening position is saved automatically.",lastPosition:"Last position: {label} at {time}.",notStarted:"Not started",inProgress:"In progress",finished:"Finished",episodeLabel:"Episode",b1core:"B1 Core",b1adv:"B1+ Advanced",themeDark:"☾ Dark",themeLight:"☀ Light",afterStop:"Stop after episode",afterNext:"Play next episode",afterRepeat:"Repeat same episode",quiz:"Quiz",best:"Best",quizTitle:"Episode Quiz",question:"Question {n} of {t}",pass:"Pass: {p}/{t}",quizPrompt:"Choose the correct English meaning. The sound tells you whether your choice was right or wrong.",quizTypeVocabulary:"Vocabulary",quizTypeGrammar:"Grammar",quizPromptVocabulary:"Choose the correct English meaning.",quizPromptArticle:"Choose the correct German article.",quizPromptVerbPresent:"Choose the correct er/sie/es present-tense form.",quizPromptVerbPast:"Choose the correct Präteritum form.",quizPromptVerbPerfect:"Choose the correct Perfekt form.",quizNoArticle:"no article",quizUnavailable:"This episode does not have enough suitable vocabulary and grammar items for the 10 + 5 quiz.",correct:"✓ Correct",correctAnswer:"Correct answer:",back:"Back",next:"Next",finish:"Finish",passed:"Passed",reviewRecommended:"Review recommended",greatTarget:"Great — you reached the 12/15 target.",listenAgainThen:"Listen to this episode again, then retake the quiz.",reviewMistakes:"Review your mistakes ({n})",yourAnswer:"Your answer:",correctShort:"Correct:",allCorrect:"All 15 answers were correct.",listenAgain:"Listen Again",retakeQuiz:"Retake Quiz",close:"Close",designedBy:"Designed & developed by Nazmul Somrat",top:"↑ Top",difficultWordBtn:"☆ Bookmark word",playThisEpisode:"▶ Play this episode",resumeThisEpisode:"▶ Resume this episode at {time}",otherEpisodePlaying:"Another episode is still playing. Use Play this episode to switch.",continueListening:"Continue Listening"},
@@ -1092,7 +1093,7 @@ function updateEpisodeSearch(){
 
   const count=$('#episodeSearchCount');
   if(!episodeSearchMatches.length){
-    if(count)count.textContent=ux('noSearchMatches');
+    if(count)count.textContent=window.matchMedia('(max-width:640px)').matches?'0':ux('noSearchMatches');
     return;
   }
   episodeSearchIndex=0;
@@ -1107,7 +1108,10 @@ function focusEpisodeSearchMatch(){
   card?.classList.add('search-current');
   card?.scrollIntoView({behavior:'smooth',block:'center'});
   const count=$('#episodeSearchCount');
-  if(count)count.textContent=`${episodeSearchIndex+1} / ${episodeSearchMatches.length} ${ux('matches')}`;
+  if(count){
+    const compact=window.matchMedia('(max-width:640px)').matches;
+    count.textContent=compact?`${episodeSearchIndex+1}/${episodeSearchMatches.length}`:`${episodeSearchIndex+1} / ${episodeSearchMatches.length} ${ux('matches')}`;
+  }
 }
 function stepEpisodeSearch(delta){
   if(!episodeSearchMatches.length){updateEpisodeSearch();return}
@@ -1116,13 +1120,41 @@ function stepEpisodeSearch(delta){
 }
 function openEpisodeSearch(){
   if(!transcriptModeIsOpen())return;
-  const bar=$('#episodeSearchBar');
-  bar?.classList.remove('hidden');
+
+  episodeSearchActive=true;
+  episodeSearchRestoreFollow=!!$('#followToggle')?.checked;
+
+  // Search temporarily owns scrolling. Audio keeps playing, but auto-follow
+  // must not pull the transcript away from the searched result.
+  if($('#followToggle'))$('#followToggle').checked=false;
+
+  $('#playerModebar')?.classList.add('search-active');
+  $('#playerSearchRow')?.classList.remove('hidden');
   $('#episodeSearchInput')?.focus();
 }
-function closeEpisodeSearch(){
-  $('#episodeSearchBar')?.classList.add('hidden');
+function closeEpisodeSearch({restoreFollow=true}={}){
+  if(!episodeSearchActive){
+    clearEpisodeSearch(true);
+    $('#playerModebar')?.classList.remove('search-active');
+    $('#playerSearchRow')?.classList.add('hidden');
+    return;
+  }
+
+  episodeSearchActive=false;
+  $('#playerModebar')?.classList.remove('search-active');
+  $('#playerSearchRow')?.classList.add('hidden');
   clearEpisodeSearch(true);
+
+  if(restoreFollow&&$('#followToggle')){
+    $('#followToggle').checked=episodeSearchRestoreFollow;
+    if(episodeSearchRestoreFollow&&transcriptModeIsOpen()&&courseState().mode!=='lyrics'){
+      // Return to the currently playing word and resume normal auto-follow.
+      setTimeout(()=>scrollToCurrentWord(true),30);
+    }else{
+      sync(true);
+    }
+  }
+  episodeSearchRestoreFollow=false;
 }
 function renderTranscript(ep=viewEp||currentEp){
   if(!ep)return;
@@ -1178,7 +1210,7 @@ function applyMode(){
   const transcriptOpen=transcriptModeIsOpen();
   const searchBtn=$('#transcriptSearchBtn');
   if(searchBtn)searchBtn.classList.toggle('hidden',!transcriptOpen);
-  if(!transcriptOpen)closeEpisodeSearch();
+  if(!transcriptOpen)closeEpisodeSearch({restoreFollow:false});
 
   // The three mode buttons describe the transcript that is currently visible.
   // Therefore none is highlighted while Home / Course / another episode is shown.
@@ -1906,13 +1938,22 @@ $('#progress').oninput=e=>{audio.currentTime=+e.target.value;sync(true)};
 $('#followToggle').onchange=()=>sync(true);
 $$('.mode[data-mode]').forEach(b=>b.onclick=()=>openPlayerTranscript(b.dataset.mode));
 if($('#transcriptSearchBtn'))$('#transcriptSearchBtn').onclick=openEpisodeSearch;
-if($('#episodeSearchClose'))$('#episodeSearchClose').onclick=closeEpisodeSearch;
+if($('#episodeSearchClose'))$('#episodeSearchClose').onclick=()=>closeEpisodeSearch();
 if($('#episodeSearchPrev'))$('#episodeSearchPrev').onclick=()=>stepEpisodeSearch(-1);
 if($('#episodeSearchNext'))$('#episodeSearchNext').onclick=()=>stepEpisodeSearch(1);
 if($('#episodeSearchInput'))$('#episodeSearchInput').addEventListener('input',updateEpisodeSearch);
 if($('#episodeSearchInput'))$('#episodeSearchInput').addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();stepEpisodeSearch(e.shiftKey?-1:1)}
-  if(e.key==='Escape')closeEpisodeSearch();
+  if(e.key==='Escape'){e.preventDefault();closeEpisodeSearch()}
+});
+
+// Clicking/tapping anywhere outside the expanded search line closes Search.
+// If Auto-follow was enabled before Search, it is restored automatically.
+document.addEventListener('pointerdown',e=>{
+  if(!episodeSearchActive)return;
+  const row=$('#playerSearchRow'),btn=$('#transcriptSearchBtn');
+  if(row?.contains(e.target)||btn?.contains(e.target))return;
+  closeEpisodeSearch();
 });
 $('#revealEnglishToggle').onchange=e=>{courseState().revealEnglishOnAudio=e.target.checked;save();applyEnglishVisibility(audio.currentTime||0);msg(e.target.checked?(lang()==='bn'?'ইংরেজি তার অডিওর সাথে দেখাবে':lang()==='de'?'Englisch erscheint mit dem Audio':'English will appear with its audio'):(lang()==='bn'?'ট্রান্সক্রিপ্ট মোডে ইংরেজি সবসময় দেখা যাবে':lang()==='de'?'Englisch ist im Transkriptmodus immer sichtbar':'English always visible in Transcript mode'))};
 const speeds={'.8×':.8,'.9×':.9,'1×':1,'1.1×':1.1,'1.25×':1.25,'1.5×':1.5,'1.75×':1.75,'2×':2};
