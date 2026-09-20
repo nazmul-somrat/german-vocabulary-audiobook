@@ -81,6 +81,763 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
 }
 </style>
 
+
+<style id="interface-final-v1016">
+/* ---------- Home hero ---------- */
+.app-hero{
+  padding:1.45rem 2rem!important;
+  min-height:0!important;
+  border-radius:1.25rem!important;
+}
+.app-hero h1{
+  margin:0!important;
+  max-width:980px;
+  font-size:clamp(2rem,3.3vw,3rem)!important;
+  line-height:1.08!important;
+  letter-spacing:-.035em!important;
+}
+.app-hero #homeSubtitle{
+  margin:.7rem 0 0!important;
+  font-size:1rem!important;
+  line-height:1.5!important;
+  max-width:760px;
+}
+
+/* ---------- Large course level blocks ---------- */
+.course-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:1rem!important;
+}
+.course-card.level-card{
+  position:relative;
+  min-height:12.5rem;
+  padding:1.45rem 1.55rem!important;
+  border:1px solid transparent!important;
+  border-radius:1.25rem!important;
+  box-shadow:0 8px 22px rgba(15,23,42,.06)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:space-between!important;
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.course-card.level-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 11px 26px rgba(15,23,42,.10)!important;
+}
+.course-card.level-card:focus-visible{
+  outline:3px solid rgba(59,130,246,.32);
+  outline-offset:3px;
+}
+.level-card-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:1rem;
+}
+.level-card-top h3{
+  margin:0!important;
+  font-size:1.55rem!important;
+  line-height:1.15!important;
+  letter-spacing:-.02em;
+}
+.level-card-arrow{
+  flex:0 0 auto;
+  font-size:2.35rem;
+  line-height:.8;
+  font-weight:600;
+  opacity:.82;
+}
+.level-card-progress{margin-top:1.35rem}
+.level-card .course-card-meta{
+  display:flex;
+  justify-content:space-between;
+  gap:1rem;
+  align-items:center;
+  font-size:.88rem;
+  margin-bottom:.55rem;
+}
+.level-card .course-card-meta strong{font-size:.94rem}
+.level-card .thinbar{
+  height:.48rem!important;
+  border-radius:999px!important;
+  overflow:hidden;
+  background:rgba(255,255,255,.62)!important;
+}
+.level-card .thinbar i{
+  display:block;
+  height:100%;
+  border-radius:999px;
+  background:currentColor!important;
+  opacity:.72;
+}
+.level-card-bottom{
+  margin-top:1.15rem;
+  padding-top:.85rem;
+  border-top:1px solid rgba(15,23,42,.10);
+  display:flex;
+  justify-content:space-between;
+  gap:.75rem;
+  flex-wrap:wrap;
+  font-size:.78rem;
+  opacity:.82;
+}
+.course-a1{background:#dff1f2!important;color:#163348!important}
+.course-a2{background:#bfe5e2!important;color:#123f45!important}
+.course-b1{background:#e1efb7!important;color:#2d421d!important}
+.course-technical{background:#e6dcfa!important;color:#3d2d66!important}
+
+/* Dark mode uses dedicated deep colors rather than inverted pastels. */
+html[data-theme="dark"] .course-card.level-card{box-shadow:none!important}
+html[data-theme="dark"] .course-a1{background:#17313a!important;color:#e8fbff!important;border-color:#2a515e!important}
+html[data-theme="dark"] .course-a2{background:#153a3a!important;color:#e8fffd!important;border-color:#2a5f5d!important}
+html[data-theme="dark"] .course-b1{background:#2b371d!important;color:#f3ffd9!important;border-color:#526638!important}
+html[data-theme="dark"] .course-technical{background:#30264a!important;color:#f5edff!important;border-color:#55437c!important}
+html[data-theme="dark"] .level-card .thinbar{background:rgba(255,255,255,.16)!important}
+html[data-theme="dark"] .level-card-bottom{border-top-color:rgba(255,255,255,.13)}
+
+/* ---------- Player mode controls ---------- */
+.mode-mobile-label,.mobile-toggle-label{display:none}
+.mode-row-primary,.mode-row-secondary{display:contents}
+.compact-toggle{white-space:nowrap}
+.episode-library-btn{white-space:nowrap}
+.search-mode{display:inline-flex!important;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.search-mode.hidden{display:none!important}
+.search-mode svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;flex:0 0 auto}
+
+/* ---------- Episode transcript search ---------- */
+.episode-search-bar{
+  position:sticky;
+  top:calc(var(--header-h,0px) + 8px);
+  z-index:12;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-height:44px;
+  padding:5px 8px;
+  margin:7px 0 12px;
+  border:1px solid #ced8e6;
+  border-radius:.9rem;
+  background:rgba(255,255,255,.96);
+  backdrop-filter:blur(8px);
+  font-size:14px;
+}
+.episode-search-bar.hidden{display:none!important}
+.episode-search-icon{font-size:1.1rem;opacity:.65}
+.episode-search-bar input{
+  flex:1 1 auto;
+  min-width:0;
+  border:0;
+  outline:0;
+  background:transparent;
+  padding:7px 3px;
+  font-size:14px!important;
+}
+.episode-search-count{
+  flex:0 0 auto;
+  font-size:.75rem;
+  opacity:.7;
+  white-space:nowrap;
+}
+.episode-search-bar button{
+  flex:0 0 auto;
+  width:34px;
+  height:34px;
+  border:1px solid #ced8e6;
+  border-radius:9px;
+  background:transparent;
+  cursor:pointer;
+  font-size:16px!important;
+}
+.vocab-card.search-hit{
+  outline:2px solid rgba(59,130,246,.22);
+  outline-offset:2px;
+}
+.vocab-card.search-current{
+  outline:3px solid rgba(59,130,246,.72);
+  outline-offset:3px;
+}
+html[data-theme="dark"] .episode-search-bar{
+  background:rgba(15,23,42,.96);
+  border-color:#334155;
+}
+html[data-theme="dark"] .episode-search-bar button{border-color:#475569;color:#f8fafc}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1100px){
+  .course-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:640px){
+  .page-main{padding-top:.7rem!important}
+  .app-hero{
+    padding:1rem 1rem!important;
+    border-radius:1rem!important;
+  }
+  .app-hero h1{
+    font-size:clamp(1.75rem,8.5vw,2.2rem)!important;
+    line-height:1.08!important;
+  }
+  .app-hero #homeSubtitle{
+    margin-top:.5rem!important;
+    font-size:.9rem!important;
+  }
+
+  .course-grid{grid-template-columns:1fr!important;gap:.75rem!important}
+  .course-card.level-card{
+    min-height:10rem;
+    padding:1.1rem 1.15rem!important;
+    border-radius:1rem!important;
+  }
+  .level-card-top h3{font-size:1.3rem!important}
+  .level-card-arrow{font-size:2rem}
+  .level-card-progress{margin-top:1rem}
+  .level-card-bottom{margin-top:.85rem;padding-top:.7rem;font-size:.72rem}
+
+  /* Compact mobile player: two aligned rows. */
+  .persistent-player .modebar{display:block!important;margin-top:7px!important}
+  .persistent-player .mode-row-primary{display:grid!important;grid-template-columns:1.35fr 1.05fr .82fr .9fr;gap:6px;align-items:stretch}
+  .persistent-player .mode-row-primary:has(#transcriptSearchBtn.hidden){grid-template-columns:repeat(3,minmax(0,1fr))}
+  .persistent-player .mode-row-secondary{display:grid!important;grid-template-columns:1.35fr 1fr .72fr;gap:6px;margin-top:6px;align-items:stretch}
+  .persistent-player .mode-row-secondary:has(#quizBtn.hidden){grid-template-columns:1.35fr 1fr}
+  .persistent-player .mode-row-primary .mode,
+  .persistent-player .mode-row-secondary .mode,
+  .persistent-player .mode-row-secondary .compact-toggle{min-width:0!important;min-height:42px!important;height:42px!important;padding:7px 8px!important;margin:0!important;border-radius:13px!important;font-size:13px!important;line-height:1.1!important;white-space:nowrap!important}
+  .persistent-player .mode-row-secondary .compact-toggle{display:flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;border:1px solid var(--border,#cfd9e8);background:var(--card,#fff)}
+  .persistent-player .mode-row-secondary .compact-toggle input{width:18px!important;height:18px!important;margin:0!important;flex:0 0 auto}
+  .persistent-player .mode-row-secondary #episodeLibrary{display:none!important}
+  .persistent-player .search-mode{gap:5px!important}
+  .persistent-player .search-mode svg{width:16px;height:16px}
+  .mode-desktop-label,.desktop-toggle-label{display:none!important}
+  .mode-mobile-label,.mobile-toggle-label{display:inline!important}
+
+  .episode-search-bar{top:6px;margin:4px 2px 8px;min-height:42px;padding:4px 6px;gap:5px;border-radius:11px;font-size:13px!important}
+  .episode-search-bar input{font-size:16px!important;padding:6px 2px}
+  .episode-search-count{max-width:62px;overflow:hidden;text-overflow:ellipsis;font-size:11px!important}
+  .episode-search-bar button{width:32px;height:32px;font-size:15px!important}
+
+}
+@media (max-width:370px){
+  .persistent-player .modebar .mode{font-size:.72rem!important}
+  .persistent-player .modebar{gap:.32rem!important}
+  .level-card-bottom{display:block}
+  .level-card-bottom span{display:block;margin-top:.2rem}
+}
+</style>
+
+
+<style id="search-focus-v1017">
+/* Normal order: transcript modes, then Reveal EN / Auto-follow / Search / Quiz / Episodes. */
+#playerModebar .mode-row-primary{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+#playerModebar .mode-row-secondary{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+#playerModebar .search-mode{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+#playerModebar .search-mode svg,
+.player-search-icon svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+}
+
+/* When Search is opened, the two normal control rows collapse and the entire
+   modebar line becomes one focused search bar. */
+#playerModebar.search-active .mode-row-primary,
+#playerModebar.search-active .mode-row-secondary{
+  display:none!important;
+}
+.player-search-row{
+  width:100%;
+  min-width:0;
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+  padding:5px 7px 5px 10px;
+  border:1px solid var(--border,#cfd9e8);
+  border-radius:13px;
+  background:var(--card,#fff);
+}
+.player-search-row.hidden{display:none!important}
+.player-search-icon{
+  flex:0 0 auto;
+  display:grid;
+  place-items:center;
+  opacity:.72;
+}
+.player-search-row input{
+  flex:1 1 auto;
+  min-width:0;
+  height:32px;
+  border:0!important;
+  outline:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  padding:0 3px!important;
+  font-size:16px!important;
+  color:inherit;
+}
+.player-search-row .episode-search-count{
+  flex:0 0 auto;
+  max-width:180px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12px!important;
+  opacity:.72;
+}
+.player-search-row button{
+  flex:0 0 auto;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  padding:0!important;
+  border:1px solid var(--border,#cfd9e8);
+  border-radius:9px;
+  background:transparent;
+  color:inherit;
+  font-size:16px!important;
+  cursor:pointer;
+}
+html[data-theme="dark"] .player-search-row{
+  background:var(--card,#101827);
+  border-color:#334155;
+}
+html[data-theme="dark"] .player-search-row button{border-color:#475569}
+
+/* The old in-content search bar no longer exists. */
+.episode-search-bar{display:none!important}
+
+@media (max-width:640px){
+  #playerModebar .mode-row-primary{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:6px!important;
+  }
+  #playerModebar .mode-row-secondary{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    gap:6px!important;
+    margin-top:6px!important;
+  }
+  #playerModebar .mode-row-secondary:has(#quizBtn.hidden){
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  }
+  #playerModebar .mode-row-secondary .compact-toggle,
+  #playerModebar .mode-row-secondary .mode{
+    min-width:0!important;
+    min-height:42px!important;
+    height:42px!important;
+    padding:6px 5px!important;
+    margin:0!important;
+    border-radius:13px!important;
+    font-size:12px!important;
+    white-space:nowrap!important;
+  }
+  #playerModebar .mode-row-secondary .compact-toggle{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:5px!important;
+  }
+  #playerModebar .mode-row-secondary .compact-toggle input{
+    width:18px!important;
+    height:18px!important;
+    flex:0 0 auto;
+    margin:0!important;
+  }
+  #playerModebar .mode-row-secondary #episodeLibrary{display:none!important}
+  #playerModebar .search-mode svg{width:15px;height:15px}
+
+  #playerModebar.search-active .mode-row-primary,
+  #playerModebar.search-active .mode-row-secondary{
+    display:none!important;
+  }
+  .player-search-row{
+    min-height:42px;
+    padding:4px 5px 4px 8px;
+    gap:4px;
+    border-radius:11px;
+  }
+  .player-search-row input{
+    height:32px;
+    font-size:16px!important;
+  }
+  .player-search-row .episode-search-count{
+    max-width:44px;
+    font-size:11px!important;
+  }
+  .player-search-row button{
+    width:31px;
+    height:31px;
+    border-radius:8px;
+    font-size:15px!important;
+  }
+  .player-search-icon svg{width:16px;height:16px}
+}
+@media (max-width:370px){
+  #playerModebar .mode-row-secondary .compact-toggle,
+  #playerModebar .mode-row-secondary .mode{
+    font-size:11px!important;
+    padding:5px 3px!important;
+  }
+  #playerModebar .search-mode{gap:3px!important}
+}
+</style>
+
+
+<style id="final-corrections-v1018">
+/* Sidebar quiz score should not look selected/bold before the user opens it. */
+#navQuizHistory #sideQuizPoints{
+  font-style:normal!important;
+  font-weight:400!important;
+}
+#navQuizHistory.active #sideQuizPoints{
+  font-weight:700!important;
+}
+
+/* Mobile: remove the unused player-note row and tighten the player-to-transcript gap.
+   Important feedback still appears through the existing toast/UI messages. */
+@media (max-width:640px){
+  #persistentPlayerFull #playerNote{
+    display:none!important;
+    height:0!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+  }
+  #persistentPlayerFull .modebar{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+  }
+  #persistentPlayerFull{
+    padding-bottom:6px!important;
+    margin-bottom:0!important;
+  }
+  #persistentPlayerHost{
+    margin-bottom:0!important;
+    padding-bottom:0!important;
+  }
+  #episodeView{
+    padding-top:0!important;
+    margin-top:0!important;
+  }
+}
+</style>
+
+
+<style id="search-focus-v1019">
+/* Search results: give the top of every vocabulary card a safe landing position. */
+.vocab-card{
+  scroll-margin-top:12px;
+}
+
+/* Focus mode replaces the old pseudo-lyrics/event view. */
+#lyricsView.focus-view{
+  display:none!important;
+  width:100%;
+  max-width:920px;
+  margin:18px auto 34px;
+  padding:0 14px 30px;
+  box-sizing:border-box;
+}
+#lyricsView.focus-view.visible{
+  display:block!important;
+}
+.focus-card{
+  border:1px solid var(--border,#d9e2ee);
+  border-radius:22px;
+  background:var(--card,#fff);
+  padding:24px 28px;
+  box-shadow:0 8px 24px rgba(15,23,42,.06);
+}
+.focus-meta{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+  font-size:12px;
+  color:var(--muted,#64748b);
+}
+.focus-meta>span:not(.focus-sync-state){
+  padding:4px 8px;
+  border-radius:999px;
+  background:rgba(148,163,184,.12);
+}
+.focus-sync-state{
+  margin-left:auto;
+  font-weight:700;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.focus-field{
+  position:relative;
+  margin:0;
+  padding:14px 16px;
+  border-radius:14px;
+  transition:background-color .15s ease,box-shadow .15s ease;
+}
+.focus-field+.focus-field{margin-top:5px}
+.focus-field.focus-active{
+  background:rgba(59,130,246,.09);
+  box-shadow:inset 4px 0 0 #3b82f6;
+}
+.focus-label{
+  display:block;
+  margin-bottom:6px;
+  font-size:11px;
+  line-height:1.2;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted,#64748b);
+}
+.focus-headword strong{
+  display:block;
+  font-size:clamp(30px,3.3vw,44px);
+  line-height:1.08;
+  letter-spacing:-.025em;
+}
+.focus-meaning{
+  display:block;
+  font-size:21px;
+  line-height:1.35;
+}
+.focus-grammar{
+  color:#6d28d9;
+  font-weight:650;
+  font-size:18px;
+}
+.focus-examples{
+  margin-top:10px;
+  border-top:1px solid var(--border,#e2e8f0);
+  padding-top:8px;
+}
+.focus-example+.focus-example{
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px dashed var(--border,#e2e8f0);
+}
+.focus-example-de{
+  display:block;
+  font-size:clamp(22px,2.4vw,31px);
+  line-height:1.28;
+}
+.focus-example-en{
+  display:block;
+  font-size:17px;
+  line-height:1.45;
+  color:#7c5b12;
+}
+.focus-bookmark{
+  display:block!important;
+  margin:14px auto 0!important;
+}
+html[data-theme="dark"] .focus-card{
+  background:var(--card,#101827);
+  border-color:#334155;
+  box-shadow:none;
+}
+html[data-theme="dark"] .focus-field.focus-active{
+  background:rgba(96,165,250,.13);
+}
+html[data-theme="dark"] .focus-example-en{color:#f4d58a}
+html[data-theme="dark"] .focus-grammar{color:#c4b5fd}
+
+/* Mobile Search mode: keep only a compact search header sticky while the keyboard
+   is open, so the matched German headword stays directly underneath it. */
+@media (max-width:640px){
+  #persistentPlayerHost.search-active-host{
+    position:sticky!important;
+    top:0!important;
+    z-index:120!important;
+    background:var(--bg,#f5f7fb)!important;
+    margin:0!important;
+    padding:0!important;
+  }
+  #persistentPlayerHost.search-active-host #persistentPlayerFull{
+    padding:5px 8px 6px!important;
+    margin:0!important;
+    background:var(--bg,#f5f7fb)!important;
+  }
+  #persistentPlayerHost.search-active-host .episode-nav,
+  #persistentPlayerHost.search-active-host .transport,
+  #persistentPlayerHost.search-active-host #progress,
+  #persistentPlayerHost.search-active-host #playerNote{
+    display:none!important;
+  }
+  #persistentPlayerHost.search-active-host #playerModebar{
+    margin:0!important;
+    padding:0!important;
+  }
+  #persistentPlayerHost.search-active-host .player-search-row{
+    margin:0!important;
+  }
+
+  #lyricsView.focus-view{
+    margin:8px auto 18px;
+    padding:0 8px 18px;
+  }
+  .focus-card{
+    border-radius:16px;
+    padding:14px 12px;
+  }
+  .focus-meta{
+    margin-bottom:8px;
+    gap:5px;
+    font-size:10px;
+  }
+  .focus-sync-state{
+    width:100%;
+    margin-left:0;
+    margin-top:2px;
+  }
+  .focus-field{
+    padding:10px 11px;
+    border-radius:11px;
+  }
+  .focus-label{
+    margin-bottom:5px;
+    font-size:9px;
+  }
+  .focus-headword strong{
+    font-size:30px;
+  }
+  .focus-meaning{
+    font-size:18px;
+  }
+  .focus-grammar{
+    font-size:16px;
+  }
+  .focus-example-de{
+    font-size:22px;
+  }
+  .focus-example-en{
+    font-size:16px;
+  }
+}
+</style>
+
+
+<style id="dark-search-expand-v1020">
+/* ---------- Premium expandable-section chevron ---------- */
+.section-chevron{
+  display:inline-grid!important;
+  place-items:center!important;
+  width:36px!important;
+  height:36px!important;
+  color:currentColor!important;
+  opacity:.82;
+  transition:transform .18s ease,opacity .18s ease!important;
+}
+.section-chevron svg{
+  width:22px!important;
+  height:22px!important;
+  fill:none!important;
+  stroke:currentColor!important;
+  stroke-width:2.5!important;
+  stroke-linecap:round!important;
+  stroke-linejoin:round!important;
+}
+.library-section.is-open .section-chevron{
+  transform:rotate(180deg)!important;
+  opacity:1;
+}
+
+/* ---------- Dark-mode transcript/player controls ---------- */
+html[data-theme="dark"] #playerModebar .mode-row-primary .mode,
+html[data-theme="dark"] #playerModebar .mode-row-secondary .mode,
+html[data-theme="dark"] #playerModebar .mode-row-secondary .compact-toggle{
+  background:#111a28!important;
+  border:1px solid #33445b!important;
+  color:#d8e2ef!important;
+  box-shadow:none!important;
+}
+
+html[data-theme="dark"] #playerModebar .mode-row-primary .mode:hover,
+html[data-theme="dark"] #playerModebar .mode-row-secondary .mode:hover,
+html[data-theme="dark"] #playerModebar .mode-row-secondary .compact-toggle:hover{
+  background:#162337!important;
+  border-color:#47617e!important;
+}
+
+html[data-theme="dark"] #playerModebar .mode-row-primary .mode.active{
+  background:#193657!important;
+  border-color:#5b9df0!important;
+  color:#f4f8ff!important;
+  box-shadow:inset 0 0 0 1px rgba(96,165,250,.16)!important;
+  font-weight:700!important;
+}
+
+html[data-theme="dark"] #playerModebar .mode-row-secondary .compact-toggle:has(input:checked){
+  background:#172d48!important;
+  border-color:#4d82bd!important;
+  color:#edf6ff!important;
+}
+
+html[data-theme="dark"] #playerModebar .compact-toggle input{
+  accent-color:#3b82f6!important;
+}
+
+html[data-theme="dark"] #playerModebar .search-mode svg{
+  stroke:#dbeafe!important;
+}
+
+/* Full search bar in dark mode: same visual family, not a white field. */
+html[data-theme="dark"] .player-search-row{
+  background:#101a29!important;
+  border-color:#3a506b!important;
+  color:#e5edf7!important;
+}
+html[data-theme="dark"] .player-search-row input{
+  color:#f4f7fb!important;
+}
+html[data-theme="dark"] .player-search-row input::placeholder{
+  color:#8291a6!important;
+}
+html[data-theme="dark"] .player-search-row button{
+  background:#142033!important;
+  border-color:#3b506b!important;
+  color:#e5edf7!important;
+}
+html[data-theme="dark"] .player-search-row button:hover{
+  background:#1b2c44!important;
+  border-color:#527195!important;
+}
+
+/* Mobile search remains sticky while the transcript is manually scrolled. */
+@media (max-width:640px){
+  html[data-theme="dark"] #persistentPlayerHost.search-active-host,
+  html[data-theme="dark"] #persistentPlayerHost.search-active-host #persistentPlayerFull{
+    background:#090f18!important;
+  }
+
+  /* Do not let touch/scroll affordances imply that search will close. */
+  #normalView{
+    overscroll-behavior-y:contain;
+  }
+}
+</style>
+
 </head>
 <body>
 <header id="appHeader" class="topbar">
@@ -172,14 +929,41 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
           <div class="playback-stats"><span id="timebox">00:00 / 00:00</span><strong id="wordProgress">0 / 0 words</strong></div>
         </div>
         <input id="progress" class="progress" type="range" min="0" value="0" step="0.05">
-        <div class="modebar">
-          <button data-mode="study" class="mode">Study</button>
-          <button data-mode="german" class="mode">German-only</button>
-          <button data-mode="lyrics" class="mode">Lyrics</button>
-          <label class="option-toggle" title="In Study mode, hide future English until its audio begins"><input id="revealEnglishToggle" type="checkbox"> <span id="revealEnglishText">Reveal English with audio</span></label>
-          <label><input id="followToggle" type="checkbox" checked> <span id="autoFollowText">Auto-follow</span></label>
-          <button id="quizBtn" class="mode quiz-launch hidden" type="button">Quiz</button>
-          <button id="episodeLibrary" class="mode">Episodes</button>
+        <div id="playerModebar" class="modebar">
+          <div class="mode-row-primary">
+            <button data-mode="study" class="mode transcript-mode">Transcript</button>
+            <button data-mode="german" class="mode german-mode"><span class="mode-desktop-label">German-only</span><span class="mode-mobile-label">DE only</span></button>
+            <button data-mode="lyrics" class="mode">Focus</button>
+          </div>
+          <div class="mode-row-secondary">
+            <label class="option-toggle compact-toggle" title="In Transcript mode, hide future English until its audio begins">
+              <input id="revealEnglishToggle" type="checkbox">
+              <span id="revealEnglishText" class="desktop-toggle-label">Reveal English with audio</span>
+              <span id="revealEnglishTextMobile" class="mobile-toggle-label">Reveal EN</span>
+            </label>
+            <label class="compact-toggle follow-toggle">
+              <input id="followToggle" type="checkbox" checked>
+              <span id="autoFollowText" class="desktop-toggle-label">Auto-follow</span>
+              <span id="autoFollowTextMobile" class="mobile-toggle-label">Follow</span>
+            </label>
+            <button id="transcriptSearchBtn" class="mode search-mode hidden" type="button" aria-label="Search episode" title="Search episode">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></svg>
+              <span id="transcriptSearchLabel">Search</span>
+            </button>
+            <button id="quizBtn" class="mode quiz-launch hidden" type="button">Quiz</button>
+            <button id="episodeLibrary" class="mode episode-library-btn">Episodes</button>
+          </div>
+
+          <div id="playerSearchRow" class="player-search-row hidden" role="search" aria-label="Search current episode">
+            <span class="player-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></svg>
+            </span>
+            <input id="episodeSearchInput" type="search" autocomplete="off" placeholder="Search this episode…">
+            <span id="episodeSearchCount" class="episode-search-count" aria-live="polite"></span>
+            <button id="episodeSearchPrev" type="button" aria-label="Previous match">‹</button>
+            <button id="episodeSearchNext" type="button" aria-label="Next match">›</button>
+            <button id="episodeSearchClose" type="button" aria-label="Close search">×</button>
+          </div>
         </div>
         <div id="playerNote" class="player-note"></div>
       </div>
@@ -188,7 +972,6 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
     <section id="appHomeView" class="view">
       <main class="page-main">
         <section class="app-hero">
-          <p class="eyebrow" id="homeEyebrow">VOCABULARY AUDIOBOOK COLLECTION</p>
           <h1 id="homeTitle">Learn German vocabulary by listening, reading and recalling.</h1>
           <p id="homeSubtitle">One player for multiple vocabulary courses. Your progress and bookmarked words stay separate for each course.</p>
         </section>
@@ -293,11 +1076,9 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
       <main class="episode-main">
         <section id="episodeIntro" class="episode-intro"></section>
         <div id="normalView"></div>
-        <section id="lyricsView" class="lyrics-view">
-          <div id="lyricPrev" class="lyric prev"></div>
-          <div id="lyricCurrent" class="lyric current"></div>
-          <button id="lyricsStar" class="lyrics-star">☆ Bookmark word</button>
-          <div id="lyricNext" class="lyric next"></div>
+        <section id="lyricsView" class="lyrics-view focus-view" aria-label="Focused vocabulary entry">
+          <article id="focusCard" class="focus-card"></article>
+          <button id="lyricsStar" class="lyrics-star focus-bookmark">☆ Bookmark word</button>
         </section>
       </main>
     </section>
@@ -421,7 +1202,7 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
       <div class="settings-row-head"><strong id="settingsAppLabel">App</strong><span id="settingsAppHint">Version and updates</span></div>
       <div class="app-version-row">
         <div class="app-version-copy">
-          <strong id="appVersionText">Version 1.0.13</strong>
+          <strong id="appVersionText">Version 1.0.21</strong>
           <span id="appUpdatedText">Updated 20 September 2026</span>
         </div>
         <button id="checkUpdateBtn" class="settings-wide-btn update-check-btn" type="button">Check for updates</button>
@@ -433,7 +1214,7 @@ html[data-theme="dark"] .home-continue-bar:hover{background:#142033;border-color
 
 <script src="site-config.js?v=20260915-playback1"></script>
 <script src="courses.js?v=20260920-quizmix1"></script>
-<script src="app.js?v=20260920-transcriptnav1"></script>
+<script src="app.js?v=20260920-expandall1"></script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "bc856becad3d46b086e528513006b981"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
