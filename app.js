@@ -39,9 +39,9 @@ const QUIZ_COUNT=15;
 const QUIZ_PASS=12;
 let quizState=null;
 
-const APP_VERSION='1.0.8';
-const APP_UPDATED='19 September 2026';
-const COURSE_DATA_CACHE_VERSION='20260919-a2final2';
+const APP_VERSION='1.0.9';
+const APP_UPDATED='20 September 2026';
+const COURSE_DATA_CACHE_VERSION='20260920-b1final1';
 let swRegistration=null;
 let swReloading=false;
 let updateCheckTimer=null;
@@ -100,9 +100,9 @@ function difficultyLabel(v){return ux(String(v||'').toLowerCase())||v}
 function typeLabel(v){return ux(String(v||'').toLowerCase())||v}
 
 const COURSE_TEXT={
-  en:{a1:{title:"A1 Vocabulary",description:"Practical beginner German for everyday life with synchronized audio, transcript and active recall."},a2:{title:"A2 Vocabulary",description:"High-frequency elementary German vocabulary with synchronized audio, transcript and active recall."},b1:{title:"B1 Vocabulary Audiobook",description:"Goethe-style B1 core and advanced vocabulary with synchronized audio, transcript and active recall."},technical:{title:"Technical Vocabulary Audiobook",description:"Engineering, software, AI, data science, manufacturing and workplace technical German."}},
-  bn:{a1:{title:"A1 শব্দভাণ্ডার",description:"দৈনন্দিন জীবনের জন্য ব্যবহারিক প্রাথমিক জার্মান শব্দভাণ্ডার, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},a2:{title:"A2 শব্দভাণ্ডার",description:"উচ্চ-প্রচলিত প্রাথমিক জার্মান শব্দভাণ্ডার, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},b1:{title:"B1 শব্দভাণ্ডার অডিওবুক",description:"Goethe-ধাঁচের B1 core এবং advanced শব্দভাণ্ডার, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},technical:{title:"কারিগরি শব্দভাণ্ডার অডিওবুক",description:"ইঞ্জিনিয়ারিং, সফটওয়্যার, AI, data science, manufacturing এবং workplace technical German."}},
-  de:{a1:{title:"A1 Wortschatz",description:"Praktischer Anfängerwortschatz für den Alltag mit synchronisiertem Audio, Transkript und aktivem Abruf."},a2:{title:"A2 Wortschatz",description:"Häufiger Grundwortschatz auf A2-Niveau mit synchronisiertem Audio, Transkript und aktivem Abruf."},b1:{title:"B1 Vokabel-Hörbuch",description:"Goethe-orientierter B1-Kern- und Aufbauwortschatz mit synchronisiertem Audio, Transkript und aktivem Abruf."},technical:{title:"Technisches Vokabel-Hörbuch",description:"Technisches Deutsch für Engineering, Software, KI, Data Science, Fertigung und Arbeitsplatz."}}
+  en:{a1:{title:"A1 Vocabulary",description:"Practical beginner German for everyday life with synchronized audio, transcript and active recall."},a2:{title:"A2 Vocabulary",description:"High-frequency elementary German vocabulary with synchronized audio, transcript and active recall."},b1:{title:"B1 Vocabulary Audiobook",description:"A single mixed B1 vocabulary course with synchronized audio, transcript and active recall."},technical:{title:"Technical Vocabulary Audiobook",description:"Engineering, software, AI, data science, manufacturing and workplace technical German."}},
+  bn:{a1:{title:"A1 শব্দভাণ্ডার",description:"দৈনন্দিন জীবনের জন্য ব্যবহারিক প্রাথমিক জার্মান শব্দভাণ্ডার, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},a2:{title:"A2 শব্দভাণ্ডার",description:"উচ্চ-প্রচলিত প্রাথমিক জার্মান শব্দভাণ্ডার, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},b1:{title:"B1 শব্দভাণ্ডার অডিওবুক",description:"একটি সমন্বিত ও মিশ্র B1 শব্দভাণ্ডার কোর্স, সিঙ্ক্রোনাইজড অডিও, ট্রান্সক্রিপ্ট এবং অ্যাক্টিভ রিকলসহ।"},technical:{title:"কারিগরি শব্দভাণ্ডার অডিওবুক",description:"ইঞ্জিনিয়ারিং, সফটওয়্যার, AI, data science, manufacturing এবং workplace technical German."}},
+  de:{a1:{title:"A1 Wortschatz",description:"Praktischer Anfängerwortschatz für den Alltag mit synchronisiertem Audio, Transkript und aktivem Abruf."},a2:{title:"A2 Wortschatz",description:"Häufiger Grundwortschatz auf A2-Niveau mit synchronisiertem Audio, Transkript und aktivem Abruf."},b1:{title:"B1 Vokabel-Hörbuch",description:"Ein einziger gemischter B1-Wortschatzkurs mit synchronisiertem Audio, Transkript und aktivem Abruf."},technical:{title:"Technisches Vokabel-Hörbuch",description:"Technisches Deutsch für Engineering, Software, KI, Data Science, Fertigung und Arbeitsplatz."}}
 };
 function lang(){return ["en","bn","de"].includes(AS.uiLanguage)?AS.uiLanguage:"en"}
 function tt(key,vars={}){let s=(UI_TEXT[lang()]&&UI_TEXT[lang()][key])||UI_TEXT.en[key]||key;return String(s).replace(/\{(\w+)\}/g,(_,k)=>vars[k]??"")}
@@ -140,13 +140,13 @@ const loading={};
 
 
 function migrateCourseContent(id,data){
-  if(id!=='a2'||!data)return;
+  if(!['a2','b1'].includes(id)||!data)return;
   const S=cs(id),nextVersion=String(data.version||'').trim();
   if(!nextVersion||S.contentVersion===nextVersion)return;
 
-  // A2 was rebuilt from 24 / 1,214 to 30 / 1,529. Old episode positions and
-  // quiz history point to the old timeline, so reset only timeline-dependent
-  // A2 state once. Valid word bookmarks survive because they are keyed by Entry_ID.
+  // A2 and B1 were rebuilt with new episode timelines. Old seek positions,
+  // completion flags and quiz attempts no longer point to the same audio.
+  // Reset only timeline-dependent state once; keep bookmarks whose Entry_ID still exists.
   S.positions={};
   S.maxPositions={};
   S.completed={};
@@ -154,9 +154,13 @@ function migrateCourseContent(id,data){
   S.sectionLastEpisodes={};
   S.quizBest={};
   S.quizHistory={};
-  S.bookmarks=(S.bookmarks||[]).filter(id=>!!data.entry_index?.[id]);
+  S.bookmarks=(S.bookmarks||[]).filter(entryId=>!!data.entry_index?.[entryId]);
   S.contentVersion=nextVersion;
   save();
+}
+
+function hasB1Sections(){
+  return currentCourseId==='b1'&&Array.isArray(D?.sections)&&D.sections.some(s=>['core','advanced'].includes(s.id));
 }
 
 async function loadCourseData(id){
@@ -186,7 +190,7 @@ async function activateCourse(id){
   try{
     D=await loadCourseData(id);currentCourseId=id;AS.lastCourse=id;save();
     entryIndex=D.entry_index||{};epMap=Object.fromEntries(D.episodes.map(e=>[e.episode,e]));
-    if(id==='b1'){
+    if(id==='b1'&&Array.isArray(D.sections)&&D.sections.length){
       const last=epMap[+courseState().lastEpisode||0];
       activeEpisodeSection=currentEp&&currentEp.section?currentEp.section:(last?.section||activeEpisodeSection||'core');
     }else activeEpisodeSection=null;
@@ -228,7 +232,7 @@ function setSectionNav(sectionId=null){
 
 function episodesForSection(sectionId=activeEpisodeSection){
   if(!D)return [];
-  if(currentCourseId==='b1'&&sectionId)return D.episodes.filter(ep=>ep.section===sectionId);
+  if(hasB1Sections()&&sectionId)return D.episodes.filter(ep=>ep.section===sectionId);
   return D.episodes;
 }
 function lastEpisodeForSection(sectionId){
@@ -240,7 +244,7 @@ function lastEpisodeForSection(sectionId){
   return episodesForSection(sectionId)[0]?.episode||D?.episodes?.[0]?.episode||1;
 }
 function setActiveEpisodeSection(sectionId=null){
-  if(currentCourseId!=='b1'){
+  if(!hasB1Sections()){
     activeEpisodeSection=null;
     populateSelect();
     return;
@@ -289,8 +293,8 @@ function cycleEndBehavior(){
   setEndBehavior(next);
 }
 function settingsCopy(){
-  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',install:'অ্যাপ ইনস্টল করুন',installHint:'Android, iPhone / iPad ও Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Chrome খুলুন → ⋮ মেনু → Install app / Add to Home screen → Install',iphoneSteps:'Safari খুলুন → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Chrome বা Edge খুলুন → address bar-এর Install আইকন / menu → Install',installNote:'ইনস্টল করলে অডিওবুকটি আলাদা অ্যাপের মতো Home Screen বা Desktop থেকে খুলবে।',feedback:'ফিডব্যাক',feedbackHint:'বাগ, পরামর্শ বা যেকোনো মন্তব্য পাঠান',feedbackIntro:'আপনি যা বলতে চান নিচে লিখুন।',feedbackPlaceholder:'এখানে আপনার ফিডব্যাক লিখুন...',feedbackSend:'ফিডব্যাক পাঠান',feedbackSending:'পাঠানো হচ্ছে…',feedbackSent:'✓ ধন্যবাদ! আপনার ফিডব্যাক পাঠানো হয়েছে।',feedbackEmpty:'প্রথমে আপনার ফিডব্যাক লিখুন।',feedbackDirect:'কোনো Google Forms পেজ খুলবে না।',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ১৫ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
-  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',install:'App installieren',installHint:'Android, iPhone / iPad und Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'In Chrome öffnen → ⋮ Menü → App installieren / Zum Startbildschirm hinzufügen → Installieren',iphoneSteps:'In Safari öffnen → Teilen → Zum Home-Bildschirm → Als Web-App öffnen → Hinzufügen',windowsSteps:'In Chrome oder Edge öffnen → Installationssymbol in der Adressleiste / Menü → Installieren',installNote:'Nach der Installation lässt sich das Hörbuch wie eine eigene App vom Home-Bildschirm oder Desktop starten.',feedback:'Feedback',feedbackHint:'Fehler, Vorschläge oder andere Rückmeldungen senden',feedbackIntro:'Schreibe unten alles, was du uns mitteilen möchtest.',feedbackPlaceholder:'Feedback hier eingeben...',feedbackSend:'Feedback senden',feedbackSending:'Wird gesendet…',feedbackSent:'✓ Danke! Dein Feedback wurde gesendet.',feedbackEmpty:'Bitte schreibe zuerst dein Feedback.',feedbackDirect:'Es wird keine Google-Forms-Seite geöffnet.',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 15. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
+  if(lang()==='bn')return {title:'সেটিংস',kicker:'পছন্দসমূহ',language:'ভাষা',languageHint:'ইন্টারফেসের ভাষা',appearance:'থিম',appearanceHint:'লাইট / ডার্ক মোড',font:'ফন্ট সাইজ',fontHint:'ইন্টারফেসের লেখার আকার',quizSound:'কুইজ সাউন্ড',quizSoundHint:'সঠিক, ভুল ও পাসের সাউন্ড',install:'অ্যাপ ইনস্টল করুন',installHint:'Android, iPhone / iPad ও Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Chrome খুলুন → ⋮ মেনু → Install app / Add to Home screen → Install',iphoneSteps:'Safari খুলুন → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Chrome বা Edge খুলুন → address bar-এর Install আইকন / menu → Install',installNote:'ইনস্টল করলে অডিওবুকটি আলাদা অ্যাপের মতো Home Screen বা Desktop থেকে খুলবে।',feedback:'ফিডব্যাক',feedbackHint:'বাগ, পরামর্শ বা যেকোনো মন্তব্য পাঠান',feedbackIntro:'আপনি যা বলতে চান নিচে লিখুন।',feedbackPlaceholder:'এখানে আপনার ফিডব্যাক লিখুন...',feedbackSend:'ফিডব্যাক পাঠান',feedbackSending:'পাঠানো হচ্ছে…',feedbackSent:'✓ ধন্যবাদ! আপনার ফিডব্যাক পাঠানো হয়েছে।',feedbackEmpty:'প্রথমে আপনার ফিডব্যাক লিখুন।',feedbackDirect:'কোনো Google Forms পেজ খুলবে না।',app:'অ্যাপ',appHint:'ভার্সন ও আপডেট',version:`ভার্সন ${APP_VERSION}`,updated:`আপডেট: ২০ সেপ্টেম্বর ২০২৬`,check:'আপডেট দেখুন',checking:'আপডেট দেখা হচ্ছে…',upToDate:'আপনি সর্বশেষ ভার্সন ব্যবহার করছেন।',available:'নতুন আপডেট পাওয়া গেছে।',updateTitle:'আপডেট পাওয়া গেছে',updateText:'নতুন ভার্সন প্রস্তুত। আপনার প্রগ্রেস, বুকমার্ক ও কুইজ স্কোর সংরক্ষিত থাকবে।',updateNow:'এখন আপডেট করুন',later:'পরে',settings:'সেটিংস',close:'সেটিংস বন্ধ করুন',browserAuto:'ওয়েব ভার্সন রিফ্রেশ করলে স্বয়ংক্রিয়ভাবে আপডেট হয়।'};
+  if(lang()==='de')return {title:'Einstellungen',kicker:'PRÄFERENZEN',language:'Sprache',languageHint:'Sprache der Benutzeroberfläche',appearance:'Darstellung',appearanceHint:'Hell / Dunkel',font:'Schriftgröße',fontHint:'Textgröße der Oberfläche',quizSound:'Quiz-Töne',quizSoundHint:'Töne für richtig, falsch und bestanden',install:'App installieren',installHint:'Android, iPhone / iPad und Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'In Chrome öffnen → ⋮ Menü → App installieren / Zum Startbildschirm hinzufügen → Installieren',iphoneSteps:'In Safari öffnen → Teilen → Zum Home-Bildschirm → Als Web-App öffnen → Hinzufügen',windowsSteps:'In Chrome oder Edge öffnen → Installationssymbol in der Adressleiste / Menü → Installieren',installNote:'Nach der Installation lässt sich das Hörbuch wie eine eigene App vom Home-Bildschirm oder Desktop starten.',feedback:'Feedback',feedbackHint:'Fehler, Vorschläge oder andere Rückmeldungen senden',feedbackIntro:'Schreibe unten alles, was du uns mitteilen möchtest.',feedbackPlaceholder:'Feedback hier eingeben...',feedbackSend:'Feedback senden',feedbackSending:'Wird gesendet…',feedbackSent:'✓ Danke! Dein Feedback wurde gesendet.',feedbackEmpty:'Bitte schreibe zuerst dein Feedback.',feedbackDirect:'Es wird keine Google-Forms-Seite geöffnet.',app:'App',appHint:'Version und Updates',version:`Version ${APP_VERSION}`,updated:'Aktualisiert: 20. September 2026',check:'Nach Updates suchen',checking:'Suche nach Updates…',upToDate:'Du verwendest die aktuelle Version.',available:'Ein neues Update ist verfügbar.',updateTitle:'Update verfügbar',updateText:'Eine neue Version ist bereit. Fortschritt, Lesezeichen und Quiz-Ergebnisse bleiben erhalten.',updateNow:'Jetzt aktualisieren',later:'Später',settings:'Einstellungen',close:'Einstellungen schließen',browserAuto:'Die Webversion wird beim Aktualisieren automatisch aktualisiert.'};
   return {title:'Settings',kicker:'PREFERENCES',language:'Language',languageHint:'Interface language',appearance:'Appearance',appearanceHint:'Light / dark mode',font:'Font size',fontHint:'Interface text size',quizSound:'Quiz sounds',quizSoundHint:'Correct, wrong and celebration sounds',install:'Install app',installHint:'Android, iPhone / iPad and Windows',android:'Android',iphone:'iPhone / iPad',windows:'Windows',androidSteps:'Open in Chrome → ⋮ menu → Install app / Add to Home screen → Install',iphoneSteps:'Open in Safari → Share → Add to Home Screen → Open as Web App → Add',windowsSteps:'Open in Chrome or Edge → Install icon in the address bar / menu → Install',installNote:'After installation, the audiobook opens like a separate app from your Home Screen or desktop.',feedback:'Feedback',feedbackHint:'Send a bug report, suggestion or any comment',feedbackIntro:'Write anything you want to tell us.',feedbackPlaceholder:'Write your feedback here...',feedbackSend:'Send feedback',feedbackSending:'Sending…',feedbackSent:'✓ Thank you! Your feedback has been sent.',feedbackEmpty:'Please write your feedback first.',feedbackDirect:'No Google Forms page will open.',app:'App',appHint:'Version and updates',version:`Version ${APP_VERSION}`,updated:`Updated ${APP_UPDATED}`,check:'Check for updates',checking:'Checking for updates…',upToDate:'You are using the latest version.',available:'A new update is available.',updateTitle:'Update available',updateText:'A newer version is ready. Your progress, bookmarks and quiz scores will be kept.',updateNow:'Update now',later:'Later',settings:'Settings',close:'Close settings',browserAuto:'The web version updates automatically when you refresh.'};
 }
 function updateSettingsUI(){
@@ -419,8 +423,8 @@ function statusLabel(ep){ let k=statusKey(ep); return k==='finished'?[`✓ ${tt(
 
 function epDisplay(ep){return ep?.display_episode||ep?.episode||1}
 function sectionMeta(id){return D?.sections?.find(s=>s.id===id)||null}
-function episodeDisplayLabel(ep){ const n=String(epDisplay(ep)).padStart(2,'0'), episodeWord=tt('episodeLabel'); if(currentCourseId==='a1')return `${courseLabel('a1')} · ${episodeWord} ${n}`; if(currentCourseId==='a2')return `${courseLabel('a2')} · ${episodeWord} ${n}`; if(currentCourseId==='technical')return `${courseLabel('technical')} · ${episodeWord} ${n}`; if(currentCourseId==='b1'&&ep.section==='advanced')return `${tt('b1adv')} · ${episodeWord} ${n}`; if(currentCourseId==='b1'&&ep.section==='core')return `${tt('b1core')} · ${episodeWord} ${n}`; return `${episodeWord} ${n}`; }
-function episodeBrowserTitle(){ if(currentCourseId==='a1')return courseLabel('a1'); if(currentCourseId==='a2')return courseLabel('a2'); if(currentCourseId==='technical')return courseLabel('technical'); if(currentCourseId==='b1')return `${tt('b1core')} & ${tt('b1adv')}`; return courseTitle(currentCourseId)||tt('episodes'); }
+function episodeDisplayLabel(ep){ const n=String(epDisplay(ep)).padStart(2,'0'), episodeWord=tt('episodeLabel'); if(currentCourseId==='a1')return `${courseLabel('a1')} · ${episodeWord} ${n}`; if(currentCourseId==='a2')return `${courseLabel('a2')} · ${episodeWord} ${n}`; if(currentCourseId==='technical')return `${courseLabel('technical')} · ${episodeWord} ${n}`; if(currentCourseId==='b1'&&ep.section==='advanced')return `${tt('b1adv')} · ${episodeWord} ${n}`; if(currentCourseId==='b1'&&ep.section==='core')return `${tt('b1core')} · ${episodeWord} ${n}`; if(currentCourseId==='b1')return `${courseLabel('b1')} · ${episodeWord} ${n}`; return `${episodeWord} ${n}`; }
+function episodeBrowserTitle(){ if(currentCourseId==='a1')return courseLabel('a1'); if(currentCourseId==='a2')return courseLabel('a2'); if(currentCourseId==='technical')return courseLabel('technical'); if(currentCourseId==='b1')return hasB1Sections()?`${tt('b1core')} & ${tt('b1adv')}`:courseLabel('b1'); return courseTitle(currentCourseId)||tt('episodes'); }
 function sectionDisplayTitle(sec){ if(currentCourseId==='a1')return courseLabel('a1'); if(currentCourseId==='a2')return courseLabel('a2'); if(currentCourseId==='technical')return courseLabel('technical'); if(currentCourseId==='b1'&&sec.id==='core')return tt('b1core'); if(currentCourseId==='b1'&&sec.id==='advanced')return tt('b1adv'); return sec.title; }
 function sectionDisplayKicker(sec){
   if(currentCourseId==='technical')return 'TECH';
@@ -582,7 +586,7 @@ function quizHistoryFolderHtml(sectionId){
 function renderQuizHistory(){
   if(!D)return;
   const st=courseState(),host=$('#quizHistoryList');if(!host)return;
-  const isB1=currentCourseId==='b1',inB1Section=isB1&&['core','advanced'].includes(quizHistorySection);
+  const isB1=hasB1Sections(),inB1Section=isB1&&['core','advanced'].includes(quizHistorySection);
   setText('#quizHistoryEyebrow',`${COURSE_META[currentCourseId]?.short||''} ${qh('title').toUpperCase()}`);
   setText('#quizHistoryTitle',inB1Section?sectionDisplayTitle(sectionMeta(quizHistorySection)):qh('title'));
   setText('#quizHistorySubtitle',isB1&&!inB1Section?qh('chooseSection'):qh('subtitle'));
@@ -616,7 +620,7 @@ function renderQuizHistory(){
 }
 async function openQuizHistory(courseId=currentCourseId,section=null){
   if(!(await activateCourse(courseId)))return;
-  quizHistorySection=currentCourseId==='b1'&&['core','advanced'].includes(section)?section:null;
+  quizHistorySection=hasB1Sections()&&['core','advanced'].includes(section)?section:null;
   showView('#quizHistoryView');
   setSectionNav(quizHistorySection);
   location.hash=quizHistorySection?`quiz-history-${currentCourseId}-${quizHistorySection}`:`quiz-history-${currentCourseId}`;
@@ -631,7 +635,7 @@ function updateCourseNavigation(){
   const core=$('#navCore'); if(core)core.innerHTML=`<span>1</span> ${tt('b1core')}`;
   const adv=$('#navAdvanced'); if(adv)adv.innerHTML=`<span>+</span> ${tt('b1adv')}`;
   $$('.course-side').forEach(b=>{ b.classList.toggle('active-course',b.dataset.course===currentCourseId); const dot=b.querySelector('.course-dot')?.outerHTML||''; b.innerHTML=dot+`<span>${esc(courseLabel(b.dataset.course))}</span>`; });
-  updateCourseQuizPoints(); if($('#navCore'))$('#navCore').classList.toggle('hidden',currentCourseId!=='b1'); if($('#navAdvanced'))$('#navAdvanced').classList.toggle('hidden',currentCourseId!=='b1'); updateStaticLanguage();
+  updateCourseQuizPoints(); if($('#navCore'))$('#navCore').classList.toggle('hidden',!hasB1Sections()); if($('#navAdvanced'))$('#navAdvanced').classList.toggle('hidden',!hasB1Sections()); updateStaticLanguage();
 }
 
 function renderAppHome(){
@@ -646,9 +650,9 @@ async function openCourse(id='b1',sectionToOpen=null){
   $('#courseEyebrow').textContent=`${meta.short} ${ux('audioCourse')}`; $('#courseTitle').textContent=courseTitle(id); $('#courseDescription').textContent=courseDescription(id); $('#courseWords').textContent=D.total_words.toLocaleString(); $('#courseEpisodes').textContent=D.episodes.length; $('#courseProgressText').textContent=`${p}%`; $('#courseProgressInline').textContent=`${words} / ${D.total_words} ${tt('words')} · ${p}%`; $('#courseProgressFill').style.width=`${p}%`; updateCourseQuizPoints();
   const browserTitle=$('#episodeBrowserTitle'); if(browserTitle)browserTitle.textContent=episodeBrowserTitle(); $('#bookmarkCount').textContent=S.bookmarks.length; $('#sideBookmarkCount').textContent=S.bookmarks.length;
   let le=+S.lastEpisode||1,pos=+S.positions[le]||0,lastEp=epMap[le]||D.episodes[0],lastLabel=episodeDisplayLabel(lastEp); $('#continueBtn').textContent=pos>5?`${tt('continueWord')} ${lastLabel} · ${fmt(pos)}`:`${tt('startWord')} ${lastLabel}`; $('#continueSummary').textContent=pos>5?tt('lastPosition',{label:lastLabel,time:fmt(pos)}):tt('savedAutomatically');
-  librarySectionFilter=id==='b1'&&['core','advanced'].includes(sectionToOpen)?sectionToOpen:null;
+  librarySectionFilter=id==='b1'&&hasB1Sections()&&['core','advanced'].includes(sectionToOpen)?sectionToOpen:null;
   libraryOpenSections=new Set(librarySectionFilter?[librarySectionFilter]:[]);
-  if(librarySectionFilter)setActiveEpisodeSection(librarySectionFilter); else if(id!=='b1')setActiveEpisodeSection(null);
+  if(librarySectionFilter)setActiveEpisodeSection(librarySectionFilter); else setActiveEpisodeSection(null);
   renderEpisodeGrid(); $('#searchInput').value='';$('#searchPanel').classList.add('hidden');$('#bookmarksPanel').classList.add('hidden');$('#bookmarksBtn').classList.remove('active'); showView('#courseHomeView');
   setSectionNav(librarySectionFilter);
   location.hash=librarySectionFilter?`course-${id}-${librarySectionFilter}`:`course-${id}`;
@@ -704,7 +708,7 @@ function bookmarkSectionForEntry(id){
   return x?epMap[x.episode]?.section||null:null;
 }
 function activeCourseBookmarkSection(){
-  return currentCourseId==='b1'&&['core','advanced'].includes(librarySectionFilter)?librarySectionFilter:null;
+  return hasB1Sections()&&['core','advanced'].includes(librarySectionFilter)?librarySectionFilter:null;
 }
 function courseBookmarkIds(){
   const all=courseState()?.bookmarks||[],section=activeCourseBookmarkSection();
@@ -1200,7 +1204,7 @@ function renderQuizResult(){
   const legacy=!!quizState?.legacy;
   body.innerHTML=`<div class="quiz-kicker">${esc(ep?episodeDisplayLabel(ep):'')}</div><h2 id="quizTitle">${esc(quizState?.history?qh('quizResult'):(passed?tt('passed'):tt('reviewRecommended')))}</h2><div class="quiz-score ${passed?'pass':'review'}"><strong>${score}/${QUIZ_COUNT}</strong><span>${legacy?qh('detailsUnavailable'):(passed?tt('greatTarget'):tt('listenAgainThen'))}</span></div>${!legacy&&wrong.length?`<section class="quiz-review"><h3>${tt('reviewMistakes',{n:wrong.length})}</h3><p class="quiz-practice-hint">${esc(qh('listenPractice'))}</p>${wrong.map(x=>`<div class="quiz-review-row"><strong>${esc(x.german)}</strong><span>${tt('yourAnswer')} ${esc(x.yours)}</span><span class="quiz-correct">${tt('correctShort')} ${esc(x.correct)} <button type="button" class="quiz-time-link" data-qtime-entry="${esc(x.entry_id||'')}" data-qtime-start="${+x.start||0}" data-qtime-episode="${episodeId}">▶ ${fmt(+x.start||0)}</button></span></div>`).join('')}</section>`:(!legacy?`<div class="quiz-perfect">${tt('allCorrect')}</div>`:'')}<div class="quiz-result-actions">${quizState?.history?`<button id="quizBackHistory" class="quiz-secondary" type="button">${esc(qh('backToHistory'))}</button>`:''}<button id="quizListenAgain" class="quiz-secondary" type="button">${tt('listenAgain')}</button><button id="quizRetake" class="quiz-primary" type="button">${tt('retakeQuiz')}</button><button id="quizDone" class="quiz-secondary" type="button">${tt('close')}</button></div>`;
   $$('.quiz-time-link').forEach(b=>b.onclick=()=>practiceQuizAnswer(+b.dataset.qtimeEpisode,b.dataset.qtimeEntry,+b.dataset.qtimeStart));
-  if($('#quizBackHistory'))$('#quizBackHistory').onclick=()=>{closeQuiz();openQuizHistory(currentCourseId,currentCourseId==='b1'?quizHistorySection:null)};
+  if($('#quizBackHistory'))$('#quizBackHistory').onclick=()=>{closeQuiz();openQuizHistory(currentCourseId,hasB1Sections()?quizHistorySection:null)};
   $('#quizRetake').onclick=async()=>{if(quizState?.history){closeQuiz();await openEpisode(episodeId,null,false);openQuiz();return}const q=buildQuiz();if(q){quizState={questions:q,index:0,answers:Array(QUIZ_COUNT).fill(null),finished:false};renderQuiz()}};
   $('#quizListenAgain').onclick=async()=>{closeQuiz();if(currentEp?.episode===episodeId){audio.currentTime=0;sync(true);setPlaybackIntent(true);safePlay('quiz-listen-again');}else await openEpisode(episodeId,0,true)};
   $('#quizDone').onclick=closeQuiz;
@@ -1266,7 +1270,7 @@ function populateSelect(sectionId=activeEpisodeSection){
   }
   let remembered=currentEp&&list.some(e=>e.episode===currentEp.episode)
     ?currentEp.episode
-    :(currentCourseId==='b1'&&sectionId?lastEpisodeForSection(sectionId):(+courseState().lastEpisode||list[0]?.episode));
+    :(hasB1Sections()&&sectionId?lastEpisodeForSection(sectionId):(+courseState().lastEpisode||list[0]?.episode));
   if(list.some(e=>e.episode===+remembered))sel.value=String(remembered);
 }
 

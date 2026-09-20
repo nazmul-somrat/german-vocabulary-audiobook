@@ -34,9 +34,9 @@ window.GVA_COURSES = [
     id: "b1",
     short: "B1",
     title: "B1 Vocabulary Audiobook",
-    description: "B1 Core plus B1+ Advanced vocabulary with synchronized audio, transcript and active recall.",
+    description: "A single mixed B1 vocabulary course with synchronized audio, transcript and active recall.",
     status: "ready",
-    totalWords: 4069,
+    totalWords: 2609,
     episodes: 51,
     dataScript: "courses/b1/data.js",
     audioBase: GVA_AUDIO_GATEWAY ? GVA_AUDIO_GATEWAY + "s/" : ""
