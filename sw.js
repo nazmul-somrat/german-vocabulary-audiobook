@@ -1,18 +1,18 @@
-const CACHE='german-vocab-audiobook-v1.0.9-b1final1';
+const CACHE='german-vocab-audiobook-v1.0.10-quizmix1';
 const CORE=[
   './',
   './index.html',
   './styles.css?v=20260915-navfolders1',
   './site-config.js?v=20260915-playback1',
-  './courses.js?v=20260920-b1final1',
-  './app.js?v=20260920-b1final1',
+  './courses.js?v=20260920-quizmix1',
+  './app.js?v=20260920-quizmix1',
   './manifest.webmanifest',
   './logo-pwa-192-v4.png',
   './logo-pwa-512-v4.png',
-  './courses/a1/data.js?v=20260920-b1final1',
-  './courses/a2/data.js?v=20260920-b1final1',
-  './courses/b1/data.js?v=20260920-b1final1',
-  './courses/technical/data.js?v=20260920-b1final1'
+  './courses/a1/data.js?v=20260920-quizmix1',
+  './courses/a2/data.js?v=20260920-quizmix1',
+  './courses/b1/data.js?v=20260920-quizmix1',
+  './courses/technical/data.js?v=20260920-quizmix1'
 ];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)));
