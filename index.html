@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>German Vocabulary Audiobook Has Moved</title>
+  <meta name="robots" content="noindex, follow">
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      font-family: Arial, sans-serif;
+      background: #f6f7fb;
+      color: #202124;
+      text-align: center;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 650px;
+      background: #fff;
+      border-radius: 18px;
+      padding: 42px 30px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.08);
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      font-size: 32px;
+    }
+
+    p {
+      line-height: 1.6;
+      color: #5f6368;
+      font-size: 17px;
+    }
+
+    .button {
+      display: inline-block;
+      margin-top: 14px;
+      padding: 14px 24px;
+      border: 0;
+      border-radius: 10px;
+      background: #202124;
+      color: #fff;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .transfer {
+      background: #2563eb;
+      margin-left: 8px;
+    }
+
+    .transfer:disabled {
+      opacity: .6;
+      cursor: default;
+    }
+
+    .new-address {
+      display: inline-block;
+      margin-top: 22px;
+      color: #2563eb;
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    .transfer-box {
+      margin-top: 28px;
+      padding: 20px;
+      border: 1px solid #e2e5ea;
+      border-radius: 14px;
+      background: #fafbfc;
+    }
+
+    .transfer-box h2 {
+      margin: 0 0 8px;
+      font-size: 19px;
+    }
+
+    .transfer-box p {
+      margin: 7px 0;
+      font-size: 14px;
+    }
+
+    #transferStatus {
+      min-height: 22px;
+      margin-top: 13px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .success { color: #16713c; }
+    .error { color: #b42318; }
+
+    .small {
+      margin-top: 24px;
+      font-size: 14px;
+      color: #777;
+    }
+
+    @media (max-width: 560px) {
+      .card { padding: 32px 20px; }
+      .button {
+        display: block;
+        width: 100%;
+        margin: 10px 0 0;
+      }
+      .transfer { margin-left: 0; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <h1>We've moved!</h1>
+
+    <p>German Vocabulary Audiobook has moved to a new website.</p>
+
+    <a class="button" href="https://deutschvocab.pages.dev/">
+      Open German Vocabulary Audiobook
+    </a>
+
+    <a class="new-address" href="https://deutschvocab.pages.dev/">
+      deutschvocab.pages.dev
+    </a>
+
+    <section class="transfer-box">
+      <h2>Already used the old website?</h2>
+      <p>
+        Transfer your saved listening progress, completed episodes,
+        bookmarks and quiz history to the new version.
+      </p>
+      <p>
+        The transfer opens the new website and moves your saved progress there.
+        Any progress already on the new website will be merged, not simply replaced.
+      </p>
+
+      <button id="transferBtn" class="button transfer" type="button">
+        Transfer my saved progress
+      </button>
+
+      <div id="transferStatus" aria-live="polite"></div>
+    </section>
+
+    <p class="small" id="redirectText">
+      You will be redirected automatically in
+      <strong><span id="countdown">60</span> seconds</strong>.
+    </p>
+  </main>
+
+  <script>
+    const PRODUCTION_URL = 'https://deutschvocab.pages.dev/';
+    const TARGET_ORIGIN = 'https://deutschvocab.pages.dev';
+
+    const transferBtn = document.getElementById('transferBtn');
+    const transferStatus = document.getElementById('transferStatus');
+    const redirectText = document.getElementById('redirectText');
+    const countdown = document.getElementById('countdown');
+
+    let seconds = 60;
+    let redirectTimer = null;
+    let transferWindow = null;
+    let transferToken = '';
+    let transferState = '';
+    let legacyB1State = '';
+    let transferTimeout = null;
+    let transferStarted = false;
+
+    function makeToken() {
+      const bytes = new Uint8Array(24);
+      crypto.getRandomValues(bytes);
+      return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function stopRedirect() {
+      if (redirectTimer) {
+        clearInterval(redirectTimer);
+        redirectTimer = null;
+      }
+      redirectText.textContent = 'Automatic redirect paused while progress is being transferred.';
+    }
+
+    function startRedirect() {
+      redirectTimer = setInterval(() => {
+        seconds -= 1;
+        countdown.textContent = String(Math.max(0, seconds));
+
+        if (seconds <= 0) {
+          clearInterval(redirectTimer);
+          redirectTimer = null;
+          location.href = PRODUCTION_URL;
+        }
+      }, 1000);
+    }
+
+    function setStatus(text, type = '') {
+      transferStatus.textContent = text;
+      transferStatus.className = type;
+    }
+
+    window.addEventListener('message', event => {
+      if (!transferStarted) return;
+      if (event.origin !== TARGET_ORIGIN) return;
+      if (event.source !== transferWindow) return;
+      if (event.data?.token !== transferToken) return;
+
+      if (event.data?.type === 'GVA_PROGRESS_TRANSFER_READY') {
+        setStatus('The new website is ready. Transferring your saved progress…');
+
+        transferWindow.postMessage({
+          type: 'GVA_PROGRESS_TRANSFER',
+          token: transferToken,
+          state: transferState,
+          legacyB1: legacyB1State
+        }, TARGET_ORIGIN);
+
+        return;
+      }
+
+      if (event.data?.type === 'GVA_PROGRESS_TRANSFER_DONE') {
+        clearTimeout(transferTimeout);
+        transferBtn.disabled = true;
+
+        const imported = Array.isArray(event.data?.summary?.importedCourses)
+          ? event.data.summary.importedCourses.map(x => x.toUpperCase())
+          : [];
+
+        const skipped = Array.isArray(event.data?.summary?.skippedTimelineCourses)
+          ? event.data.summary.skippedTimelineCourses.map(x => x.toUpperCase())
+          : [];
+
+        let message = imported.length
+          ? `Transfer complete: ${imported.join(', ')} progress was merged into the new website.`
+          : 'Transfer completed.';
+
+        if (skipped.length) {
+          message += ` Timeline progress for ${skipped.join(', ')} was not imported because that course version changed.`;
+        }
+
+        setStatus(message, 'success');
+        redirectText.textContent = 'Transfer complete. Check the new website tab that opened.';
+        return;
+      }
+
+      if (event.data?.type === 'GVA_PROGRESS_TRANSFER_ERROR') {
+        clearTimeout(transferTimeout);
+        transferBtn.disabled = false;
+        setStatus('The transfer could not be completed. Nothing was deleted from the old website.', 'error');
+      }
+    });
+
+    transferBtn.addEventListener('click', () => {
+      stopRedirect();
+
+      transferState = localStorage.getItem('gvaAppState') || '';
+      legacyB1State = localStorage.getItem('goetheB1State') || '';
+
+      if (!transferState && !legacyB1State) {
+        setStatus('No saved progress was found in this browser for the old website.', 'error');
+        transferBtn.disabled = false;
+        return;
+      }
+
+      transferStarted = true;
+      transferBtn.disabled = true;
+      transferToken = makeToken();
+
+      const targetUrl =
+        `${TARGET_ORIGIN}/?gva-transfer=1&gva-token=${encodeURIComponent(transferToken)}`;
+
+      transferWindow = window.open(targetUrl, '_blank');
+
+      if (!transferWindow) {
+        transferStarted = false;
+        transferBtn.disabled = false;
+        setStatus('Your browser blocked the new website tab. Allow pop-ups for this page and try again.', 'error');
+        return;
+      }
+
+      setStatus('Opening the new website and preparing the browser-to-browser transfer…');
+
+      clearTimeout(transferTimeout);
+      transferTimeout = setTimeout(() => {
+        transferBtn.disabled = false;
+        setStatus(
+          'The new website did not respond in time. Your old progress is still safe. Refresh the new website, return here and try again.',
+          'error'
+        );
+      }, 15000);
+    });
+
+    startRedirect();
+  </script>
+</body>
+</html>
